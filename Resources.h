@@ -17,8 +17,8 @@ enum class PolicySelectionReasonType {
 const bool DefaultSelect = false;
 const std::string str_cur_points = "cur_points";
 const std::string str_board = "board";
-const std::string str_board_material = "board_material";
-const std::string str_table_material = "table_material";
+const std::string str_board_material = "board";
+const std::string str_table_material = "table";
 const std::string str_cur_board = "cur_board";
 const std::string str_tablet = "tablet";
 const std::string str_table = "table";

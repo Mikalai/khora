@@ -1,6 +1,4 @@
-﻿#pragma once
-
-#include "Animation.h"
+﻿#include "Animation.h"
 
 Animation::~Animation() {
 }
