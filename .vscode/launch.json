@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/../out/Debug/Khora",
-            "args": ["--data", "~/code/khora/data/raw/models/old/board.glb", "--font", "~/code/khora/data/fonts/times.vsgb"],
+            "args": ["--data", "~/code/khora/data/raw/models/board.vsgb", "--font", "~/code/khora/data/fonts/times.vsgb"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
