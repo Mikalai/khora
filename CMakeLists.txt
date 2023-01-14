@@ -45,7 +45,26 @@ file(GLOB_RECURSE SourceFiles
      "*.cpp"
 )
 
-add_executable (Khora ${SourceFiles})
+set(MAKELIST_SOURCE 
+    "Render/WorldCompiler.h"
+    "Render/WorldCompiler.cpp"
+    "Log/Log.cpp"
+    "Platform/SpinLock.cpp"
+    "Platform/WellKnownPaths.cpp"
+    "Platform/ThreadId.cpp"
+    "MakeList/Main.cpp")
+
+add_executable (MakeList ${MAKELIST_SOURCE})
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/Assets/Names.h
+    COMMAND MakeList "${CMAKE_CURRENT_SOURCE_DIR}/../data/raw/models/board.vsgb" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../data/raw/models/city_card.vsgb" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/../data/raw/models/policies.vsgb"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../data/raw/models/events.vsgb" > ${CMAKE_CURRENT_SOURCE_DIR}/Assets/Names.h
+    VERBATIM)
+
+add_executable (Khora ${SourceFiles} "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Names.h")
+#add_executable (Khora ${MAKELIST_SOURCE} "${CMAKE_CURRENT_SOURCE_DIR}/Assets/Names.h")
 
 if (MAD_ENGINE_ENABLE_LOG)
     message ("Search fmt library")
@@ -55,6 +74,7 @@ if (MAD_ENGINE_ENABLE_LOG)
         target_link_libraries(Khora fmt::fmt)
         message("FMT DIR: " ${fmt_DIR})
         target_include_directories(Khora PRIVATE ${fmt_DIR})
+        target_link_libraries(MakeList fmt::fmt)    
         set(MAD_ENGINE_USE_FMT "1" CACHE STRING "Use fmt library in logger")
     endif()
 endif()
@@ -74,6 +94,7 @@ endif()
 if (MAD_ENGINE_USE_GLM)
     find_package(glm CONFIG REQUIRED)    
     target_link_libraries(Khora glm::glm)
+    target_link_libraries(MakeList vsg::vsg)    
     target_include_directories(Khora PRIVATE ${GLM_DIR})    
 endif()
 
@@ -107,8 +128,12 @@ if (${vsg_FOUND})
 
     target_include_directories(Khora PRIVATE ${vsg_INCLUDE_DIR} )
     target_link_libraries(Khora vsg::vsg)
+
+    target_include_directories(MakeList PRIVATE ${vsg_INCLUDE_DIR} )
+    target_link_libraries(MakeList vsg::vsg)    
 endif()
 
 configure_file("Config.h.in" "Config.h")
+
 
 # TODO: Add tests and install targets if needed.

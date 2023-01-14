@@ -10,6 +10,7 @@ public:
 
     const PolicyEffect& GetEffect() const;
 	Policies GetType() const;
+	PolicyType GetRepeateType() const { return type; }
 	
 	const std::string& GetName() const;
 	const std::string& GetDescription() const;

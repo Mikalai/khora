@@ -21,6 +21,7 @@
 #include <WorldLogic.h>
 #include "Resources.h"
 #include <Render/WorldVisualInput.h>
+#include <Assets/AssetsCompiler.h>
 
 class ConsoleObserver : public Observer<GameMessage> {
 public:
@@ -56,10 +57,19 @@ int main(int argc, char** argv)
 
     // set up defaults and read command line arguments to override them
     vsg::CommandLine arguments(&argc, argv);
+    std::string dataFolder;
+
+    if (arguments.read<std::string>("--data-folder", dataFolder)) {
+        WellKnownPaths::SetDataFolder(dataFolder);
+    }
 
 	if (arguments.read("--run-tests")) {
 		return RunTests(argc, argv);
 	}
+
+    if (arguments.read("--compile")) {
+        return Compile(options);
+    }
 
     windowTraits->debugLayer = arguments.read({"--debug", "-d"});
     windowTraits->apiDumpLayer = arguments.read({"--api", "-a"});
@@ -94,7 +104,7 @@ int main(int argc, char** argv)
     assert(!font_filename.empty());
 
     auto font = vsg::read_cast<vsg::Font>(font_filename, options);
-
+    
     // assign a custom StateSet to options->shaderSets so that subsequent TextGroup::setup(0, options) call will pass in our custom ShaderSet.
     auto shaderSet = options->shaderSets["text"] = vsg::createTextShaderSet(options);
 

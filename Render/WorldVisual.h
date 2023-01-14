@@ -13,6 +13,7 @@
 #include <Render/IntersectionHandler.h>
 #include <Render/WorldVisualAnimator.h>
 #include <Render/WorldVisualInput.h>
+#include <Assets/KhoraAssets.h>
 #ifdef vsgXchange_FOUND
 #    include <vsgXchange/all.h>
 #endif
@@ -33,8 +34,7 @@ public:
 
     void CreateFromScene(vsg::ref_ptr<vsg::Node> scene);
     auto CreateBox();
-    void CreateScene();
-    vsg::StateInfo state;
+    void CreateScene();    
     vsg::ref_ptr<vsg::Node> GetWorldRoot();
     vsg::ref_ptr<vsg::Node> GetRoot();
     //vsg::ref_ptr<vsg::Camera> GetCamera();
@@ -43,13 +43,27 @@ public:
     using GeneralUserInput::Update;
 
     vsg::ref_ptr<vsg::Builder> builder;
-    std::unordered_map<std::string, vsg::ref_ptr<vsg::StateGroup>*> materials_serialization_table;
+    /*std::unordered_map<std::string, vsg::ref_ptr<vsg::StateGroup>*> materials_serialization_table;
     std::unordered_map<std::string, vsg::ref_ptr<vsg::VertexIndexDraw>*> geometry_serialization_table;
     std::unordered_map<std::string, vsg::ref_ptr<vsg::MatrixTransform>*> transform_serialization_table;
-    std::unordered_map<std::string, vsg::ref_ptr<vsg::Camera>*> camera_serialization_table;
+    std::unordered_map<std::string, vsg::dmat4*> matrix_serialization_table;
+    std::unordered_map<std::string, vsg::ref_ptr<vsg::Camera>*> camera_serialization_table;*/
 
-    vsg::ref_ptr<vsg::Camera> _camera;
-    vsg::ref_ptr<vsg::MatrixTransform> root;
+    /*vsg::ref_ptr<vsg::Camera> _camera;
+    vsg::ref_ptr<vsg::MatrixTransform> root;    
+    vsg::ref_ptr<vsg::MatrixTransform> economy_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> culture_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> military_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> dice_icon_culture_location;    
+
+    vsg::ref_ptr<vsg::MatrixTransform> economy_icon_location;
+    vsg::ref_ptr<vsg::MatrixTransform> culture_icon_location;
+    vsg::ref_ptr<vsg::MatrixTransform> military_power_icon_location;
+    vsg::ref_ptr<vsg::MatrixTransform> persepolis_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> troops_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> glory_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> tax_text_location;
+    vsg::ref_ptr<vsg::MatrixTransform> population_text_location;
     vsg::ref_ptr<vsg::MatrixTransform> coin_first_location_offset;
     vsg::ref_ptr<vsg::MatrixTransform> loc_dice_3_offset;
     vsg::ref_ptr<vsg::MatrixTransform> first_dice_location;
@@ -70,6 +84,11 @@ public:
     vsg::ref_ptr<vsg::StateGroup> event_back_material;
     vsg::ref_ptr<vsg::StateGroup> board_material;
     vsg::ref_ptr<vsg::StateGroup> table_material;
+
+    vsg::ref_ptr<vsg::VertexIndexDraw> economy_icon_geometry;
+    vsg::ref_ptr<vsg::VertexIndexDraw> culture_icon_geometry;
+    vsg::ref_ptr<vsg::VertexIndexDraw> military_icon_geometry;
+    vsg::ref_ptr<vsg::VertexIndexDraw> dice_icon_geometry;
     vsg::ref_ptr<vsg::VertexIndexDraw> board_geometry;
     vsg::ref_ptr<vsg::VertexIndexDraw> city_geometry;
     vsg::ref_ptr<vsg::VertexIndexDraw> coin_geometry;
@@ -106,7 +125,7 @@ public:
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, max_expedition_discoveries> expedition_discoveries;
     std::vector<vsg::ref_ptr<vsg::MatrixTransform>> discoveries;
 
-    std::array<vsg::ref_ptr<vsg::StateGroup>, players_count> tablet_materials;
+    vsg::ref_ptr<vsg::StateGroup> tablet_materials;
     std::array<vsg::ref_ptr<vsg::StateGroup>, players_count> city_level_materials;
     std::array<vsg::ref_ptr<vsg::StateGroup>, players_count> economy_materials;
     std::array<vsg::ref_ptr<vsg::StateGroup>, players_count> culture_materials;
@@ -145,6 +164,7 @@ public:
     std::array<vsg::dmat4, players_count> activated_policies_table_first_location;
     std::array<vsg::dmat4, players_count> in_hand_policies_table_first_location;
 
+    std::array<vsg::dmat4, players_count> players_tablet_matrix;
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, players_count> players_tablet_locations;
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, players_count> players_city_locations;
     vsg::ref_ptr<vsg::MatrixTransform> city_location;
@@ -163,7 +183,9 @@ public:
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, max_city_track_level> military_track_offset;
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, max_city_levels> city_track_offset;
     std::array<std::vector<std::tuple<int, vsg::ref_ptr<vsg::MatrixTransform>>>, players_count> player_coins;
-    std::array<std::vector<vsg::ref_ptr<vsg::MatrixTransform>>, players_count> philosophy;
+    std::array<std::vector<vsg::ref_ptr<vsg::MatrixTransform>>, players_count> philosophy;*/
+
+    KhoraAssets assets;
 
     vsg::ref_ptr<vsg::Node> _box;
     vsg::ref_ptr<vsg::MatrixTransform> _root;
@@ -192,10 +214,9 @@ public:
 	WorldVisualAnimator Animator();    
 
     vsg::ref_ptr<vsg::Options> _options;
-    vsg::ref_ptr<vsg::Font> _font;
-    vsg::ref_ptr<vsg::Switch> _selectPlayersCountMessageBox;
+    vsg::ref_ptr<vsg::Font> _font;    
     std::function<void(int count)> _selectPlayersCountMessageBoxCallback;
-    vsg::ref_ptr<vsg::Switch> _selectColorMessageBox;
+    
     std::function<void(player_color color)> _selectColorMessageBoxCallback;
     vsg::ref_ptr<vsg::Switch> _selectCityMessageBox;
     std::function<void(Cities city)> _selectCityMessageBoxCallback;
@@ -210,9 +231,7 @@ public:
     std::unordered_map<vsg::ref_ptr<vsg::MatrixTransform>, int> _discoveryTokenToExpedition;
     std::unordered_map<int, std::vector<vsg::ref_ptr<vsg::MatrixTransform>>> _expeditionToDiscoveryTokens;
 private:
-    void CreateSelectPlayersCountMessageBox();
-    void CreateSelectColorMessageBox();
-    void CreateSelectCityMessageBox();	
+    
 
 private:
 	using TransformIterator = std::vector<vsg::ref_ptr<vsg::MatrixTransform>>::iterator;
@@ -241,7 +260,7 @@ private:
     void CompilePhilosophy();
     void CompilePlayerMarkers();
     void CompileDiscoveries();
-
+    void CompileTabletMaterial();
     void Next(IntersectionMessage& msg) override;
     void OnActivate(vsg::ref_ptr<vsg::MatrixTransform> sender, std::function<void(vsg::ref_ptr<vsg::MatrixTransform>)> action);
     void OnActivateClear(vsg::ref_ptr<vsg::MatrixTransform> sender);
@@ -265,6 +284,7 @@ private:
 	void SelectPolicyFromActiveDeckAsync(SelectPolicyCallback cb) override;
 
 	vsg::dmat4 GetInvert(int playerId) const;
+    vsg::ref_ptr<vsg::Node> CreateText(const std::string& t, const vsg::dvec3& offset, const vsg::dvec4 color, double scale);
 
 private:
     void Handle(PlayerCountSelectedMessage& msg);

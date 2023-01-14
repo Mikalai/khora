@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <Log/Log.h>
 
 #include <vsg/all.h>
 #ifdef vsgXchange_FOUND
@@ -20,7 +21,6 @@ public:
         std::string name;
         if (auto hasName = o.getValue("name", name); hasName) {
             objects[name] = std::make_tuple(vsg::ref_ptr<Object>{&o}, path);
-            INFO("")
         }
 
         path.emplace_back(&o);

@@ -10,6 +10,9 @@
 #include <WorldLogic.h>
 #include "WorldCompiler.h"
 
+const vsg::dvec4 darkColor{ 0.2,0.2,0.2,1.0 };
+double tableCaptionScale = 0.003;
+
 WorldVisual& loadWorld(WorldVisual& world, vsg::ref_ptr<vsg::Node> scene) {
 	WorldCompiler compiler;
 	scene->accept(compiler);
@@ -42,27 +45,12 @@ WorldVisual& loadWorld(WorldVisual& world, vsg::ref_ptr<vsg::Node> scene) {
 		if (auto it = compiler.objects.find(geometry.first); it != compiler.objects.end()) {	
 			auto o = std::get<0>(it->second);
 			INFO("Geometry {} found. Type {}", geometry.first, o->className());
-			if (auto group = vsg::cast<vsg::Group>(o); group) {
-				std::string parentName;
-				group->getValue("name", parentName);				
-				for (auto& child : group->children) {					
-					std::string childName;					
-					child->getValue("name", childName);
-					INFO("Group {} has child '{}' of type {}", parentName, childName, child->className());
-				}
-			} else {
-				auto m = vsg::cast<vsg::MatrixTransform>(o);
-				auto state = vsg::cast<vsg::StateGroup>(m->children[0]);
-				*geometry.second = vsg::cast<vsg::VertexIndexDraw>(state->children[0]);
 
-				if (geometry.first == "policy_front" || geometry.first == "policy_back") {
-					std::cout << "found";
-				}
+			auto m = vsg::cast<vsg::MatrixTransform>(o);
+			auto state = vsg::cast<vsg::StateGroup>(m->children[0]);
+			*geometry.second = vsg::cast<vsg::VertexIndexDraw>(state->children[0]);
 
-				if (!*geometry.second) {
-					std::cerr << "Object " << geometry.first << " was found but this is not geometry." << std::endl;
-				}
-			}
+
 			assert(geometry.second != nullptr && "Asset not found");
 		}
 		else {
@@ -70,25 +58,6 @@ WorldVisual& loadWorld(WorldVisual& world, vsg::ref_ptr<vsg::Node> scene) {
 			exit(-1);
 		}
 	}
-
-	for (auto& transform : world.transform_serialization_table) {
-		if (auto it = compiler.objects.find(transform.first); it != compiler.objects.end()) {
-			auto o = std::get<0>(it->second);
-			auto m = vsg::cast<vsg::MatrixTransform>(o);
-			m->children.clear();
-			*transform.second = m;
-
-			if (!*transform.second) {
-				std::cerr << "Object " << transform.first << " was found but this is not transform." << std::endl;
-			}
-		}
-		else {
-			std::cerr << "Can't load geometry " << transform.first << std::endl;
-			exit(-1);
-		}
-	}
-
-
 
 	for (auto& material : world.materials_serialization_table) {
 		if (auto it = compiler.objects.find(material.first); it != compiler.objects.end()) {
@@ -123,7 +92,37 @@ WorldVisual& loadWorld(WorldVisual& world, vsg::ref_ptr<vsg::Node> scene) {
 		}
 	}
 
-	assert(world.army_materials[0] != nullptr);
+	for (auto& transform : world.transform_serialization_table) {
+		if (auto it = compiler.objects.find(transform.first); it != compiler.objects.end()) {
+			auto o = std::get<0>(it->second);
+			auto m = vsg::cast<vsg::MatrixTransform>(o);
+			m->children.clear();
+			*transform.second = m;
+
+			if (!*transform.second) {
+				std::cerr << "Object " << transform.first << " was found but this is not transform." << std::endl;
+			}
+		}
+		else {
+			std::cerr << "Can't load geometry " << transform.first << std::endl;
+			exit(-1);
+		}
+	}
+
+	for (auto& transform : world.matrix_serialization_table) {
+		if (auto it = compiler.objects.find(transform.first); it != compiler.objects.end()) {
+			auto o = std::get<0>(it->second);
+			auto m = vsg::cast<vsg::MatrixTransform>(o);
+			m->children.clear();
+			*transform.second = m->matrix;			
+		}
+		else {
+			std::cerr << "Can't load geometry " << transform.first << std::endl;
+			exit(-1);
+		}
+	}
+
+	//assert(world.army_materials[0] != nullptr);
 
 	return world;
 }
@@ -159,7 +158,7 @@ void WorldVisual::CompileActions() {
 }
 
 void WorldVisual::CompilePolicies() {
-
+	
 	policy_back_material->addChild(policy_back_geometry);
 
 	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
@@ -209,6 +208,12 @@ void WorldVisual::OnLoadComplete() {
 	CompilePhilosophy();
 	CompileDiscoveries();
 	CompileActions();
+	CompileTabletMaterial();
+}
+
+void WorldVisual::CompileTabletMaterial() {
+	assert(tablet_materials);
+	table_material->children.clear();	
 }
 
 void WorldVisual::CompilePhilosophy() {
@@ -239,160 +244,169 @@ void WorldVisual::CompilePoliciesLocations() {
 
 void WorldVisual::CompileInHandsPoliciesLocations() {
 	for (int i = 0; i < players_count; ++i) {
-		auto tablet_location = players_tablet_locations[i]->matrix;		
-		in_hand_policies_table_first_location[i] = tablet_location * policies_in_hand_first_location_offset->matrix;
+		in_hand_policies_table_first_location[i] = GetRelativeToTableLocation(i, policies_in_hand_first_location_offset->matrix);
 	}
 }
 
 void WorldVisual::CompileActivatedPoliciesLocations() {
 	for (int i = 0; i < players_count; ++i) {
-		auto tablet_location = players_tablet_locations[i]->matrix;
-		activated_policies_table_first_location[i] = tablet_location * policies_activated_first_location_offset->matrix;
+		activated_policies_table_first_location[i] = GetRelativeToTableLocation(i, policies_activated_first_location_offset->matrix);
 	}	
 }
 
-std::array<vsg::dmat4, players_count> in_hand_policies_table_first_location;
-
-auto WorldVisual::CreateBox() {	
-	vsg::GeometryInfo geom;
-	state.wireframe = false;
-	state.blending = true;
-	state.lighting = false;
-	geom.color.set(0, 1, 0, 0.6);
-	geom.position.set(0.0f, 0.005f, 0.0f);
-	geom.dx.set(0.01f, 0.0f, 0.0f);
-	geom.dy.set(0.0f, 0.01f, 0.0f);
-	geom.dz.set(0.0f, 0.0f, 0.01f);
-
-	return builder->createBox(geom, state);
-}
-
-void WorldVisual::CreateScene() {
-	if (_worldRoot)
-		return;
-
-	_box = CreateBox();
-	_worldRoot = vsg::MatrixTransform::create();
-
-	table_material->addChild(table_geometry);
-	_worldRoot->addChild(table_material);
-
-	// root->matrix = vsg::rotate(-vsg::PI / 2.0, 1.0, 0.0, 0.0);
-
-	_worldRoot->addChild(board_material);
-	board_material->addChild(board_geometry);
-
-	if (DEBUG_POLICIES_DECK) {
-		policies_deck_location->addChild(_box);
-	}
-
-	_worldRoot->addChild(policies_deck_location);
-
-	if (DEBUG_CLOSE_EVENTS_DECK) {
-		events_deck_close_location->addChild(_box);
-	}
-
-	_worldRoot->addChild(events_deck_close_location);
-
-	if (DEBUG_OPEN_EVENTS_DECK) {
-		events_deck_open_location->addChild(_box);
-	}
-
-	_worldRoot->addChild(events_deck_open_location);
-
-	if (DEBUG_POINTS_LOCATION) {
-		for (int i = 0; i < max_points_locations; ++i) {
-			auto point = points_location[i];
-			point->addChild(_box);
-			_worldRoot->addChild(point);
-		}
-	}
-
-	if (DEBUG_TAX_LOCATION) {
-		for (int i = 0; i < max_tax_locations; ++i) {
-			auto point = tax_location[i];
-			point->addChild(_box);
-			_worldRoot->addChild(point);
-		}
-	}
-
-	if (DEBUG_POPULATION_LOCATION) {
-		for (int i = 0; i < max_population_locations; ++i) {
-			auto point = population_location[i];
-			point->addChild(_box);
-			_worldRoot->addChild(point);
-		}
-	}
-
-	if (DEBUG_GLORY_LOCATION) {
-		for (int i = 0; i < max_glory_locations; ++i) {
-			auto point = glory_location[i];
-			point->addChild(_box);
-			_worldRoot->addChild(point);
-		}
-	}
-
-	if (DEBUG_ARMY_LOCATION) {
-		for (int i = 0; i < max_army_locations; ++i) {
-			auto point = army_location[i];
-			point->addChild(_box);
-			_worldRoot->addChild(point);
-		}
-	}
-
-	for (int i = 0; i < GetExpeditionsCount(); ++i) {
-
-		auto& e = GetExpeditionTemplate(i);
-		for (int j = 0; j < e.discoveries.size(); ++j) {
-			if (e.discoveries[j] == discovery_type::no)
-				continue;
-
-			// all expeditions has 1 except of the last
-			auto location = expedition_discoveries[i + j] = vsg::MatrixTransform::create();
-			location->matrix = vsg::translate(0, 1, 0);
-			location->addChild(discovery_materials[As<int>(e.discoveries[j])]);
-			_discoveryTokenToExpedition[location] = i;
-			_expeditionToDiscoveryTokens[i].push_back(location);
-
-			/*OnActivate(location, [id = i, this](vsg::ref_ptr<vsg::MatrixTransform> t) {
-				std::cout << "Expedition: " << id << std::endl;
-				auto expedition = GetExpeditionByDiscovery(id);
-				PostWorldUpdateAction([player = PlayerId(), expedition](WorldLogic& logic) {
-					if (logic.IsExpeditionAvailable(expedition)) {
-						logic.ActivateExpedition(player, expedition);
-					}
-					});
-				});*/
-
-			_worldRoot->addChild(location);
-		}
-	}
-
-	for (int i = 0; i < achieves_count; ++i) {
-		auto point = achieve_location[i];
-		point->addChild(_box);
-		_worldRoot->addChild(point);
-	}
-
-	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
-		_worldRoot->addChild(policies[i]);
-	}
-
-	for (int i = 0; i < (int)GlobalEventType::Count; ++i) {
-		_worldRoot->addChild(events[i]);
-	}
-
-
-	_root = vsg::MatrixTransform::create();
-	_root->addChild(_worldRoot);
-
-	_cameraAligned = vsg::MatrixTransform::create();
-	CreateSelectPlayersCountMessageBox();
-	CreateSelectColorMessageBox();
-	CreateSelectCityMessageBox();
-	_root->addChild(_cameraAligned);
-
-}
+//auto WorldVisual::CreateBox() {	
+//	vsg::GeometryInfo geom;
+//	state.wireframe = false;
+//	state.blending = true;
+//	state.lighting = false;
+//	geom.color.set(0, 1, 0, 0.6);
+//	geom.position.set(0.0f, 0.005f, 0.0f);
+//	geom.dx.set(0.01f, 0.0f, 0.0f);
+//	geom.dy.set(0.0f, 0.01f, 0.0f);
+//	geom.dz.set(0.0f, 0.0f, 0.01f);
+//
+//	return builder->createBox(geom, state);
+//}
+//
+//void WorldVisual::CreateScene() {
+//	if (_worldRoot)
+//		return;
+//
+//	_box = CreateBox();
+//	_worldRoot = vsg::MatrixTransform::create();
+//	_worldRoot->addChild(tablet_materials);
+//
+//	table_material->addChild(table_geometry);
+//	_worldRoot->addChild(table_material);
+//
+//	// root->matrix = vsg::rotate(-vsg::PI / 2.0, 1.0, 0.0, 0.0);
+//
+//	_worldRoot->addChild(board_material);
+//	board_material->addChild(board_geometry);
+//
+//	if (DEBUG_POLICIES_DECK) {
+//		policies_deck_location->addChild(_box);
+//	}
+//
+//	_worldRoot->addChild(policies_deck_location);
+//
+//	if (DEBUG_CLOSE_EVENTS_DECK) {
+//		events_deck_close_location->addChild(_box);
+//	}
+//
+//	_worldRoot->addChild(events_deck_close_location);
+//
+//	if (DEBUG_OPEN_EVENTS_DECK) {
+//		events_deck_open_location->addChild(_box);
+//	}
+//
+//	_worldRoot->addChild(events_deck_open_location);
+//
+//	if (DEBUG_POINTS_LOCATION) {
+//		for (int i = 0; i < max_points_locations; ++i) {
+//			auto point = points_location[i];
+//			point->addChild(_box);
+//			_worldRoot->addChild(point);
+//		}
+//	}
+//
+//	if (DEBUG_TAX_LOCATION) {
+//		for (int i = 0; i < max_tax_locations; ++i) {
+//			auto point = tax_location[i];
+//			point->addChild(_box);
+//			_worldRoot->addChild(point);
+//		}
+//	}
+//
+//	if (DEBUG_POPULATION_LOCATION) {
+//		for (int i = 0; i < max_population_locations; ++i) {
+//			auto point = population_location[i];
+//			point->addChild(_box);
+//			_worldRoot->addChild(point);
+//		}
+//	}
+//
+//	if (DEBUG_GLORY_LOCATION) {
+//		for (int i = 0; i < max_glory_locations; ++i) {
+//			auto point = glory_location[i];
+//			point->addChild(_box);
+//			_worldRoot->addChild(point);
+//		}
+//	}
+//
+//	if (DEBUG_ARMY_LOCATION) {
+//		for (int i = 0; i < max_army_locations; ++i) {
+//			auto point = army_location[i];
+//			point->addChild(_box);
+//			_worldRoot->addChild(point);
+//		}
+//	}
+//
+//	for (int i = 0; i < GetExpeditionsCount(); ++i) {
+//
+//		auto& e = GetExpeditionTemplate(i);
+//		for (int j = 0; j < e.discoveries.size(); ++j) {
+//			if (e.discoveries[j] == discovery_type::no)
+//				continue;
+//
+//			// all expeditions has 1 except of the last
+//			auto location = expedition_discoveries[i + j] = vsg::MatrixTransform::create();
+//			location->matrix = vsg::translate(0, 1, 0);
+//			location->addChild(discovery_materials[As<int>(e.discoveries[j])]);
+//			_discoveryTokenToExpedition[location] = i;
+//			_expeditionToDiscoveryTokens[i].push_back(location);
+//
+//			/*OnActivate(location, [id = i, this](vsg::ref_ptr<vsg::MatrixTransform> t) {
+//				std::cout << "Expedition: " << id << std::endl;
+//				auto expedition = GetExpeditionByDiscovery(id);
+//				PostWorldUpdateAction([player = PlayerId(), expedition](WorldLogic& logic) {
+//					if (logic.IsExpeditionAvailable(expedition)) {
+//						logic.ActivateExpedition(player, expedition);
+//					}
+//					});
+//				});*/
+//
+//			_worldRoot->addChild(location);
+//		}
+//	}
+//
+//	for (int i = 0; i < achieves_count; ++i) {
+//		auto point = achieve_location[i];
+//		point->addChild(_box);
+//		_worldRoot->addChild(point);
+//	}
+//
+//	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
+//		_worldRoot->addChild(policies[i]);
+//	}
+//
+//	for (int i = 0; i < (int)GlobalEventType::Count; ++i) {
+//		_worldRoot->addChild(events[i]);
+//	}
+//	
+//	double darkScale = 0.005;
+//	persepolis_text_location->addChild(CreateText(tr("PERSEPOLIS"), { 0.0, 0.0, 0.0 }, { 0.6, 0.6, 0.6, 1.0 }, 0.008));
+//	troops_text_location->addChild(CreateText(tr("TROOPS"), { 0.0, 0.0, 0.0 }, darkColor, darkScale));
+//	glory_text_location->addChild(CreateText(tr("GLORY"), { 0.0, 0.0, 0.0 }, darkColor, darkScale));
+//	tax_text_location->addChild(CreateText(tr("TAX"), { 0.0, 0.0, 0.0 }, darkColor, darkScale));
+//	population_text_location->addChild(CreateText(tr("POPULATION"), { 0.0, 0.0, 0.0 }, darkColor, darkScale));
+//
+//	_worldRoot->addChild(persepolis_text_location);
+//	_worldRoot->addChild(troops_text_location);
+//	_worldRoot->addChild(glory_text_location);
+//	_worldRoot->addChild(tax_text_location);
+//	_worldRoot->addChild(population_text_location);
+//
+//	_root = vsg::MatrixTransform::create();
+//	_root->addChild(_worldRoot);
+//
+//	_cameraAligned = vsg::MatrixTransform::create();
+//	CreateSelectPlayersCountMessageBox();
+//	CreateSelectColorMessageBox();
+//	CreateSelectCityMessageBox();
+//	_root->addChild(_cameraAligned);
+//
+//}
 
 vsg::ref_ptr<vsg::Node> WorldVisual::GetWorldRoot() {
 	CreateScene();
@@ -423,11 +437,28 @@ WorldVisual::WorldVisual(WorldVisualInput vi)
 	transform_serialization_table[str_first_action_card] = &first_action_card;
 	transform_serialization_table[str_first_philosophy_offset] = &first_philosophy_offset;
 	transform_serialization_table[str_first_discovery_offset] = &first_discovery_offset;
+	transform_serialization_table[str_persepolis_location] = &persepolis_text_location;
+	transform_serialization_table[str_glory_location] = &glory_text_location;
+	transform_serialization_table[str_tax_location] = &tax_text_location;
+	transform_serialization_table[str_troops_location] = &troops_text_location;
+	transform_serialization_table[str_population_location] = &population_text_location;
+	transform_serialization_table[str_dice_icon_culture_location] = &dice_icon_culture_location;	
 
+	transform_serialization_table[str_economy_text_location] = &economy_text_location;
+	transform_serialization_table[str_culture_text_location] = &culture_text_location;
+	transform_serialization_table[str_military_text_location] = &military_text_location;
+
+	transform_serialization_table[str_economy_icon_location] = &economy_icon_location;
+	transform_serialization_table[str_culture_icon_location] = &culture_icon_location;
+	transform_serialization_table[str_military_power_icon_location] = &military_power_icon_location;
 	
 	geometry_serialization_table[str_board] = &board_geometry;
 	geometry_serialization_table[str_coin_5] = &coin_geometry;
 	geometry_serialization_table[str_philosophy] = &philosophy_geometry;
+	geometry_serialization_table[str_economy_icon] = &economy_icon_geometry;
+	geometry_serialization_table[str_culture_icon] = &culture_icon_geometry;
+	geometry_serialization_table[str_military_icon] = &military_icon_geometry;
+	geometry_serialization_table[str_dice_icon] = &dice_icon_geometry;
 
 	materials_serialization_table[str_board_material] = &board_material;
 	materials_serialization_table[str_table_material] = &table_material;
@@ -455,12 +486,12 @@ WorldVisual::WorldVisual(WorldVisualInput vi)
 		materials_serialization_table[str_event_material[i]] = &events_materials[i];
 	}
 
-	for (int i = 0; i < players_count; ++i) {
-		materials_serialization_table[str_tablet_material[i]] = &tablet_materials[i];
-	}
+	//for (int i = 0; i < players_count; ++i) {
+		materials_serialization_table[str_tablet_material] = &tablet_materials;
+	//}
 
 	for (int i = 0; i < players_count; ++i) {
-		transform_serialization_table[str_player_location[i]] = &players_tablet_locations[i];
+		matrix_serialization_table[str_player_location[i]] = &players_tablet_matrix[i];
 	}
 
 	transform_serialization_table[str_city_location] = &city_location;
@@ -685,12 +716,13 @@ void WorldVisual::Handle(ExpeditionAddedMessage& msg) {
 
 void WorldVisual::Handle(PlayerCountSelectedMessage& msg) {
 	for (int i = 0; i < msg.playersCount; ++i) {
-		auto point = players_tablet_locations[i];
+		auto point = players_tablet_locations[i] = vsg::MatrixTransform::create();
+		point->matrix = players_tablet_matrix[i];
 
 		if (DEBUG_PLAYER_LOCATION) {
 			point->addChild(_box);
 		}
-		_worldRoot->addChild(point);
+		// _worldRoot->addChild(point);
 	}
 
 	for (int i = 0; i < msg.playersCount; ++i) {
@@ -717,14 +749,82 @@ void WorldVisual::Handle(CitySelectedMessage& msg) {
 
 void WorldVisual::Handle(PlayerColorSelectedMessage& msg) {
 	auto tableRoot = players_tablet_locations[msg.player];	
-	auto material = tablet_materials[msg.color];
-	material->addChild(tablet_geometry);
-	_player_to_color[msg.player] = msg.color;
+	auto material = tablet_materials;//[msg.color];
+	//material->addChild(tablet_geometry);
+	_player_to_color[msg.player] = msg.color;	
+	tableRoot->addChild(tablet_geometry);
+	material->addChild(tableRoot);	
+
 	_viewer->compileManager->compile(material);
 	_viewer->compileManager->compile(coin_1_material);
 	_viewer->compileManager->compile(coin_5_material);
-	tableRoot->addChild(material);
-	Animator().MoveTransform(tableRoot, vsg::translate(0.0, 1.0, 0.0), tableRoot->matrix);	
+
+	Animator().MoveTransform(tableRoot, vsg::translate(0.0, 1.0, 0.0), tableRoot->matrix);
+	auto group_material = vsg::StateGroup::create();
+	{
+		for (auto c : city_level_materials[msg.color]->stateCommands) {
+			group_material->stateCommands.push_back(c);
+		}
+	}
+	tableRoot->addChild(group_material);
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = dice_icon_culture_location->matrix;
+		t->addChild(dice_icon_geometry);
+		group_material->addChild(t);
+	}
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = economy_icon_location->matrix;		
+		t->addChild(economy_icon_geometry);		
+		group_material->addChild(t);		
+	}
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = culture_icon_location->matrix;		
+		t->addChild(culture_icon_geometry);
+		group_material->addChild(t);
+	}
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = military_power_icon_location->matrix;
+		t->addChild(military_icon_geometry);
+		group_material->addChild(t);
+	}
+	_viewer->compileManager->compile(group_material);
+
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = economy_text_location->matrix;
+		auto text = CreateText(tr("ECONOMY"), { 0.0,0.0,0.0 }, darkColor, tableCaptionScale);
+		_viewer->compileManager->compile(text);
+		t->addChild(text);
+		tableRoot->addChild(t);
+	}	
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = culture_text_location->matrix;
+		auto text = CreateText(tr("CULTURE"), { 0.0,0.0,0.0 }, darkColor, tableCaptionScale);
+		_viewer->compileManager->compile(text);
+		t->addChild(text);
+		tableRoot->addChild(t);
+	}
+	{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = military_text_location->matrix;
+		auto text = CreateText(tr("MILITARY"), { 0.0,0.0,0.0 }, darkColor, tableCaptionScale);
+		_viewer->compileManager->compile(text);
+		t->addChild(text);
+		tableRoot->addChild(t);
+	}
+	/*{
+		auto t = vsg::MatrixTransform::create();
+		t->matrix = military_text_location_2->matrix;
+		auto text = CreateText(tr("POWER"), { 0.0,0.0,0.0 }, darkColor, tableCaptionScale);
+		_viewer->compileManager->compile(text);
+		t->addChild(text);
+		tableRoot->addChild(t);
+	}*/	
 	{
 		auto t = cur_points[msg.player] = vsg::MatrixTransform::create();
 		t->matrix = vsg::translate(0.0, 1.0, 0.0);
@@ -1077,23 +1177,23 @@ void WorldVisual::Handle(PolicyRemovedFromDraftMessage& msg) {
 }
 
 vsg::dmat4 WorldVisual::GetRelativeToTableLocation(int playerId, vsg::dmat4 offset) {
-	return players_tablet_locations[playerId]->matrix * offset;
+	return players_tablet_matrix[playerId] * offset;
 }
 
 vsg::dmat4 WorldVisual::GetCityTrackLocation(int playerId, int level) {
-	return players_tablet_locations[playerId]->matrix * city_location->matrix * city_track_offset[level]->matrix;
+	return players_tablet_matrix[playerId] * city_location->matrix * city_track_offset[level]->matrix;
 }
 
 vsg::dmat4 WorldVisual::GetEconomyTrackLocation(int playerId, int level) {
-	return players_tablet_locations[playerId]->matrix * ecomony_track_offset[level]->matrix;
+	return players_tablet_matrix[playerId] * ecomony_track_offset[level]->matrix;
 }
 
 vsg::dmat4 WorldVisual::GetCultureTrackLocation(int playerId, int level) {
-	return players_tablet_locations[playerId]->matrix * culture_track_offset[level]->matrix;
+	return players_tablet_matrix[playerId] * culture_track_offset[level]->matrix;
 }
 
 vsg::dmat4 WorldVisual::GetMilitaryTrackLocation(int playerId, int level) {
-	return players_tablet_locations[playerId]->matrix * military_track_offset[level]->matrix;
+	return players_tablet_matrix[playerId] * military_track_offset[level]->matrix;
 }
 
 std::tuple<int, vsg::ref_ptr<vsg::MatrixTransform>> WorldVisual::CreateCoin(int playerId, int value) {
@@ -1846,253 +1946,6 @@ void WorldVisual::ThrowDiceAsync(int diceIndex, std::function<void(int diceIndex
 	};
 }
 
-void WorldVisual::CreateSelectPlayersCountMessageBox() {
-	_selectPlayersCountMessageBox = vsg::Switch::create();
-	_selectPlayersCountMessageBox->setAllChildren(false);	
-
-	vsg::dvec4 v;
-	v.set(0.0, 0.0, 0.0, 1.0);
-	auto p = _camera->projectionMatrix->transform() * v;
-	// p = p / p.w;	
-
-	auto offset = vsg::translate(0.0, 0.0, -2.0*p.z);
-	auto abs = vsg::AbsoluteTransform::create(); // vsg::MatrixTransform::create();
-	abs->matrix = offset;
-
-	v.set(1.0, 1.0, 0.0, 1.0);
-	p = _camera->projectionMatrix->transform() * v;
-
-	vsg::GeometryInfo gi;
-	float w = 0.01f * 2.0f;
-	float h = 0.005f * 2.0f;
-	gi.position.set(0, 0, 0);
-	gi.dx.set(w, 0.0f, 0.0f);
-	gi.dy.set(0.0f, h, 0.0f);
-	gi.dz.set(0.0f, 0.0f, 0.2f);
-	gi.color.set(0.8f, 0.8f, 0.8f, 0.8f);
-
-	state.blending = true;
-	
-
-	auto quad = builder->createQuad(gi, state);	
-	float size = 0.001 * 2;
-	for (int i = 1; i < 4; ++i) {
-		gi.position.set(0, 0, 0);
-		gi.dx.set(size, 0.0f, 0.0f);
-		gi.dy.set(0.0f, size, 0.0f);
-		gi.dz.set(0.0f, 0.0f, 0.05f);
-		gi.color.set(1.0f, 0.0f, 0.0f, 1.0f);		
-		state.blending = false;
-
-		auto q = builder->createQuad(gi, state);
-		auto t = vsg::MatrixTransform::create();
-		t->matrix = vsg::translate(-w/2.0f + (float)(i) * w / 4.0f, 0.0f, 0.00001f);
-		t->addChild(q);
-
-		OnActivate(t, [i, this](auto v) {
-			std::cout << "SET PLAYERS COUNT " << i + 1 << std::endl;
-			_world.SetPlayersCount(i + 1);
-			_selectPlayersCountMessageBox->setAllChildren(false);
-		});
-
-		abs->addChild(t);
-	}
-
-	abs->addChild(quad);
-
-	auto layout = vsg::StandardLayout::create();
-	layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
-	layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
-	layout->position = vsg::vec3(0, 1.5, 0);	
-	layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
-	layout->vertical = vsg::vec3(0.0, 1.0, 0.0);
-	layout->color = vsg::vec4(1.0, 1.0, 1.0, 1.0);
-	layout->outlineWidth = 0.0;
-	layout->billboard = true;
-
-	auto data = vsg::stringValue::create(tr("Select players count"));
-		
-	auto text = vsg::Text::create();	
-	text->text = data;
-	text->font = _font;
-	text->layout = layout;
-	text->setup(0, _options);
-
-	auto s = vsg::AbsoluteTransform::create();
-	s->matrix = vsg::translate(0.0f, 0.0f, -15.0f);// *vsg::scale(0.1f, 0.1f, 1.0f);
-	s->addChild(text);
-
-	abs->addChild(s);	
-	_selectPlayersCountMessageBox->addChild(false, abs);
-	// _cameraAligned->addChild(_selectPlayersCountMessageBox);
-	_worldRoot->addChild(_selectPlayersCountMessageBox);
-}
-
-void WorldVisual::CreateSelectColorMessageBox() {
-
-	_selectColorMessageBox = vsg::Switch::create();
-	_selectColorMessageBox->setAllChildren(false);	
-
-	vsg::dvec4 v;
-	v.set(0.0, 0.0, 0.0, 1.0);
-	auto p = _camera->projectionMatrix->transform() * v;
-	// p = p / p.w;	
-
-	auto offset = vsg::translate(0.0, 0.0, -2.0 * p.z);
-	auto abs = vsg::AbsoluteTransform::create();
-	abs->matrix = offset;
-
-	v.set(1.0, 1.0, 0.0, 1.0);
-	p = _camera->projectionMatrix->transform() * v;
-
-	vsg::GeometryInfo gi;
-	float w = 0.01f * 2.0f;
-	float h = 0.005f * 2.0f;
-	gi.position.set(0, 0, 0);
-	gi.dx.set(w, 0.0f, 0.0f);
-	gi.dy.set(0.0f, h, 0.0f);
-	gi.dz.set(0.0f, 0.0f, 0.2f);
-	gi.color.set(0.8f, 0.8f, 0.8f, 0.8f);
-
-	state.blending = true;
-
-
-	auto quad = builder->createQuad(gi, state);
-	float size = 0.001 * 2;
-	for (int i = 0; i < 4; ++i) {
-		gi.position.set(0, 0, 0);
-		gi.dx.set(size, 0.0f, 0.0f);
-		gi.dy.set(0.0f, size, 0.0f);
-		gi.dz.set(0.0f, 0.0f, 0.05f);
-		gi.color.set(1.0f, 0.0f, 0.0f, 1.0f);
-		state.blending = false;
-
-		auto q = builder->createQuad(gi, state);
-		auto t = vsg::MatrixTransform::create();
-		t->matrix = vsg::translate(-w / 2.0f + (float)(i+1)*w / 5.0f, 0.0f, 0.00001f);
-		t->addChild(q);
-
-		OnActivate(t, [i, this](auto v) {
-			std::cout << "SET PLAYERS COLOR " << i << std::endl;
-			_selectColorMessageBoxCallback((player_color)i);
-			_selectColorMessageBox->setAllChildren(false);
-		});
-
-		abs->addChild(t);
-	}
-
-	abs->addChild(quad);
-
-	auto layout = vsg::StandardLayout::create();
-	layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
-	layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
-	layout->position = vsg::vec3(0, 1.5, 0);
-	layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
-	layout->vertical = vsg::vec3(0.0, 1.0, 0.0);
-	layout->color = vsg::vec4(1.0, 1.0, 1.0, 1.0);
-	layout->outlineWidth = 0.0;
-	layout->billboard = true;
-
-	auto data = vsg::stringValue::create(tr("Select color"));
-
-	auto text = vsg::Text::create();
-	text->text = data;
-	text->font = _font;
-	text->layout = layout;
-	text->setup(0, _options);
-
-	auto s = vsg::AbsoluteTransform::create();
-	s->matrix = vsg::translate(0.0f, 0.0f, -15.0f);// *vsg::scale(0.1f, 0.1f, 1.0f);
-	s->addChild(text);
-
-	abs->addChild(s);
-	_selectColorMessageBox->addChild(false, abs);
-	//_cameraAligned->addChild(_selectColorMessageBox);
-	_worldRoot->addChild(_selectColorMessageBox);
-}
-
-void WorldVisual::CreateSelectCityMessageBox() {
-	_selectCityMessageBox = vsg::Switch::create();
-	_selectCityMessageBox->setAllChildren(false);
-
-	vsg::dvec4 v;
-	v.set(0.0, 0.0, 0.0, 1.0);
-	auto p = _camera->projectionMatrix->transform() * v;
-	// p = p / p.w;	
-
-	auto offset = vsg::translate(0.0, 0.0, -2.0 * p.z);
-	auto abs = vsg::AbsoluteTransform::create(); // vsg::MatrixTransform::create();
-	abs->matrix = offset;
-
-	v.set(1.0, 1.0, 0.0, 1.0);
-	p = _camera->projectionMatrix->transform() * v;
-
-	vsg::GeometryInfo gi;
-	float w = 0.01f * 2.0f;
-	float h = 0.005f * 2.0f;
-	gi.position.set(0, 0, 0);
-	gi.dx.set(w, 0.0f, 0.0f);
-	gi.dy.set(0.0f, h, 0.0f);
-	gi.dz.set(0.0f, 0.0f, 0.2f);
-	gi.color.set(0.8f, 0.8f, 0.8f, 0.8f);
-
-	state.blending = true;
-
-
-	auto quad = builder->createQuad(gi, state);
-	float size = 0.0005 * 2;
-	int count = cities_count;
-	for (int i = 0; i < count; ++i) {
-		gi.position.set(0, 0, 0);
-		gi.dx.set(size, 0.0f, 0.0f);
-		gi.dy.set(0.0f, size, 0.0f);
-		gi.dz.set(0.0f, 0.0f, 0.05f);
-		gi.color.set(1.0f, 0.0f, 0.0f, 1.0f);
-		state.blending = false;
-
-		auto q = builder->createQuad(gi, state);
-		auto t = vsg::MatrixTransform::create();
-		t->matrix = vsg::translate(-w / 2.0f + (float)(i + 1) * w / 5.0f, 0.0f, 0.00001f);
-		t->addChild(q);
-
-		OnActivate(t, [i, this](auto v) {
-			std::cout << "SET CITY" << i << std::endl;
-			_selectCityMessageBoxCallback((Cities)i);
-			_selectCityMessageBox->setAllChildren(false);
-			});
-
-		abs->addChild(t);
-	}
-
-	abs->addChild(quad);
-
-	auto layout = vsg::StandardLayout::create();
-	layout->horizontalAlignment = vsg::StandardLayout::CENTER_ALIGNMENT;
-	layout->verticalAlignment = vsg::StandardLayout::BOTTOM_ALIGNMENT;
-	layout->position = vsg::vec3(0, 1.5, 0);
-	layout->horizontal = vsg::vec3(1.0, 0.0, 0.0);
-	layout->vertical = vsg::vec3(0.0, 1.0, 0.0);
-	layout->color = vsg::vec4(1.0, 1.0, 1.0, 1.0);
-	layout->outlineWidth = 0.0;
-	layout->billboard = true;
-
-	auto data = vsg::stringValue::create(tr("Select city"));
-
-	auto text = vsg::Text::create();
-	text->text = data;
-	text->font = _font;
-	text->layout = layout;
-	text->setup(0, _options);
-
-	auto s = vsg::AbsoluteTransform::create();
-	s->matrix = vsg::translate(0.0f, 0.0f, -15.0f);// *vsg::scale(0.1f, 0.1f, 1.0f);
-	s->addChild(text);
-
-	abs->addChild(s);
-	_selectCityMessageBox->addChild(false, abs);
-	//_cameraAligned->addChild(_selectCityMessageBox);
-	_worldRoot->addChild(_selectCityMessageBox);
-}
 
 void WorldVisual::Handle(EventAddedToOpenDeckMessage& msg) {
 	assert(_taken_event != nullptr);

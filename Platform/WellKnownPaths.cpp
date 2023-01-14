@@ -85,3 +85,7 @@ Path WellKnownPaths::GetLogFilePath()
 {
 	return LogFile;
 }
+
+void WellKnownPaths::SetDataFolder(const Path& path) {
+	DataFolder = path;
+}
