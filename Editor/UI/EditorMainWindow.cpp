@@ -317,34 +317,6 @@ void EditorMainWindow::finalSceneOnTreeSelChanged(wxTreeEvent& event) {
     }
 }
 
-//void EditorMainWindow::Execute(const SetRootNodeCommand& cmd)
-//{
-//    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-//        assert(cmd.Node);
-//        _dataModel->GetRoot()->children.clear();
-//        _dataModel->GetRoot()->addChild(cmd.Node);
-//        });
-//}
-
-
-
-//void EditorMainWindow::assetsTreeOnTreeBeginDrag(wxTreeEvent& event) {
-//    event.Allow();
-//}
-//
-//void EditorMainWindow::assetsTreeOnTreeEndDrag(wxTreeEvent& event) {
-//    event.Allow();
-//    
-//}
-//
-//void EditorMainWindow::finalSceneOnTreeBeginDrag(wxTreeEvent& event) {
-//
-//}
-//
-//void EditorMainWindow::finalSceneOnTreeEndDrag(wxTreeEvent& event) {
-//
-//}
-
 void EditorMainWindow::assetsTreeOnTreeBeginDrag(wxTreeEvent& event) {
     auto text = GetPath(ROOT_PACKAGES, assetsTree, event.GetItem());
 
@@ -379,4 +351,20 @@ void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent& event) {
 
     _dataModel->Execute(IDataModelEditor::RemoveEntryCommand{ .Path = path });
     _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = EntryPath{ ROOT_SCENE } });
+}
+
+void EditorMainWindow::loadProjectMenuItemOnMenuSelection(wxCommandEvent& event) {
+}
+
+void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent& event) {
+    if (_projectStorage.empty()) {
+        wxFileDialog fd{ this, "Save project", wxEmptyString, wxEmptyString, "Khora Scene Project (*.ksp)|*.ksp", wxFD_SAVE };
+
+        if (auto result = fd.ShowModal(); result == wxID_CANCEL)
+            return;
+
+        _projectStorage = fd.GetPath().ToStdString();
+    }
+
+    _dataModel->Execute(IDataModelEditor::ExportToFileCommand{ .Path = _projectStorage });
 }

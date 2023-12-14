@@ -19,8 +19,12 @@ public:
     void apply(Object& o) override {
         std::string name;
         if (auto hasName = o.getValue("name", name); hasName) {
-            objects[name] = std::make_tuple(vsg::ref_ptr<Object>{&o}, path);
-            INFO("")
+            auto ptr = vsg::ref_ptr<Object>{ &o };
+            objects[name] = std::make_tuple(ptr, path);
+
+            if (auto t = vsg::cast<vsg::MatrixTransform>(ptr); t) {
+                allTransforms[name] = t;
+            }            
         }
 
         path.emplace_back(&o);
@@ -30,4 +34,5 @@ public:
 
     std::vector<vsg::ref_ptr<Object>> path;
     std::map<std::string, std::tuple<vsg::ref_ptr<Object>, std::vector<vsg::ref_ptr<Object>>>> objects;
+    std::unordered_map<std::string, vsg::ref_ptr<vsg::MatrixTransform>> allTransforms;
 };

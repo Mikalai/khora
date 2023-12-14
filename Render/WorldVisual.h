@@ -28,6 +28,35 @@ struct std::hash<vsg::ref_ptr<vsg::MatrixTransform>> {
     }
 };
 
+class Visual {
+    
+public:
+
+    Visual(WorldVisualInput vi)
+        : _vi{ vi } {
+    }
+
+    void CreateFromScene(vsg::ref_ptr<vsg::Node> scene);
+
+    virtual void OnLoadComplete() {
+
+    }
+
+protected:
+    WorldVisualInput _vi;
+
+    std::unordered_map<std::string, vsg::ref_ptr<vsg::StateGroup>*> materials_serialization_table;
+    std::unordered_map<std::string, vsg::ref_ptr<vsg::VertexIndexDraw>*> geometry_serialization_table;
+    std::unordered_map<std::string, vsg::ref_ptr<vsg::MatrixTransform>*> transform_serialization_table;
+    std::unordered_map<std::string, vsg::ref_ptr<vsg::Camera>*> camera_serialization_table;
+};
+
+class TabletVisual : public Visual {
+public:
+
+    TabletVisual(WorldVisualInput vi); 
+};
+
 class WorldVisual : public GeneralUserInput, public Observer<GameMessage>, public Observer<IntersectionMessage> {
 public:  
 

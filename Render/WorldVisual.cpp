@@ -2357,3 +2357,127 @@ void WorldVisual::Handle(DiscoveryAddedMessage& msg) {
 		Animator().MoveTransform(std::get<1>(in_hand[i]), std::get<1>(in_hand[i])->matrix, start * vsg::translate(As<double>(i) * 0.01, 0.0, 0.0));
 	}
 }
+
+void Visual::CreateFromScene(vsg::ref_ptr<vsg::Node> scene) {
+	
+	WorldCompiler compiler;
+	scene->accept(compiler);
+
+	if (auto it = compiler.objects.find("camera_object_Orientation"); it != compiler.objects.end()) {
+		auto camera = it->second;
+	}
+
+	if (auto it = compiler.objects.find("camera_settings"); it != compiler.objects.end()) {
+		auto camera = it->second;
+	}
+
+	for (auto& camera : camera_serialization_table) {
+		if (auto it = compiler.objects.find(camera.first); it != compiler.objects.end()) {
+			auto m = vsg::cast<vsg::MatrixTransform>(std::get<0>(it->second));
+			*camera.second = vsg::cast<vsg::Camera>(m->children[0]);
+
+			if (!*camera.second) {
+				std::cerr << "Object " << camera.first << " was found but this is not camera." << std::endl;
+			}
+		}
+		else {
+			std::cerr << "Can't load geometry " << camera.first << std::endl;
+			exit(-1);
+		}
+	}
+
+	for (auto& geometry : geometry_serialization_table) {
+		INFO("Loading geometry {}", geometry.first);
+		if (auto it = compiler.objects.find(geometry.first); it != compiler.objects.end()) {
+			auto o = std::get<0>(it->second);
+			INFO("Geometry {} found. Type {}", geometry.first, o->className());
+			if (auto group = vsg::cast<vsg::Group>(o); group) {
+				std::string parentName;
+				group->getValue("name", parentName);
+				for (auto& child : group->children) {
+					std::string childName;
+					child->getValue("name", childName);
+					INFO("Group {} has child '{}' of type {}", parentName, childName, child->className());
+				}
+			}
+			else {
+				auto m = vsg::cast<vsg::MatrixTransform>(o);
+				auto state = vsg::cast<vsg::StateGroup>(m->children[0]);
+				*geometry.second = vsg::cast<vsg::VertexIndexDraw>(state->children[0]);
+
+				if (geometry.first == "policy_front" || geometry.first == "policy_back") {
+					std::cout << "found";
+				}
+
+				if (!*geometry.second) {
+					std::cerr << "Object " << geometry.first << " was found but this is not geometry." << std::endl;
+				}
+			}
+			assert(geometry.second != nullptr && "Asset not found");
+		}
+		else {
+			std::cerr << "Can't load geometry " << geometry.first << std::endl;
+			exit(-1);
+		}
+	}
+
+	for (auto& transform : transform_serialization_table) {
+		if (auto it = compiler.objects.find(transform.first); it != compiler.objects.end()) {
+			auto o = std::get<0>(it->second);
+			auto m = vsg::cast<vsg::MatrixTransform>(o);
+			m->children.clear();
+			*transform.second = m;
+
+			if (!*transform.second) {
+				std::cerr << "Object " << transform.first << " was found but this is not transform." << std::endl;
+			}
+		}
+		else {
+			std::cerr << "Can't load geometry " << transform.first << std::endl;
+			exit(-1);
+		}
+	}
+
+
+
+	for (auto& material : materials_serialization_table) {
+		if (auto it = compiler.objects.find(material.first); it != compiler.objects.end()) {
+			if (material.first == str_red_army)
+			{
+				std::cout << "RED";
+			}
+			auto o = std::get<0>(it->second);
+			INFO("Object {} has class name {}", material.first, o->className());
+
+			vsg::ref_ptr<vsg::StateGroup> state;
+
+			if (auto t = vsg::cast<vsg::MatrixTransform>(o); t) {
+				state = vsg::cast<vsg::StateGroup>(t->children.front());
+			}
+			else {
+				state = vsg::cast<vsg::StateGroup>(o);
+			}
+
+			assert(state != nullptr);
+
+			state->children.clear();
+			*material.second = state;
+
+			assert(state != nullptr);
+			if (!*material.second) {
+				std::cerr << "Object " << material.first << " was found but this is not material." << std::endl;
+			}
+		}
+		else {
+			std::cerr << "Can't load material " << material.first << std::endl;
+			exit(-1);
+		}
+	}
+
+	OnLoadComplete();
+}
+
+TabletVisual::TabletVisual(WorldVisualInput vi)
+	: Visual{ vi } {
+
+}

@@ -84,8 +84,23 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	statusBar = this->CreateStatusBar( 1, wxSTB_SIZEGRIP, wxID_ANY );
 	m_menubar1 = new wxMenuBar( 0 );
 	m_menu1 = new wxMenu();
+	wxMenuItem* loadProjectMenuItem;
+	loadProjectMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Load Project") ) + wxT('\t') + wxT("Ctrl+O"), wxEmptyString, wxITEM_NORMAL );
+	m_menu1->Append( loadProjectMenuItem );
+
+	wxMenuItem* saveProjectMenuItem;
+	saveProjectMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Save Project") ) + wxT('\t') + wxT("Ctrl+S"), wxEmptyString, wxITEM_NORMAL );
+	#ifdef __WXMSW__
+	saveProjectMenuItem->SetBitmaps( wxNullBitmap );
+	#elif (defined( __WXGTK__ ) || defined( __WXOSX__ ))
+	saveProjectMenuItem->SetBitmap( wxNullBitmap );
+	#endif
+	m_menu1->Append( saveProjectMenuItem );
+
+	m_menu1->AppendSeparator();
+
 	wxMenuItem* importMenuItem;
-	importMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Import") ) + wxT('\t') + wxT("Ctrl+O"), wxEmptyString, wxITEM_NORMAL );
+	importMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Import") ) + wxT('\t') + wxT("Ctrl+I"), wxEmptyString, wxITEM_NORMAL );
 	m_menu1->Append( importMenuItem );
 
 	m_menubar1->Append( m_menu1, wxT("File") );
@@ -103,6 +118,8 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	finalScene->Connect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndDrag ), NULL, this );
 	finalScene->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeSelChanged ), NULL, this );
 	deleteFromScene->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
+	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::loadProjectMenuItemOnMenuSelection ), this, loadProjectMenuItem->GetId());
+	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::saveProjectMenuItemOnMenuSelection ), this, saveProjectMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::OnImport ), this, importMenuItem->GetId());
 }
 

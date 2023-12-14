@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vsg/all.h>
+#include <filesystem>
 #include "EntryPath.h"
 
 class IDataModelObserver;
@@ -41,6 +42,18 @@ public:
     };
 
     virtual void Execute(const RemoveEntryCommand& cmd) = 0;
+
+    struct ExportToFileCommand {
+        std::filesystem::path Path;
+    };
+
+    virtual void Execute(const ExportToFileCommand& cmd) = 0;
+
+    struct ImportFromFileCommand {
+        std::filesystem::path Path;
+    };
+
+    virtual void Execute(const ImportFromFileCommand& cmd) = 0;
 
     virtual void Subscribe(IDataModelObserver* observer) = 0;
 };

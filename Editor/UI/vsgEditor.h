@@ -59,6 +59,8 @@ class EditorMainWindowBase : public wxFrame
 		virtual void finalSceneOnTreeEndDrag( wxTreeEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnTreeSelChanged( wxTreeEvent& event ) { event.Skip(); }
 		virtual void deleteFromSceneOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void loadProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void saveProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnImport( wxCommandEvent& event ) { event.Skip(); }
 
 

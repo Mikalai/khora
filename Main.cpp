@@ -34,6 +34,10 @@ public:
     }
 };
 
+int GenerateStringTable(const std::string& file) {
+    return 0;
+}
+
 int main(int argc, char** argv)
 {
     WellKnownPaths::Init();
@@ -57,9 +61,13 @@ int main(int argc, char** argv)
     // set up defaults and read command line arguments to override them
     vsg::CommandLine arguments(&argc, argv);
 
-	if (arguments.read("--run-tests")) {
+	/*if (arguments.read("--run-tests")) {
 		return RunTests(argc, argv);
-	}
+	}*/
+
+    if (arguments.read("--generate-string-table")) {
+        return GenerateStringTable(arguments.value<std::string>("", "--file"));
+    }
 
     windowTraits->debugLayer = arguments.read({"--debug", "-d"});
     windowTraits->apiDumpLayer = arguments.read({"--api", "-a"});
@@ -150,6 +158,7 @@ int main(int argc, char** argv)
     vi.font = font;
     vi.camera = camera;
 
+    TabletVisual tablet{ vi };
     WorldVisual visual(vi);
     // ConsoleUserInput consoleUI{ 0, logic };
 
@@ -164,13 +173,46 @@ int main(int argc, char** argv)
 
     if (argc > 1)
     {
-		vsg::Path filename = arguments.value<std::string>("", "--data");
-        auto model = vsg::read_cast<vsg::Node>(filename, options);
-        assert(model);
+        auto root = vsg::Group::create();
 
-        visual.CreateFromScene(model);
+        {
+            vsg::Path filename = arguments.value<std::string>("", "--data");
+            if (auto model = vsg::read_cast<vsg::Node>(filename, options); model) {
+                root->addChild(model);
+            }
+        }
 
-        model = visual.GetRoot();
+        {
+            vsg::Path filename = arguments.value<std::string>("", "--policies-data");
+            if (auto model = vsg::read_cast<vsg::Node>(filename, options); model) {
+                root->addChild(model);
+            }
+        }
+
+        {
+            vsg::Path filename = arguments.value<std::string>("", "--cities-data");
+            if (auto model = vsg::read_cast<vsg::Node>(filename, options); model) {
+                root->addChild(model);
+            }
+        }
+
+        {
+            vsg::Path filename = arguments.value<std::string>("", "--events-data");
+            if (auto model = vsg::read_cast<vsg::Node>(filename, options); model) {
+                root->addChild(model);
+            }
+        }
+        {
+            vsg::Path filename = arguments.value<std::string>("", "--tablet-data");
+            if (auto model = vsg::read_cast<vsg::Node>(filename, options); model) {
+                tablet.CreateFromScene(model);
+                root->addChild(model);
+            }            
+        }
+
+        visual.CreateFromScene(root);
+
+        auto model = visual.GetRoot();
         scene->addChild(model);
     }
 

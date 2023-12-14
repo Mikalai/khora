@@ -133,3 +133,22 @@ std::shared_ptr<Entry> DirectoryEntry::FindEntry(const EntryPath& path) const {
     }
     return {};
 }
+
+
+void DirectoryEntry::Serialize(EntryProperties& properties) const {
+    Entry::Serialize(properties);
+    std::unique_lock lock{ _cs };
+    EntryProperties entries;
+    for (auto [name, entry] : _entries) {
+        EntryProperties d;
+        d["Name"] = name;
+        entry->Serialize(d["Data"]);
+        entries.push_back(std::move(d));
+    }
+    properties["Entries"] = std::move(entries);
+}
+
+void DirectoryEntry::Deserialize(const EntryProperties& properties) {
+    Entry::Deserialize(properties);
+    std::unique_lock lock{ _cs };
+}
