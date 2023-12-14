@@ -1,6 +1,7 @@
 #pragma once
 
 #include <magic_enum.hpp>
+#include "Serializer.h"
 #include "GeometryEntry.h"
 #include "DirectoryEntry.h"
 #include "Clone.h"
@@ -17,30 +18,29 @@ vsg::ref_ptr<vsg::VertexIndexDraw> GeometryPackageEntry::GetGeometry() {
     return ::Clone(_geometry);
 }
 
-std::shared_ptr<Entry> GeometryPackageEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path) {
-    return std::make_shared<GeometryProxyEntry>(path, root);
+std::shared_ptr<Entry> GeometryPackageEntry::CreateProxy(EntryPath path) {
+    return std::make_shared<GeometryProxyEntry>(path);
 }
 
 std::shared_ptr<Entry> GeometryEntry::FindEntry(const EntryPath& path) const {
     return {};
 }
 
-GeometryProxyEntry::GeometryProxyEntry(EntryPath path, std::shared_ptr<Entry> root)
-    : _path{ path }
-    , _root{ root } {
+GeometryProxyEntry::GeometryProxyEntry(EntryPath path)
+    : _path{ path } {
 }
 
 std::shared_ptr<Entry> GeometryProxyEntry::Clone() {
-    auto root = _root.lock();
+    auto root = GetRoot();
     if (!root) {
         throw std::runtime_error("Proxy geometry references object in the catalog that doesn't exist.");
     }
 
-    return std::make_shared<GeometryProxyEntry>(_path, root);
+    return std::make_shared<GeometryProxyEntry>(_path);
 }
 
 vsg::ref_ptr<vsg::VertexIndexDraw> GeometryProxyEntry::GetGeometry() {
-    auto root = _root.lock();
+    auto root = GetRoot();
     if (!root)
         throw std::runtime_error("Proxy geometry references object in the catalog that doesn't exist.");
 
@@ -57,8 +57,8 @@ vsg::ref_ptr<vsg::VertexIndexDraw> GeometryProxyEntry::GetGeometry() {
     }
 }
 
-std::shared_ptr<Entry> GeometryProxyEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path) {
-    return std::make_shared<GeometryProxyEntry>(path, root);
+std::shared_ptr<Entry> GeometryProxyEntry::CreateProxy(EntryPath path) {
+    return std::make_shared<GeometryProxyEntry>(path);
 }
 
 void GeometryProxyEntry::Serialize(EntryProperties& properties) const {
@@ -66,7 +66,7 @@ void GeometryProxyEntry::Serialize(EntryProperties& properties) const {
     properties["Path"] = _path.Path;
 }
 
-void GeometryProxyEntry::Deserialize(const EntryProperties& properties) {
-    GeometryEntry::Deserialize(properties);
-    _path.Path = properties["Path"].get<std::string>();
+void GeometryProxyEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+    GeometryEntry::DeserializeInternal(path, properties);
+    _path.Path = ::Deserialize(properties, "Path", std::string{});
 }

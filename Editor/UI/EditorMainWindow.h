@@ -43,8 +43,10 @@ protected:
     virtual void deleteFromSceneOnButtonClick(wxCommandEvent& event) override;
     virtual void loadProjectMenuItemOnMenuSelection(wxCommandEvent& event) override;
     virtual void saveProjectMenuItemOnMenuSelection(wxCommandEvent& event) override;
+    virtual void resetMenuItemOnMenuSelection(wxCommandEvent& event) override;
 
 private:
+    bool reseting{ false };
     ViewerWindow* viewerWindow;
     std::filesystem::path _projectStorage;
     vsg::ref_ptr<vsg::Group> _root = vsg::Group::create();
@@ -70,6 +72,12 @@ private:
     void Execute(const SceneCompeledNotification& cmd) override;
 
     EntryPath _oldPath;
+
+    // Inherited via IDataModelObserver
+    void Execute(const ModelResetNotification& cmd) override;
+
+    // Inherited via IDataModelObserver
+    void Execute(const LogNotification& cmd) override;
 };
 
 #endif // __EditorMainWindow__

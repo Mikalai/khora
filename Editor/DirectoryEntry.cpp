@@ -1,16 +1,20 @@
 #include <iostream>
 #include <magic_enum.hpp>
+#include "Serializer.h"
 #include "DirectoryEntry.h"
 #include "GroupEntry.h"
+#include "TransformEntry.h"
+#include "MaterialEntry.h"
+#include "GeometryEntry.h"
 
-std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath parent, IDirectoryObserver& o) {
+std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath parent) {
     std::unique_lock lock{ _cs };
     auto name = path.GetName();
     if (auto it = _entries.find(name); it != _entries.end()) {
         auto next = path.GetNext();
         if (next.IsValid()) {
             if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(it->second); dir) {
-                return dir->Remove(next, parent.Append(name), o);
+                return dir->Remove(next, parent.Append(name));
             }
             else {
                 std::cerr << "Can't remove " << path.Path << " because entry " << name << " is not a directory." << std::endl;
@@ -24,11 +28,11 @@ std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath p
             if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry); dir) {
                 dir->TraverseDownTop([&](auto name, auto entry) {
                     auto path = root.Append(name.Path);
-                    o.OnEntryRemoved(path, entry);
+                    OnEntryRemoved(path, entry);
                     });
             }
 
-            o.OnEntryRemoved(root, entry);
+            OnEntryRemoved(root, entry);
             return entry;
         }
     }
@@ -61,7 +65,7 @@ void DirectoryEntry::TraverseDownTop(const EntryPath& parent, std::function<void
     }
 }
 
-void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry, IDirectoryObserver& o)
+void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry)
 {
     std::unique_lock lock{ _cs };
     auto name = path.GetName();
@@ -71,15 +75,16 @@ void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_pt
         auto it = _entries.find(name);
         if (it == _entries.end()) {
             auto group = std::make_shared<GroupEntry>();
+            CopyObserversTo(*group);
             _entries[name] = group;
             group->SetParent(shared_from_this());
-
-            o.OnEntryAdded(parent.Append(name), group);
-            group->Add(next, parent.Append(name), entry, o);
+            
+            OnEntryAdded(parent.Append(name), group);
+            group->Add(next, parent.Append(name), entry);
         }
         else {
             if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(it->second); dir) {
-                dir->Add(next, parent.Append(name), entry, o);
+                dir->Add(next, parent.Append(name), entry);
             }
             else {
                 std::cerr << "Can't add " << magic_enum::enum_name(entry->GetType()) << " to " << parent.Path << ". Parent is not a directory." << std::endl;
@@ -90,14 +95,16 @@ void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_pt
         auto it = _entries.find(name);
         if (it == _entries.end()) {
             _entries[name] = entry;
+            CopyObserversTo(*entry);
             entry->SetParent(shared_from_this());
-            o.OnEntryAdded(parent.Append(name), entry);
+            OnEntryAdded(parent.Append(name), entry);
 
             auto root = parent.Append(name);
             if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry); dir) {
                 dir->TraverseTopDown([&](auto localPath, auto entry) {
                     auto path = root.Append(localPath.Path);
-                    o.OnEntryAdded(path, entry);
+                    CopyObserversTo(*entry);
+                    OnEntryAdded(path, entry);
                     });
             }
             else {
@@ -148,7 +155,39 @@ void DirectoryEntry::Serialize(EntryProperties& properties) const {
     properties["Entries"] = std::move(entries);
 }
 
-void DirectoryEntry::Deserialize(const EntryProperties& properties) {
-    Entry::Deserialize(properties);
+void DirectoryEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+    Entry::DeserializeInternal(path, properties);
     std::unique_lock lock{ _cs };
+    if (auto it = properties.find("Entries"); it == properties.end())
+        return;
+    else for (auto entry : *it) {
+        auto name = ::Deserialize(entry, "Name", std::string{});
+        if (auto dit = entry.find("Data"); dit == entry.end())
+            continue;
+        else {
+            auto type = ::Deserialize(*dit, "Type", std::string{});
+            std::shared_ptr<Entry> newEntry;
+            if (type == magic_enum::enum_name(EntryType::Transform)) {
+                newEntry = std::make_shared<TransformProxyEntry>(EntryPath{});
+            }
+            else if (type == magic_enum::enum_name(EntryType::Geometry)) {
+                newEntry = std::make_shared<GeometryProxyEntry>(EntryPath{});
+            }
+            else if (type == magic_enum::enum_name(EntryType::Material)) {
+                newEntry = std::make_shared<MaterialProxyEntry>(EntryPath{});
+            }
+
+            if (!newEntry) {
+                std::cout << "Can't deserialize " << name << " of type " << type << std::endl;
+                continue;
+            }
+
+            _entries[name] = newEntry;
+            CopyObserversTo(*newEntry);
+            newEntry->SetParent(shared_from_this());
+            OnEntryAdded(path.Append(name), newEntry);            
+
+            newEntry->DeserializeInternal(path.Append(name), *dit);
+        }
+    }
 }

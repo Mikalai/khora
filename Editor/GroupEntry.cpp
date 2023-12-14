@@ -20,7 +20,7 @@ bool GroupEntry::CanAdd(std::shared_ptr<Entry> entry)
     return true;
 }
 
-std::shared_ptr<Entry> GroupEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path)
+std::shared_ptr<Entry> GroupEntry::CreateProxy(EntryPath path)
 {
     throw std::runtime_error("Group entry is not supposed to have proxies. At least for now.");
 }

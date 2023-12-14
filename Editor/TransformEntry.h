@@ -20,7 +20,7 @@ public:
     bool CanAdd(std::shared_ptr<Entry> entry) override;
     std::shared_ptr<Entry> Clone() override;
     vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const;
-    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
+    std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
 
 private:
     vsg::ref_ptr<vsg::MatrixTransform> _transform;
@@ -30,10 +30,10 @@ private:
 class TransformProxyEntry final : public TransformEntry {
 public:
 
-    TransformProxyEntry(EntryPath path, std::shared_ptr<Entry> root);
+    TransformProxyEntry(EntryPath path);
 
     std::shared_ptr<Entry> Clone() override;
-    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
+    std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
     bool CanAdd(std::shared_ptr<Entry> entry) override;
     vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const override;
 
@@ -46,13 +46,12 @@ public:
     void SetScale(vsg::dvec3 value) { _scale = value; }
 
     void Serialize(EntryProperties& properties) const override;
-    void Deserialize(const EntryProperties& properties) override;
+    void DeserializeInternal(EntryPath path, const EntryProperties& properties) override;
 
 private:
     bool _override{ false };
     vsg::dvec3 _position;
     vsg::dquat _orientation;
     vsg::dvec3 _scale;
-    std::weak_ptr<Entry> _root;
     EntryPath _path;
 };

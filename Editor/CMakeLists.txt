@@ -21,7 +21,7 @@ if (${vsg_FOUND})
         "GroupEntry.h"
         "DirectoryEntry.h"
         "DirectoryEntry.cpp"
-        "IDirectoryObserver.h"
+        "IEntryObserver.h"
         "ObjectEntry.cpp"
         "ObjectEntry.h"
         "Entry.cpp"
@@ -38,6 +38,8 @@ if (${vsg_FOUND})
         "Serializer.cpp"
         "AsyncQueue.h"
         "AsyncQueue.cpp"
+        "Errors.h"
+        "Errors.cpp"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 

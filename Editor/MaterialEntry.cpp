@@ -1,6 +1,7 @@
 #pragma once
 
 #include <magic_enum.hpp>
+#include "Serializer.h"
 #include "MaterialEntry.h"
 #include "Clone.h"
 
@@ -20,17 +21,16 @@ bool MaterialPackageEntry::CanAdd(std::shared_ptr<Entry> entry) {
     return true;
 }
 
-std::shared_ptr<Entry> MaterialPackageEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path) {
-    return std::make_shared<MaterialProxyEntry>(path, root);
+std::shared_ptr<Entry> MaterialPackageEntry::CreateProxy(EntryPath path) {
+    return std::make_shared<MaterialProxyEntry>(path);
 }
 
-MaterialProxyEntry::MaterialProxyEntry(EntryPath path, std::shared_ptr<Entry> root)
-    : _path{ path }
-    , _root{ root } {
+MaterialProxyEntry::MaterialProxyEntry(EntryPath path)
+    : _path{ path } {
 }
 
 vsg::ref_ptr<vsg::StateGroup> MaterialProxyEntry::GetState() const {
-    auto root = _root.lock();
+    auto root = GetRoot();
     if (!root)
         throw std::runtime_error("Proxy material references object in the catalog that doesn't exist.");
 
@@ -48,17 +48,17 @@ vsg::ref_ptr<vsg::StateGroup> MaterialProxyEntry::GetState() const {
 }
 
 std::shared_ptr<Entry> MaterialProxyEntry::Clone() {
-    auto root = _root.lock();
+    auto root = GetRoot();
     
     if (!root) {
         throw std::runtime_error("Material proxy can't be cloned because catalog is not valid.");
     }
 
-    return std::make_shared<MaterialProxyEntry>(_path, root);
+    return std::make_shared<MaterialProxyEntry>(_path);
 }
 
-std::shared_ptr<Entry> MaterialProxyEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path) {
-    return std::make_shared<MaterialProxyEntry>(_path, root);
+std::shared_ptr<Entry> MaterialProxyEntry::CreateProxy(EntryPath path) {
+    return std::make_shared<MaterialProxyEntry>(_path);
 }
 
 bool MaterialProxyEntry::CanAdd(std::shared_ptr<Entry> entry) {
@@ -70,8 +70,7 @@ void MaterialProxyEntry::Serialize(EntryProperties& properties) const {
     properties["Path"] = _path.Path;
 }
 
-void MaterialProxyEntry::Deserialize(const EntryProperties& properties) {
-    MaterialEntry::Deserialize(properties);
-    _path.Path = properties["Path"].get<std::string>();
+void MaterialProxyEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+    MaterialEntry::DeserializeInternal(path, properties);
+    _path.Path = ::Deserialize(properties, "Path", std::string{});
 }
-

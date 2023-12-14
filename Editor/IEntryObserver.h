@@ -1,14 +1,17 @@
 #pragma once
 
-#include "Entry.h"
+#include <memory>
 #include "EntryPath.h"
 
-class IDirectoryObserver {
+class Entry;
+
+class IEntryObserver {
 public:
-    virtual ~IDirectoryObserver() {}
+    virtual ~IEntryObserver() {}
 
     virtual void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) = 0;
     virtual void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) = 0;
+    virtual void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) = 0;
 };
 
 
