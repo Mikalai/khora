@@ -21,7 +21,7 @@ public:
 
     std::shared_ptr<Entry> Clone() override;
     vsg::ref_ptr<vsg::VertexIndexDraw> GetGeometry() override;
-    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
+    std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
 
 private:
     vsg::ref_ptr<vsg::VertexIndexDraw> _geometry;
@@ -30,16 +30,15 @@ private:
 class GeometryProxyEntry final : public GeometryEntry {
 public:
 
-    GeometryProxyEntry(EntryPath path, std::shared_ptr<Entry> root);
+    GeometryProxyEntry(EntryPath path);
     
     std::shared_ptr<Entry> Clone() override;
     vsg::ref_ptr<vsg::VertexIndexDraw> GetGeometry() override;
-    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
+    std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
 
     void Serialize(EntryProperties& properties) const override;
-    void Deserialize(const EntryProperties& properties) override;
+    void DeserializeInternal(EntryPath path, const EntryProperties& properties) override;
 
 private:
     EntryPath _path;
-    std::weak_ptr<Entry> _root;
 };

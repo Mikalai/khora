@@ -9,7 +9,7 @@ wxIMPLEMENT_APP(Application);
 
 bool Application::OnInit() {
     _work = InitThreadPool();
-    _dataModel = std::make_shared<DataModel>(_io_context);
+    _dataModel = DataModel::Create(_io_context);
     mainWindow = new EditorMainWindow(_dataModel.get(), argc, argv, nullptr);
     mainWindow->Show(true);
 

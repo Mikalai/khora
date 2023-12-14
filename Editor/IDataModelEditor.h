@@ -55,5 +55,10 @@ public:
 
     virtual void Execute(const ImportFromFileCommand& cmd) = 0;
 
+    struct ResetModelCommand {
+    };
+
+    virtual void Execute(const ResetModelCommand& cmd) = 0;
+
     virtual void Subscribe(IDataModelObserver* observer) = 0;
 };

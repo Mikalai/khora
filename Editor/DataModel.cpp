@@ -7,6 +7,7 @@
 #include "DataModel.h"
 #include "../Render/WorldCompiler.h"
 
+#include "Serializer.h"
 #include "GeometryEntry.h"
 #include "GroupEntry.h"
 #include "TransformEntry.h"
@@ -16,6 +17,12 @@
 DataModel::DataModel(boost::asio::io_context& ctx)
     : _ctx{ ctx } {
     (_queue = std::make_shared<AsyncQueue>(ctx))->Start();
+}
+
+std::shared_ptr<DataModel> DataModel::Create(boost::asio::io_context& ctx) {
+    std::shared_ptr<DataModel> r{ new DataModel{ ctx } };
+    r->Execute(IDataModelEditor::ResetModelCommand{});
+    return r;
 }
 
 DataModel::~DataModel() {
@@ -46,19 +53,19 @@ void DataModel::Execute(const ImportFileCommand& cmd)
                     std::string path = o.first;
 
                     if (auto tr = std::get<0>(o.second).cast<vsg::MatrixTransform>(); tr) {
-                        _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_TRANSFORMS + "/" + o.first }, std::make_shared<TransformPackageEntry>(tr), *this);
+                        _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_TRANSFORMS + "/" + o.first }, std::make_shared<TransformPackageEntry>(tr));
 
                         for (auto child : tr->children) {
                             if (auto m = child.cast<vsg::StateGroup>(); m) {
-                                _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_MATERIALS + "/" + o.first }, std::make_shared<MaterialPackageEntry>(m), *this);
+                                _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_MATERIALS + "/" + o.first }, std::make_shared<MaterialPackageEntry>(m));
                             }
                         }
                     }
                     if (auto tr = std::get<0>(o.second).cast<vsg::VertexIndexDraw>(); tr) {
-                        _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_GEOMETRIES + "/" + path }, std::make_shared<GeometryPackageEntry>(tr), *this);
+                        _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_GEOMETRIES + "/" + path }, std::make_shared<GeometryPackageEntry>(tr));
                     }
                     if (auto tr = std::get<0>(o.second).cast<vsg::StateGroup>(); tr) {
-                        _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_MATERIALS + "/" + path }, std::make_shared<MaterialPackageEntry>(tr), *this);
+                        _dir->Add({ ROOT_PACKAGES + "/" + packageName + "/" + PACKAGE_ENTRY_MATERIALS + "/" + path }, std::make_shared<MaterialPackageEntry>(tr));
                     }
                 }
                 });
@@ -71,6 +78,20 @@ void DataModel::Subscribe(IDataModelObserver* observer)
     _queue->Enqueue([=]() {
         _observers.push_back(observer);
     });
+}
+
+void DataModel::Execute(const ResetModelCommand& cmd)
+{
+    _queue->Enqueue([=]() {
+        _dir = std::make_shared<GroupEntry>();
+        _dir->AddObserver(shared_from_this());
+        _packagePreviewRoots.clear();
+        Notify(IDataModelObserver::ModelResetNotification{});
+    });
+}
+
+void DataModel::OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name)
+{
 }
 
 void DataModel::Execute(const ExportToFileCommand& cmd) {
@@ -104,19 +125,57 @@ void DataModel::Execute(const ExportToFileCommand& cmd) {
 
 void DataModel::Execute(const ImportFromFileCommand& cmd) {
     _queue->Enqueue([=]() {
-        });
+        std::ifstream stream(cmd.Path, std::ios::binary);
+        if (!stream.is_open()) {
+            Notify(LogNotification{ .Code = EDITOR_ERROR_FILE_NOT_FOUND, .StrParamter = cmd.Path.string() });
+            return;
+        }
+
+        std::string text((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+
+        try {
+            auto o = nlohmann::json::parse(text);
+            if (auto it = o.find("packages"); it != o.end()) {
+                for (auto entry : *it) {
+                    auto name = ::Deserialize(entry, "name", std::string{});
+                    auto path = ::Deserialize(entry, "path", std::string{});
+                    if (name.empty() || path.empty()) {
+                        Notify(LogWarning(LOG_EMPTY_PACKAGE_REFERENCE));
+                        continue;
+                    }
+                    Execute(IDataModelEditor::ImportFileCommand{ .FilePath = path, .Options = _options });
+                }
+            }
+            else {
+                throw std::runtime_error("'packages' section not found.");
+            }
+
+            auto scene = std::make_shared<GroupEntry>();
+
+            if (auto it = o.find("catalog"); it != o.end()) {
+                scene->Deserialize(*it);
+                _dir->Add({ ROOT_SCENE }, scene);
+            }
+            else {
+                throw std::runtime_error("'catalog' section not found.");
+            }
+        }
+        catch (const std::exception& e) {
+            Notify(LogNotification{ .Code = EDITOR_ERROR_PROJECT_FILE_IS_NOT_VALID, .StrParamter = e.what() + text});
+        }
+    });
 }
 
 void DataModel::Execute(const MoveEntryCommand& cmd)
 {
     _queue->Enqueue([=]() {
-        auto o = _dir->Remove(cmd.SourcePath, *this);
+        auto o = _dir->Remove(cmd.SourcePath);
         if (!o) {
             std::cerr << "Can't move entry " << cmd.SourcePath.Path << " to " << cmd.TargetPath.Path << " because source is not found.";
             return;
         }
 
-        _dir->Add(cmd.TargetPath.Append(cmd.SourcePath.GetLeafName()), o, *this);
+        _dir->Add(cmd.TargetPath.Append(cmd.SourcePath.GetLeafName()), o);
     });
 }
 
@@ -152,7 +211,7 @@ void DataModel::Execute(const CopyNodeCommand& cmd)
         }
 
         auto localPath = cmd.TargetPath.Path + "/" + cmd.SourcePath.GetLeafName();
-        _dir->Add({ localPath }, entry->CreateProxy(_dir, cmd.SourcePath), *this);
+        _dir->Add({ localPath }, entry->CreateProxy(cmd.SourcePath));
     });
 }
 

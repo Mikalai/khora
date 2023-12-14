@@ -184,6 +184,29 @@ void EditorMainWindow::Execute(const SceneCompeledNotification& cmd)
     });
 }
 
+void EditorMainWindow::Execute(const ModelResetNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        reseting = true;
+        assetsTree->UnselectAll();
+        finalScene->UnselectAll();
+        packageToId.clear();
+        _root->children.clear();
+        assetsTree->DeleteAllItems();
+        finalScene->DeleteAllItems();
+        assetsTree->AddRoot("");
+        finalScene->AddRoot("");
+        reseting = false;
+    });
+}
+
+void EditorMainWindow::Execute(const LogNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        wxMessageBox(ErrorToString(cmd), "Error", wxICON_ERROR);
+    });
+}
+
 
 void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
     wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
@@ -296,6 +319,9 @@ void EditorMainWindow::Execute(const ItemRemovedNotification& cmd)
 }
 
 void EditorMainWindow::assetsTreeOnTreeSelChanged(wxTreeEvent& event) {
+    if (reseting)
+        return;
+
     if (auto item = event.GetItem(); !item.IsOk())
         return;
     else {
@@ -307,6 +333,9 @@ void EditorMainWindow::assetsTreeOnTreeSelChanged(wxTreeEvent& event) {
 }
 
 void EditorMainWindow::finalSceneOnTreeSelChanged(wxTreeEvent& event) {
+    if (reseting)
+        return;
+
     if (auto item = event.GetItem(); !item.IsOk())
         return;
     else {
@@ -354,6 +383,19 @@ void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent& event) {
 }
 
 void EditorMainWindow::loadProjectMenuItemOnMenuSelection(wxCommandEvent& event) {
+    wxFileDialog fd{ this, "Load project", wxEmptyString, wxEmptyString, "Khora Scene Project (*.ksp)|*.ksp", wxFD_OPEN | wxFD_FILE_MUST_EXIST };
+
+    if (auto result = fd.ShowModal(); result == wxID_CANCEL)
+        return;
+
+    _projectStorage = fd.GetPath().ToStdString();
+
+    _dataModel->Execute(IDataModelEditor::ResetModelCommand{});
+    _dataModel->Execute(IDataModelEditor::ImportFromFileCommand{ .Path = _projectStorage });
+}
+
+void EditorMainWindow::resetMenuItemOnMenuSelection(wxCommandEvent& event) {
+    _dataModel->Execute(IDataModelEditor::ResetModelCommand{});
 }
 
 void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent& event) {

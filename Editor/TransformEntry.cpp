@@ -13,8 +13,8 @@ vsg::ref_ptr<vsg::MatrixTransform> TransformPackageEntry::GetTransform() const {
     return ::Clone(_transform);
 }
 
-std::shared_ptr<Entry> TransformPackageEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path) {
-    return std::make_shared<TransformProxyEntry>(path, root);
+std::shared_ptr<Entry> TransformPackageEntry::CreateProxy(EntryPath path) {
+    return std::make_shared<TransformProxyEntry>(path);
 }
 
 std::shared_ptr<Entry> TransformPackageEntry::Clone() {
@@ -25,14 +25,13 @@ bool TransformPackageEntry::CanAdd(std::shared_ptr<Entry> entry) {
     return true;
 }
 
-TransformProxyEntry::TransformProxyEntry(EntryPath path, std::shared_ptr<Entry> root)
-    : _path{ path }
-    , _root{ root } {
+TransformProxyEntry::TransformProxyEntry(EntryPath path)
+    : _path{ path } {
 }
 
 vsg::ref_ptr<vsg::MatrixTransform> TransformProxyEntry::GetTransform() const
 {
-    auto root = _root.lock();
+    auto root = GetRoot();
     if (!root)
         throw std::runtime_error("Proxy transform references object in the catalog that doesn't exist.");
 
@@ -57,15 +56,15 @@ vsg::ref_ptr<vsg::MatrixTransform> TransformProxyEntry::GetTransform() const
 }
 
 std::shared_ptr<Entry> TransformProxyEntry::Clone() {
-    auto root = _root.lock();
+    auto root = GetRoot();
     if (!root)
         throw std::runtime_error("Proxy transform references object in the catalog that doesn't exist.");
 
-    return std::make_shared<TransformProxyEntry>(_path, root);
+    return std::make_shared<TransformProxyEntry>(_path);
 }
 
-std::shared_ptr<Entry> TransformProxyEntry::CreateProxy(std::shared_ptr<Entry> root, EntryPath path) {
-    return std::make_shared<TransformProxyEntry>(path, root);
+std::shared_ptr<Entry> TransformProxyEntry::CreateProxy(EntryPath path) {
+    return std::make_shared<TransformProxyEntry>(path);
 }
 
 bool TransformProxyEntry::CanAdd(std::shared_ptr<Entry> entry) {
@@ -82,6 +81,12 @@ void TransformProxyEntry::Serialize(EntryProperties& properties) const {
     properties["Path"] = _path.Path;
 }
 
-void TransformProxyEntry::Deserialize(const EntryProperties& properties) {
-    TransformEntry::Deserialize(properties);
+void TransformProxyEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+    TransformEntry::DeserializeInternal(path, properties);
+
+    _override = ::Deserialize(properties, "Override", false);
+    _position = ::Deserialize(properties, "Position", vsg::dvec3{});
+    _orientation = ::Deserialize(properties, "Orientation", vsg::dquat{});
+    _scale = ::Deserialize(properties, "Scale", vsg::dvec3{});
+    _path.Path = ::Deserialize(properties, "Path", std::string{});
 }

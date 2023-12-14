@@ -61,6 +61,7 @@ class EditorMainWindowBase : public wxFrame
 		virtual void deleteFromSceneOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void loadProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void saveProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
+		virtual void resetMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnImport( wxCommandEvent& event ) { event.Skip(); }
 
 

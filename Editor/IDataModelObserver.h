@@ -1,5 +1,10 @@
 #pragma once
 
+#include <vsg/all.h>
+#include "Errors.h"
+#include "EntryType.h"
+#include "EntryPath.h"
+
 class IDataModelObserver {
 public:
     virtual ~IDataModelObserver();
@@ -30,5 +35,13 @@ public:
     };
 
     virtual void Execute(const SceneCompeledNotification& cmd) = 0;    
+
+    struct ModelResetNotification {
+
+    };
+
+    virtual void Execute(const ModelResetNotification& cmd) = 0;
+
+    virtual void Execute(const LogNotification& cmd) = 0;
 };
 

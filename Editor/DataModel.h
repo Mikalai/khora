@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "IDataModelEditor.h"
-#include "IDirectoryObserver.h"
+#include "IEntryObserver.h"
 #include "IDataModelObserver.h"
 #include "DirectoryEntry.h"
 #include "GroupEntry.h"
@@ -25,11 +25,15 @@ const std::string PACKAGE_ENTRY_MATERIALS{ "Materials" };
 
 class DataModel : 
     public IDataModelEditor, 
-    public IDirectoryObserver, 
+    public IEntryObserver, 
     public std::enable_shared_from_this<DataModel> {
-public:
-    
+protected:    
     DataModel(boost::asio::io_context& ctx);
+
+public:
+
+    static std::shared_ptr<DataModel> Create(boost::asio::io_context& ctx);
+
     virtual ~DataModel();
 
     void Execute(const ImportFileCommand& cmd) override;
@@ -59,10 +63,17 @@ private:
         vsg::ref_ptr<vsg::Node> Root;
     };
 
+    vsg::ref_ptr<vsg::Options> _options = vsg::Options::create();
     std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
     std::shared_ptr<AsyncQueue> _queue;
 
     std::shared_ptr<DirectoryEntry> _dir = std::make_shared<GroupEntry>();
     std::vector<IDataModelObserver*> _observers;
     boost::asio::io_context& _ctx;    
+
+    // Inherited via IDataModelEditor
+    void Execute(const ResetModelCommand& cmd) override;
+
+    // Inherited via IEntryObserver
+    void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
 };
