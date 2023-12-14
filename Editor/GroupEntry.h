@@ -21,4 +21,7 @@ private:
     EntryType GetType() const override;
     std::shared_ptr<Entry> Clone() override;
     bool CanAdd(std::shared_ptr<Entry> entry) override;
+
+    // Inherited via DirectoryEntry
+    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
 };

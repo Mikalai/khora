@@ -34,6 +34,10 @@ if (${vsg_FOUND})
         "GroupEntry.cpp"
         "Clone.h"
         "Clone.cpp"
+        "Serializer.h"
+        "Serializer.cpp"
+        "AsyncQueue.h"
+        "AsyncQueue.cpp"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 

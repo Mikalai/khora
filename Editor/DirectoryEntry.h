@@ -43,7 +43,10 @@ public:
         return Remove(path, {}, o);
     }
 
-    std::shared_ptr<Entry> FindEntry(const EntryPath& path) const;
+    std::shared_ptr<Entry> FindEntry(const EntryPath& path) const override;
+
+    void Serialize(EntryProperties& properties) const override;
+    void Deserialize(const EntryProperties& properties) override;
 
 private:
     void Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry, IDirectoryObserver& o);

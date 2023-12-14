@@ -3,21 +3,41 @@
 #include <vsg/all.h>
 #include "DirectoryEntry.h"
 
-class MaterialEntry final : public DirectoryEntry {
+class MaterialEntry : public DirectoryEntry {
+public:
+    EntryType GetType() const override;
+    virtual vsg::ref_ptr<vsg::StateGroup> GetState() const = 0;
+};
+
+class MaterialPackageEntry : public MaterialEntry {
 public:
 
-    MaterialEntry(vsg::ref_ptr<vsg::StateGroup> state)
-        : _state { state } {
+    MaterialPackageEntry(vsg::ref_ptr<vsg::StateGroup> state)
+        : _state{ state } {
     }
 
-    EntryType GetType() const override;
+    vsg::ref_ptr<vsg::StateGroup> GetState() const override;
     std::shared_ptr<Entry> Clone() override;
-
-    vsg::ref_ptr<vsg::StateGroup> GetState() const;
+    bool CanAdd(std::shared_ptr<Entry> entry) override;
+    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
 
 private:
-    vsg::ref_ptr<vsg::StateGroup> _state;    
+    vsg::ref_ptr<vsg::StateGroup> _state;
+};
 
-    // Inherited via DirectoryEntry
+class MaterialProxyEntry : public MaterialEntry {
+public:
+    MaterialProxyEntry(EntryPath path, std::shared_ptr<Entry> root);
+
+    vsg::ref_ptr<vsg::StateGroup> GetState() const override;
+    std::shared_ptr<Entry> Clone() override;
+    std::shared_ptr<Entry> CreateProxy(std::shared_ptr<Entry> root, EntryPath path) override;
     bool CanAdd(std::shared_ptr<Entry> entry) override;
+    
+    void Serialize(EntryProperties& properties) const override;
+    void Deserialize(const EntryProperties& properties) override;
+
+private:
+    EntryPath _path;
+    std::weak_ptr<Entry> _root;
 };
