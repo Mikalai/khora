@@ -4,6 +4,8 @@ if (${vsg_FOUND})
     set(EditorSources 
         "UI/ViewerWindow.cpp"
         "UI/ViewerWindow.h"
+        "UI/TransformPanel.cpp"
+        "UI/TransformPanel.h"
         "UI/EditorMainWindow.cpp"
         "UI/EditorMainWindow.h"
         "UI/vsgEditor.cpp"
@@ -26,8 +28,10 @@ if (${vsg_FOUND})
         "ObjectEntry.h"
         "Entry.cpp"
         "Entry.h"
+        "IDataModelEditor.cpp"
         "IDataModelEditor.h"
         "EntryType.h"
+        "IDataModelObserver.cpp"
         "IDataModelObserver.h"
         "EntryPath.cpp"
         "EntryPath.h"
@@ -40,6 +44,8 @@ if (${vsg_FOUND})
         "AsyncQueue.cpp"
         "Errors.h"
         "Errors.cpp"
+        "ConfigEntry.h"
+        "ConfigEntry.cpp"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 
@@ -51,9 +57,16 @@ if (${vsg_FOUND})
     find_package(wxWidgets CONFIG REQUIRED)
     find_package(vsgXchange CONFIG REQUIRED)
 
+
     add_executable(Editor WIN32 ${EditorSources})
     
     target_include_directories(Editor PRIVATE ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
     target_link_libraries(Editor PRIVATE wx::core wx::base vsg::vsg vsgXchange::vsgXchange ${Boost_LIBRARIES} KhoraLib)
+
+    add_custom_command(
+        TARGET Editor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/UI/Icons
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Icons)
 
 endif()

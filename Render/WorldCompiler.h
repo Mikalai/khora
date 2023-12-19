@@ -24,7 +24,13 @@ public:
 
             if (auto t = vsg::cast<vsg::MatrixTransform>(ptr); t) {
                 allTransforms[name] = t;
-            }            
+            }           
+            _name = name;
+        }
+        else {
+            if (auto m = o.cast<vsg::StateGroup>(); m) {
+                objects[_name + ".material"] = std::make_tuple(m, path);
+            }
         }
 
         path.emplace_back(&o);
@@ -32,6 +38,7 @@ public:
         path.pop_back();
     }
 
+    std::string _name;
     std::vector<vsg::ref_ptr<Object>> path;
     std::map<std::string, std::tuple<vsg::ref_ptr<Object>, std::vector<vsg::ref_ptr<Object>>>> objects;
     std::unordered_map<std::string, vsg::ref_ptr<vsg::MatrixTransform>> allTransforms;

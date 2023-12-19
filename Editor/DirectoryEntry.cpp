@@ -8,7 +8,6 @@
 #include "GeometryEntry.h"
 
 std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath parent) {
-    std::unique_lock lock{ _cs };
     auto name = path.GetName();
     if (auto it = _entries.find(name); it != _entries.end()) {
         auto next = path.GetNext();
@@ -43,7 +42,6 @@ std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath p
 }
 
 void DirectoryEntry::TraverseTopDown(const EntryPath& parent, std::function<void(EntryPath path, std::shared_ptr<Entry>)> cb) {
-    std::unique_lock lock{ _cs };
     for (auto& [name, entry] : _entries) {
         cb(parent.Append(name), entry);
 
@@ -54,7 +52,6 @@ void DirectoryEntry::TraverseTopDown(const EntryPath& parent, std::function<void
 }
 
 void DirectoryEntry::TraverseDownTop(const EntryPath& parent, std::function<void(EntryPath path, std::shared_ptr<Entry>)> cb) {
-    std::unique_lock lock{ _cs };
     for (auto& [name, entry] : _entries) {
 
         if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry); dir) {
@@ -67,7 +64,6 @@ void DirectoryEntry::TraverseDownTop(const EntryPath& parent, std::function<void
 
 void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry)
 {
-    std::unique_lock lock{ _cs };
     auto name = path.GetName();
     auto next = path.GetNext();
 
@@ -117,8 +113,19 @@ void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_pt
 }
 
 
+DirectoryEntry::DirectoryEntry()
+{
+}
+
+DirectoryEntry::DirectoryEntry(const DirectoryEntry& entry)
+    : Entry{entry}
+{
+    for (auto [name, entry] : entry._entries) {
+        _entries[name] = entry->Clone();
+    }
+}
+
 std::shared_ptr<Entry> DirectoryEntry::FindEntry(const EntryPath& path) const {
-    std::unique_lock lock{ _cs };
 
     auto name = path.GetName();
     if (auto it = _entries.find(name); it != _entries.end()) {
@@ -144,7 +151,6 @@ std::shared_ptr<Entry> DirectoryEntry::FindEntry(const EntryPath& path) const {
 
 void DirectoryEntry::Serialize(EntryProperties& properties) const {
     Entry::Serialize(properties);
-    std::unique_lock lock{ _cs };
     EntryProperties entries;
     for (auto [name, entry] : _entries) {
         EntryProperties d;
@@ -157,7 +163,6 @@ void DirectoryEntry::Serialize(EntryProperties& properties) const {
 
 void DirectoryEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
     Entry::DeserializeInternal(path, properties);
-    std::unique_lock lock{ _cs };
     if (auto it = properties.find("Entries"); it == properties.end())
         return;
     else for (auto entry : *it) {
@@ -176,6 +181,9 @@ void DirectoryEntry::DeserializeInternal(EntryPath path, const EntryProperties& 
             else if (type == magic_enum::enum_name(EntryType::Material)) {
                 newEntry = std::make_shared<MaterialProxyEntry>(EntryPath{});
             }
+            else if (type == magic_enum::enum_name(EntryType::Group)) {
+                newEntry = std::make_shared<GroupEntry>();
+            }
 
             if (!newEntry) {
                 std::cout << "Can't deserialize " << name << " of type " << type << std::endl;
@@ -189,5 +197,20 @@ void DirectoryEntry::DeserializeInternal(EntryPath path, const EntryProperties& 
 
             newEntry->DeserializeInternal(path.Append(name), *dit);
         }
+    }
+}
+
+void DirectoryEntry::CloneFrom(std::shared_ptr<Entry> entry)
+{
+    Entry::CloneFrom(entry);
+
+    assert(std::dynamic_pointer_cast<DirectoryEntry>(entry));
+    auto dir = std::static_pointer_cast<DirectoryEntry>(entry);
+
+    for (auto [name, entry] : dir->_entries) {
+        auto e = entry->Clone();
+        e->SetParent(shared_from_this());
+        CopyObserversTo(*e);
+        _entries[name] = e;
     }
 }

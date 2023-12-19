@@ -19,6 +19,8 @@
 
 const std::string ROOT_PACKAGES{ "PACKAGES" };
 const std::string ROOT_SCENE{ "SCENE" };
+const std::string ROOT_CONFIG{ "CONFIG" };
+
 const std::string PACKAGE_ENTRY_TRANSFORMS{ "Transforms" };
 const std::string PACKAGE_ENTRY_GEOMETRIES{ "Geometries" };
 const std::string PACKAGE_ENTRY_MATERIALS{ "Materials" };
@@ -57,12 +59,23 @@ public:
     }
 
 private:
+    void CreateAxis();
+    vsg::StateInfo stateInfo;
+    vsg::ref_ptr<vsg::Builder> _builder = vsg::Builder::create();
+    vsg::ref_ptr<vsg::Group> _axis;
+    std::shared_ptr<Entry> _activeEntry;
+    std::shared_ptr<ConfigEntry> GetConfig();
+
+    void DenyCompilation();
+    void AllowCompilation();
+    bool CanCompile() const { return _denyCompilation == 0; }
 
     struct PackageInfo {
         std::filesystem::path Path;
         vsg::ref_ptr<vsg::Node> Root;
     };
 
+    std::int32_t _denyCompilation{ 0 };
     vsg::ref_ptr<vsg::Options> _options = vsg::Options::create();
     std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
     std::shared_ptr<AsyncQueue> _queue;
@@ -76,4 +89,19 @@ private:
 
     // Inherited via IEntryObserver
     void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
+
+    // Inherited via IDataModelEditor
+    void Execute(const SelectEntryCommand& cmd) override;
+
+    // Inherited via IDataModelEditor
+    std::shared_ptr<AsyncQueue> GetSyncContext() override;
+
+    // Inherited via IDataModelEditor
+    void Execute(const RenameEntryCommand& cmd) override;
+
+    // Inherited via IDataModelEditor
+    void Execute(const CreateNodeCommand& cmd) override;
+
+    // Inherited via IDataModelEditor
+    void Execute(const CopyEntryCommand& cmd) override;
 };

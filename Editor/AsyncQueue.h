@@ -1,5 +1,6 @@
 #pragma once
 
+#include <semaphore>
 #include <queue>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/deadline_timer.hpp>
@@ -23,6 +24,28 @@ public:
 
     void Enqueue(Task task);
 
+    auto Execute(auto func) {
+        std::binary_semaphore s{ 0 };
+
+        if constexpr (std::is_same_v<void, decltype(func())>) {
+            Enqueue([&]() {
+                func();
+                s.release();
+                });
+
+            s.acquire();
+        }
+        else {
+            decltype(func()) result{};
+            Enqueue([&]() {
+                result = func();
+                s.release();
+            });
+            s.acquire();
+            return result;
+        }
+    }
+
 private:
 
     void Process(boost::system::error_code ec);
@@ -32,4 +55,5 @@ private:
     boost::asio::deadline_timer _timer;
     std::mutex _cs;
     std::queue<Task> _tasks;
+    std::thread::id _currentThread;
 };

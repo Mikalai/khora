@@ -1,4 +1,7 @@
 #include <wx/dnd.h>
+#include <unordered_set>
+#include "../ConfigEntry.h"
+#include "../TransformEntry.h"
 #include "EditorMainWindow.h"
 
 EntryPath GetPath(const wxString& rootName, wxTreeCtrl* tree, wxTreeItemId id) {
@@ -63,6 +66,9 @@ EditorMainWindow::EditorMainWindow(IDataModelEditor* dataModel, int argc, char**
 {
     Maximize(true);
 
+    _transformPanel = std::make_shared<TransformPanel>(propertiesPanel);
+    propertiesSizer->Add(_transformPanel.get(), 0, wxALL | wxEXPAND, 5);
+
     finalScene->SetDropTarget(new MyTreeDropTarget(ROOT_SCENE, _dataModel, finalScene));
 
     assert(_dataModel);
@@ -102,20 +108,20 @@ EditorMainWindow::EditorMainWindow(IDataModelEditor* dataModel, int argc, char**
         vsg_scene->accept(computeBounds);
         vsg::dvec3 centre = (computeBounds.bounds.min + computeBounds.bounds.max) * 0.5;
         double nearFarRatio = 0.001;
-        auto lookAt = vsg::LookAt::create(centre + vsg::dvec3(0.0, 3.5, 0.0), centre,
-            vsg::dvec3(0.0, 0.0, 1.0));
+        _lookAt = vsg::LookAt::create(centre + vsg::dvec3(0.0, 0.0, 3.5), centre,
+            vsg::dvec3(0.0, 1.0, 0.0));
         auto perspective = vsg::Perspective::create(
             30.0,
             static_cast<double>(width) /
             static_cast<double>(height),
             0.1, 100.0);
 
-        auto camera = vsg::Camera::create(perspective, lookAt, vsg::ViewportState::create(vw.window->extent2D()));
+        _camera = vsg::Camera::create(perspective, _lookAt, vsg::ViewportState::create(vw.window->extent2D()));
 
         vsg::ref_ptr<vsg::EllipsoidModel> ellipsoidModel(vsg_scene->getObject<vsg::EllipsoidModel>("EllipsoidModel"));
-        vw.viewer->addEventHandler(vsg::Trackball::create(camera, ellipsoidModel));
+        vw.viewer->addEventHandler(_trackball = vsg::Trackball::create(_camera, ellipsoidModel));
 
-        auto commandGraph = vsg::createCommandGraphForView(vw.window, camera, vsg_scene);
+        auto commandGraph = vsg::createCommandGraphForView(vw.window, _camera, vsg_scene);
         vw.viewer->assignRecordAndSubmitTaskAndPresentation({ commandGraph });
 
         vw.viewer->compile();
@@ -207,6 +213,42 @@ void EditorMainWindow::Execute(const LogNotification& cmd)
     });
 }
 
+void EditorMainWindow::Execute(const EntrySelectedNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        _transformPanel->SetDataModel(cmd.Entry);
+        _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {ROOT_SCENE} });
+    });
+}
+
+static const std::unordered_set<std::string_view> PropertiesToRecompile{
+    "Orientation",
+    "Position",
+    "Override",
+    "Scale"
+};
+
+void EditorMainWindow::Execute(const EntryPropertyChangedNotification& cmd)
+{
+    if (!cmd.Entry)
+        return;
+
+    if (PropertiesToRecompile.contains(cmd.Property)) {
+        _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {ROOT_SCENE} });
+    }
+}
+
+void EditorMainWindow::Execute(const ConfigNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        _config = cmd.Config;
+        UpdateConfig();
+    });
+}
+
+void EditorMainWindow::UpdateConfig() {
+    showTransformMenu->Check(_config->GetShowTransform());
+}
 
 void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
     wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
@@ -255,7 +297,11 @@ void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
         if (!parent.IsOk())
             return;
 
-        tree->AppendItem(parent, cur.GetName());
+        auto itemId = tree->AppendItem(parent, cur.GetName());
+        if (tree == finalScene) {
+            tree->SelectItem(itemId, true);
+            _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {.Path = ROOT_SCENE } });
+        }
     });
 }
 
@@ -315,6 +361,8 @@ void EditorMainWindow::Execute(const ItemRemovedNotification& cmd)
 
             child = tree->GetNextChild(parent, cookie);
         }
+
+        _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {.Path = ROOT_SCENE } });
     });
 }
 
@@ -343,6 +391,8 @@ void EditorMainWindow::finalSceneOnTreeSelChanged(wxTreeEvent& event) {
         {
             _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = GetPath(ROOT_SCENE, finalScene, item) });
         }
+
+        _dataModel->Execute(IDataModelEditor::SelectEntryCommand{ .Path = GetPath(ROOT_SCENE, finalScene, item) });
     }
 }
 
@@ -366,8 +416,12 @@ void EditorMainWindow::finalSceneOnTreeBeginDrag(wxTreeEvent& event) {
 void EditorMainWindow::finalSceneOnTreeEndDrag(wxTreeEvent& event) {
     // auto oldPath = GetPath(ROOT_SCENE, finalScene, event.GetOldItem());
     auto newPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
-
-    _dataModel->Execute(IDataModelEditor::MoveEntryCommand{ .SourcePath = _oldPath, .TargetPath = newPath.Path });
+    if (wxGetKeyState(WXK_CONTROL)) {
+        _dataModel->Execute(IDataModelEditor::CopyEntryCommand{ .SourcePath = _oldPath, .TargetPath = newPath.Path });
+    }
+    else {
+        _dataModel->Execute(IDataModelEditor::MoveEntryCommand{ .SourcePath = _oldPath, .TargetPath = newPath.Path });
+    }
     // _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = EntryPath{ ROOT_SCENE } });
 }
 
@@ -380,6 +434,37 @@ void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent& event) {
 
     _dataModel->Execute(IDataModelEditor::RemoveEntryCommand{ .Path = path });
     _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = EntryPath{ ROOT_SCENE } });
+}
+
+void EditorMainWindow::addToSceneOnCombobox(wxCommandEvent& event) {
+    EntryPath path{ .Path = ROOT_SCENE };
+
+    auto s = finalScene->GetSelection();
+    if (s.IsOk()) {
+        path = GetPath(ROOT_SCENE, finalScene, s);
+    }
+
+    auto type = event.GetString().ToStdString();
+    _dataModel->Execute(IDataModelEditor::CreateNodeCommand{ .Path = path.Append(type), .Type = type });
+}
+
+void EditorMainWindow::navigateOnToolClicked(wxCommandEvent& event) {
+    
+    auto transform = _transformPanel->GetDataModel();
+    
+    if (!transform)
+        return;
+
+    auto m = transform->GetWorldMatrix();
+    auto centre = (m * vsg::dvec4(0, 0, 0, 1)).xyz;
+
+    vsg::ComputeBounds computeBounds{};
+    auto size = 0.3;
+    
+    _lookAt = vsg::LookAt::create(centre + vsg::dvec3(0.0, size * .5, size * .5), centre,
+        vsg::dvec3(0.0, 1.0, 0.0));
+
+    _trackball->setViewpoint(_lookAt);
 }
 
 void EditorMainWindow::loadProjectMenuItemOnMenuSelection(wxCommandEvent& event) {
@@ -398,6 +483,34 @@ void EditorMainWindow::resetMenuItemOnMenuSelection(wxCommandEvent& event) {
     _dataModel->Execute(IDataModelEditor::ResetModelCommand{});
 }
 
+void EditorMainWindow::finalSceneOnTreeBeginLabelEdit(wxTreeEvent& event) {    
+}
+
+void EditorMainWindow::finalSceneOnTreeEndLabelEdit(wxTreeEvent& event) {
+    if (event.IsEditCancelled())
+        return;
+
+    auto newName = event.GetLabel();
+
+    auto oldPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
+    auto newPath = oldPath.GetParent().Append(newName.ToStdString());
+
+    _dataModel->Execute(IDataModelEditor::RenameEntryCommand{ .OldPath = oldPath, .NewPath = newPath });
+
+    event.Veto();
+}
+
+void EditorMainWindow::finalSceneOnKeyDown(wxKeyEvent& event)
+{
+    if (event.GetKeyCode() == WXK_F2) {
+        auto sel = finalScene->GetSelection();
+        if (sel.IsOk()) {
+            finalScene->EditLabel(sel);
+        }
+    }
+    event.Skip();
+}
+
 void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent& event) {
     if (_projectStorage.empty()) {
         wxFileDialog fd{ this, "Save project", wxEmptyString, wxEmptyString, "Khora Scene Project (*.ksp)|*.ksp", wxFD_SAVE };
@@ -409,4 +522,9 @@ void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent& event)
     }
 
     _dataModel->Execute(IDataModelEditor::ExportToFileCommand{ .Path = _projectStorage });
+}
+
+void EditorMainWindow::showTransformMenuOnMenuSelection(wxCommandEvent& event) {
+    _config->SetShowTransform(event.IsChecked());
+    _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = { ROOT_SCENE } });
 }

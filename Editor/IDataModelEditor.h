@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vsg/all.h>
 #include <filesystem>
+#include "AsyncQueue.h"
+#include <vsg/all.h>
 #include "EntryPath.h"
 
 class IDataModelObserver;
@@ -37,11 +38,25 @@ public:
 
     virtual void Execute(const MoveEntryCommand& cmd) = 0;
 
+    struct CopyEntryCommand {
+        EntryPath SourcePath;
+        EntryPath TargetPath;
+    };
+
+    virtual void Execute(const CopyEntryCommand& cmd) = 0;
+
     struct RemoveEntryCommand {
         EntryPath Path;
     };
 
     virtual void Execute(const RemoveEntryCommand& cmd) = 0;
+
+    struct RenameEntryCommand {
+        EntryPath OldPath;
+        EntryPath NewPath;
+    };
+
+    virtual void Execute(const RenameEntryCommand& cmd) = 0;
 
     struct ExportToFileCommand {
         std::filesystem::path Path;
@@ -61,4 +76,19 @@ public:
     virtual void Execute(const ResetModelCommand& cmd) = 0;
 
     virtual void Subscribe(IDataModelObserver* observer) = 0;
+
+    struct SelectEntryCommand {
+        EntryPath Path;
+    };
+
+    virtual void Execute(const SelectEntryCommand& cmd) = 0;
+
+    virtual std::shared_ptr<AsyncQueue> GetSyncContext() = 0;
+
+    struct CreateNodeCommand {
+        EntryPath Path;
+        std::string Type;
+    };
+
+    virtual void Execute(const CreateNodeCommand& cmd) = 0;
 };

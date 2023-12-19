@@ -7,8 +7,13 @@ void AsyncQueue::Start() {
 
 void AsyncQueue::Enqueue(Task task) {
     std::unique_lock lock{ _cs };
-    _tasks.push(task);
-    _timer.cancel();
+    if (_currentThread == std::this_thread::get_id()) {
+        task();
+    }
+    else {
+        _tasks.push(task);
+        _timer.cancel();
+    }
 }
 
 void AsyncQueue::Process(boost::system::error_code ec) {
@@ -17,6 +22,7 @@ void AsyncQueue::Process(boost::system::error_code ec) {
     {
         {
             std::unique_lock lock{ _cs };
+            _currentThread = std::this_thread::get_id();
             if (!_tasks.empty()) {
                 task = _tasks.front();
                 _tasks.pop();
@@ -24,6 +30,7 @@ void AsyncQueue::Process(boost::system::error_code ec) {
             else {
                 _timer.expires_from_now(boost::posix_time::seconds(60));
                 _timer.async_wait(boost::bind(&AsyncQueue::Process, shared_from_this(), boost::placeholders::_1));
+                _currentThread = {};
                 return;
             }
         }

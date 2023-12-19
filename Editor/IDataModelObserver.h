@@ -5,6 +5,9 @@
 #include "EntryType.h"
 #include "EntryPath.h"
 
+class Entry;
+class ConfigEntry;
+
 class IDataModelObserver {
 public:
     virtual ~IDataModelObserver();
@@ -43,5 +46,24 @@ public:
     virtual void Execute(const ModelResetNotification& cmd) = 0;
 
     virtual void Execute(const LogNotification& cmd) = 0;
+
+    struct EntrySelectedNotification {
+        std::shared_ptr<Entry> Entry;
+    };
+
+    virtual void Execute(const EntrySelectedNotification& cmd) = 0;
+
+    struct EntryPropertyChangedNotification {
+        std::shared_ptr<Entry> Entry;
+        std::string_view Property;
+    };
+
+    virtual void Execute(const EntryPropertyChangedNotification& cmd) = 0;
+
+    struct ConfigNotification {
+        std::shared_ptr<ConfigEntry> Config;
+    };
+
+    virtual void Execute(const ConfigNotification& cmd) = 0;
 };
 

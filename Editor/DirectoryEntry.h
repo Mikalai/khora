@@ -9,12 +9,13 @@
 #include "Entry.h"
 
 class DirectoryEntry : public Entry {
-    mutable std::mutex _cs;
     std::unordered_map<std::string, std::shared_ptr<Entry>> _entries;
 public:
 
+    DirectoryEntry();
+    DirectoryEntry(const DirectoryEntry& entry);
+
     void ForEachEntry(std::function<void(const std::string& name, std::shared_ptr<Entry>)> cb) {
-        std::unique_lock lock{ _cs };
         for (auto& [name, entry] : _entries) {
             cb(name, entry);
         }
@@ -29,7 +30,6 @@ public:
     }
 
     bool IsEmpty() const {
-        std::unique_lock<std::mutex> lock{ _cs };
         return _entries.empty();
     }
 
@@ -49,7 +49,7 @@ public:
 
 protected:
     void DeserializeInternal(EntryPath path, const EntryProperties& properties) override;
-
+    void CloneFrom(std::shared_ptr<Entry> entry) override;
 private:
     void Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry);
     std::shared_ptr<Entry> Remove(const EntryPath& path, EntryPath parent);

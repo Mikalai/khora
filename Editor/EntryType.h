@@ -5,6 +5,7 @@ enum class EntryType {
     Transform,
     Material,
     Geometry,
-    Group
+    Group,
+    Config
 };
 

@@ -7,17 +7,17 @@ class GroupEntry final : public DirectoryEntry {
 
 public:
 
-    GroupEntry()
-        : _group{vsg::Group::create()}
-    {
-    }
+    GroupEntry();
 
     vsg::ref_ptr<vsg::Group> GetGroup();
     EntryType GetType() const override;
-    std::shared_ptr<Entry> Clone() override;
     bool CanAdd(std::shared_ptr<Entry> entry) override;
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
 
-private:
-    vsg::ref_ptr<vsg::Group> _group;
+    std::shared_ptr<Entry> CreateView(std::shared_ptr<AsyncQueue> sync) { return {}; }
+
+
+protected:
+    void CloneFrom(std::shared_ptr<Entry> entry) override;
+    std::shared_ptr<Entry> CreateCopy() const override;
 };
