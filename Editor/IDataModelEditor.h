@@ -58,11 +58,11 @@ public:
 
     virtual void Execute(const RenameEntryCommand& cmd) = 0;
 
-    struct ExportToFileCommand {
+    struct SaveToFileCommand {
         std::filesystem::path Path;
     };
 
-    virtual void Execute(const ExportToFileCommand& cmd) = 0;
+    virtual void Execute(const SaveToFileCommand& cmd) = 0;
 
     struct ImportFromFileCommand {
         std::filesystem::path Path;
@@ -91,4 +91,10 @@ public:
     };
 
     virtual void Execute(const CreateNodeCommand& cmd) = 0;
+
+    struct ExportToFileCommand {
+        std::string Path;
+    };
+
+    virtual void Execute(const ExportToFileCommand& cmd) = 0;
 };

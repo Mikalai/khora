@@ -20,4 +20,7 @@ private:
     std::shared_ptr<boost::asio::io_context::work> _work;
     boost::thread_group _threads;
     std::shared_ptr<DataModel> _dataModel;
+    double _accumulator{ 0 };
+    double _alpha{ 0.98 };
+    std::chrono::high_resolution_clock::time_point _last;
 };

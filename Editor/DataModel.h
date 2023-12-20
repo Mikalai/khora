@@ -43,7 +43,7 @@ public:
     void Execute(const CopyNodeCommand& cmd) override;
     void Execute(const MoveEntryCommand& cmd) override;
     void Execute(const RemoveEntryCommand& cmd) override;
-    void Execute(const ExportToFileCommand& cmd) override;
+    void Execute(const SaveToFileCommand& cmd) override;
     void Execute(const ImportFromFileCommand& cmd) override;
 
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
@@ -84,24 +84,12 @@ private:
     std::vector<IDataModelObserver*> _observers;
     boost::asio::io_context& _ctx;    
 
-    // Inherited via IDataModelEditor
     void Execute(const ResetModelCommand& cmd) override;
-
-    // Inherited via IEntryObserver
     void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
-
-    // Inherited via IDataModelEditor
     void Execute(const SelectEntryCommand& cmd) override;
-
-    // Inherited via IDataModelEditor
     std::shared_ptr<AsyncQueue> GetSyncContext() override;
-
-    // Inherited via IDataModelEditor
     void Execute(const RenameEntryCommand& cmd) override;
-
-    // Inherited via IDataModelEditor
     void Execute(const CreateNodeCommand& cmd) override;
-
-    // Inherited via IDataModelEditor
     void Execute(const CopyEntryCommand& cmd) override;
+    void Execute(const ExportToFileCommand& cmd) override;
 };

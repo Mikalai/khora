@@ -5,6 +5,8 @@
 // PLEASE DO *NOT* EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
+#include "UICommon.h"
+
 #include "vsgEditor.h"
 
 ///////////////////////////////////////////////////////////////////////////
@@ -29,16 +31,96 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	m_splitter3->Connect( wxEVT_IDLE, wxIdleEventHandler( EditorMainWindowBase::m_splitter3OnIdle ), NULL, this );
 
 	m_panel8 = new wxPanel( m_splitter3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	wxBoxSizer* bSizer9;
-	bSizer9 = new wxBoxSizer( wxVERTICAL );
+	wxFlexGridSizer* fgSizer6;
+	fgSizer6 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer6->AddGrowableCol( 0 );
+	fgSizer6->AddGrowableCol( 1 );
+	fgSizer6->AddGrowableRow( 0 );
+	fgSizer6->AddGrowableRow( 1 );
+	fgSizer6->SetFlexibleDirection( wxBOTH );
+	fgSizer6->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 
-	assetsTree = new wxTreeCtrl( m_panel8, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE|wxTR_HIDE_ROOT );
-	bSizer9->Add( assetsTree, 1, wxEXPAND, 0 );
+	dataPanels = new wxNotebook( m_panel8, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	wxSize dataPanelsImageSize = wxSize( 16,16 );
+	int dataPanelsIndex = 0;
+	wxImageList* dataPanelsImages = new wxImageList( dataPanelsImageSize.GetWidth(), dataPanelsImageSize.GetHeight() );
+	dataPanels->AssignImageList( dataPanelsImages );
+	wxBitmap dataPanelsBitmap;
+	wxImage dataPanelsImage;
+	assetsPage = new wxPanel( dataPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer8;
+	fgSizer8 = new wxFlexGridSizer( 2, 2, 0, 0 );
+	fgSizer8->AddGrowableCol( 0 );
+	fgSizer8->AddGrowableCol( 1 );
+	fgSizer8->AddGrowableRow( 0 );
+	fgSizer8->AddGrowableRow( 1 );
+	fgSizer8->SetFlexibleDirection( wxBOTH );
+	fgSizer8->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	assetsTree = new wxTreeCtrl( assetsPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTR_DEFAULT_STYLE|wxTR_HIDE_ROOT );
+	fgSizer8->Add( assetsTree, 1, wxALL|wxEXPAND, 0 );
 
 
-	m_panel8->SetSizer( bSizer9 );
+	assetsPage->SetSizer( fgSizer8 );
+	assetsPage->Layout();
+	fgSizer8->Fit( assetsPage );
+	dataPanels->AddPage( assetsPage, wxT("Assets"), false );
+	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconAssets, wxART_FRAME_ICON );
+	if ( dataPanelsBitmap.Ok() )
+	{
+		dataPanelsImage = dataPanelsBitmap.ConvertToImage();
+		dataPanelsImages->Add( dataPanelsImage.Scale( dataPanelsImageSize.GetWidth(), dataPanelsImageSize.GetHeight() ) );
+		dataPanels->SetPageImage( dataPanelsIndex, dataPanelsIndex );
+		dataPanelsIndex++;
+	}
+	localizationPage = new wxPanel( dataPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer7;
+	fgSizer7 = new wxFlexGridSizer( 2, 1, 0, 0 );
+	fgSizer7->AddGrowableCol( 0, 1 );
+	fgSizer7->AddGrowableRow( 0 );
+	fgSizer7->AddGrowableRow( 1, 1 );
+	fgSizer7->SetFlexibleDirection( wxBOTH );
+	fgSizer7->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer8;
+	bSizer8 = new wxBoxSizer( wxHORIZONTAL );
+
+	langAdd = new wxButton( localizationPage, wxID_ANY, wxT("Add"), wxDefaultPosition, wxDefaultSize, 0 );
+
+	langAdd->SetBitmap( wxArtProvider::GetBitmap( ArtIconAdd, wxART_BUTTON ) );
+	bSizer8->Add( langAdd, 0, wxALL, 0 );
+
+	langRemove = new wxButton( localizationPage, wxID_ANY, wxT("Remove"), wxDefaultPosition, wxDefaultSize, 0 );
+
+	langRemove->SetBitmap( wxArtProvider::GetBitmap( ArtIconRemove, wxART_BUTTON ) );
+	bSizer8->Add( langRemove, 0, wxALL, 0 );
+
+
+	fgSizer7->Add( bSizer8, 1, wxEXPAND, 0 );
+
+	languageListBox = new wxListBox( localizationPage, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fgSizer7->Add( languageListBox, 0, wxALL|wxEXPAND, 0 );
+
+
+	localizationPage->SetSizer( fgSizer7 );
+	localizationPage->Layout();
+	fgSizer7->Fit( localizationPage );
+	dataPanels->AddPage( localizationPage, wxT("Localization"), true );
+	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconLocalization, wxART_FRAME_ICON );
+	if ( dataPanelsBitmap.Ok() )
+	{
+		dataPanelsImage = dataPanelsBitmap.ConvertToImage();
+		dataPanelsImages->Add( dataPanelsImage.Scale( dataPanelsImageSize.GetWidth(), dataPanelsImageSize.GetHeight() ) );
+		dataPanels->SetPageImage( dataPanelsIndex, dataPanelsIndex );
+		dataPanelsIndex++;
+	}
+
+	fgSizer6->Add( dataPanels, 1, wxALL|wxEXPAND, 0 );
+
+
+	m_panel8->SetSizer( fgSizer6 );
 	m_panel8->Layout();
-	bSizer9->Fit( m_panel8 );
+	fgSizer6->Fit( m_panel8 );
 	m_panel9 = new wxPanel( m_splitter3, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxBoxSizer* bSizer10;
 	bSizer10 = new wxBoxSizer( wxVERTICAL );
@@ -136,6 +218,10 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	importMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Import") ) + wxT('\t') + wxT("Ctrl+I"), wxEmptyString, wxITEM_NORMAL );
 	m_menu1->Append( importMenuItem );
 
+	wxMenuItem* exportMenu;
+	exportMenu = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Export") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu1->Append( exportMenu );
+
 	m_menubar1->Append( m_menu1, wxT("File") );
 
 	m_menu2 = new wxMenu();
@@ -150,7 +236,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	mainToolbar = this->CreateToolBar( wxTB_HORIZONTAL, wxID_ANY );
 	mainToolbar->SetMaxSize( wxSize( -1,40 ) );
 
-	navigate = mainToolbar->AddTool( wxID_ANY, wxT("Navigate To Selection"), wxBitmap( wxT("Icons/NavigateToSelection.bmp"), wxBITMAP_TYPE_ANY ), wxNullBitmap, wxITEM_NORMAL, wxT("Navigate To Selection"), wxT("Reposition camera to the selected transform node"), NULL );
+	navigate = mainToolbar->AddTool( wxID_ANY, wxT("Navigate To Selection"), wxArtProvider::GetBitmap( ArtToolbarNavigate, wxART_TOOLBAR ), wxNullBitmap, wxITEM_NORMAL, wxT("Navigate To Selection"), wxT("Reposition camera to the selected transform node"), NULL );
 
 	mainToolbar->Realize();
 
@@ -161,6 +247,10 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	assetsTree->Connect( wxEVT_COMMAND_TREE_BEGIN_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeBeginDrag ), NULL, this );
 	assetsTree->Connect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeEndDrag ), NULL, this );
 	assetsTree->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeSelChanged ), NULL, this );
+	langAdd->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::langAddOnButtonClick ), NULL, this );
+	langRemove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::langRemoveOnButtonClick ), NULL, this );
+	languageListBox->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBox ), NULL, this );
+	languageListBox->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBoxDClick ), NULL, this );
 	addToScene->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::addToSceneOnCombobox ), NULL, this );
 	deleteFromScene->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
 	finalScene->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( EditorMainWindowBase::finalSceneOnKeyDown ), NULL, this );
@@ -173,6 +263,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::saveProjectMenuItemOnMenuSelection ), this, saveProjectMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::resetMenuItemOnMenuSelection ), this, resetMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::OnImport ), this, importMenuItem->GetId());
+	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::exportMenuOnMenuSelection ), this, exportMenu->GetId());
 	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::showTransformMenuOnMenuSelection ), this, showTransformMenu->GetId());
 	this->Connect( navigate->GetId(), wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( EditorMainWindowBase::navigateOnToolClicked ) );
 }
@@ -183,6 +274,10 @@ EditorMainWindowBase::~EditorMainWindowBase()
 	assetsTree->Disconnect( wxEVT_COMMAND_TREE_BEGIN_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeBeginDrag ), NULL, this );
 	assetsTree->Disconnect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeEndDrag ), NULL, this );
 	assetsTree->Disconnect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeSelChanged ), NULL, this );
+	langAdd->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::langAddOnButtonClick ), NULL, this );
+	langRemove->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::langRemoveOnButtonClick ), NULL, this );
+	languageListBox->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBox ), NULL, this );
+	languageListBox->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBoxDClick ), NULL, this );
 	addToScene->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::addToSceneOnCombobox ), NULL, this );
 	deleteFromScene->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
 	finalScene->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( EditorMainWindowBase::finalSceneOnKeyDown ), NULL, this );
@@ -465,5 +560,59 @@ TransformPanelBase::~TransformPanelBase()
 	orient1->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TransformPanelBase::orientationChanged ), NULL, this );
 	orient2->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TransformPanelBase::orientationChanged ), NULL, this );
 	orient3->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TransformPanelBase::orientationChanged ), NULL, this );
+
+}
+
+TextEnter::TextEnter( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxSize( 300,150 ), wxDefaultSize );
+
+	wxBoxSizer* bSizer9;
+	bSizer9 = new wxBoxSizer( wxVERTICAL );
+
+
+	bSizer9->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	textEdit = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	textEdit->SetMinSize( wxSize( 200,-1 ) );
+
+	bSizer9->Add( textEdit, 0, wxALIGN_CENTER_HORIZONTAL, 0 );
+
+
+	bSizer9->Add( 0, 0, 1, wxEXPAND, 5 );
+
+	wxBoxSizer* bSizer10;
+	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
+
+	btnOk = new wxButton( this, wxID_ANY, wxT("OK"), wxDefaultPosition, wxDefaultSize, 0 );
+
+	btnOk->SetDefault();
+	bSizer10->Add( btnOk, 0, wxALL, 5 );
+
+	btnCancel = new wxButton( this, wxID_ANY, wxT("Cancel"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer10->Add( btnCancel, 0, wxALL, 5 );
+
+
+	bSizer9->Add( bSizer10, 0, wxALIGN_RIGHT|wxTOP, 5 );
+
+
+	this->SetSizer( bSizer9 );
+	this->Layout();
+	bSizer9->Fit( this );
+
+	this->Centre( wxBOTH );
+
+	// Connect Events
+	textEdit->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextEnter::textEditOnText ), NULL, this );
+	btnOk->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextEnter::btnOkOnButtonClick ), NULL, this );
+	btnCancel->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextEnter::btnCancelOnButtonClick ), NULL, this );
+}
+
+TextEnter::~TextEnter()
+{
+	// Disconnect Events
+	textEdit->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( TextEnter::textEditOnText ), NULL, this );
+	btnOk->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextEnter::btnOkOnButtonClick ), NULL, this );
+	btnCancel->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( TextEnter::btnCancelOnButtonClick ), NULL, this );
 
 }

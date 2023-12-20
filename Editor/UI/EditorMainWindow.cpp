@@ -1,7 +1,9 @@
 #include <wx/dnd.h>
+#include "UICommon.h"
 #include <unordered_set>
 #include "../ConfigEntry.h"
 #include "../TransformEntry.h"
+#include "TextEnterDialog.h"
 #include "EditorMainWindow.h"
 
 EntryPath GetPath(const wxString& rootName, wxTreeCtrl* tree, wxTreeItemId id) {
@@ -65,6 +67,15 @@ EditorMainWindow::EditorMainWindow(IDataModelEditor* dataModel, int argc, char**
     , _dataModel{ dataModel }
 {
     Maximize(true);
+    wxSize size{ 16, 16 };
+    _imageList = new wxImageList(size.GetWidth(), size.GetHeight(), true);
+    _imageErrorIcon = _imageList->Add(wxArtProvider::GetBitmap(ArtIconError, wxART_LIST, size));
+    _imageTransformImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconTransform, wxART_LIST, size));
+    _imageGeometryImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconGeometry, wxART_LIST, size));
+    _imageGroupImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconGroup, wxART_LIST, size));
+    _imageMaterialImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconMaterial, wxART_LIST, size));
+    finalScene->SetImageList(_imageList);
+    assetsTree->SetImageList(_imageList);
 
     _transformPanel = std::make_shared<TransformPanel>(propertiesPanel);
     propertiesSizer->Add(_transformPanel.get(), 0, wxALL | wxEXPAND, 5);
@@ -129,7 +140,7 @@ EditorMainWindow::EditorMainWindow(IDataModelEditor* dataModel, int argc, char**
         return true;
         };
 
-    viewerWindow->frameCallback = [](ViewerWindow& vw) {
+    viewerWindow->frameCallback = [&](ViewerWindow& vw) {
         if (!vw.viewer || !vw.viewer->advanceToNextFrame()) {
             return false;
         }
@@ -141,6 +152,20 @@ EditorMainWindow::EditorMainWindow(IDataModelEditor* dataModel, int argc, char**
         vw.viewer->recordAndSubmit();
 
         vw.viewer->present();
+
+        bool empty = true;
+        for (auto& c : _cleanup) {
+            if (!c.second)
+                continue;
+            if (c.first-- <= 0) {
+                c.second = {};
+                empty = false;
+            }
+        }
+        
+        if (empty) {
+            _cleanup.clear();
+        }
 
         return true;
         };
@@ -196,7 +221,12 @@ void EditorMainWindow::Execute(const ModelResetNotification& cmd)
         reseting = true;
         assetsTree->UnselectAll();
         finalScene->UnselectAll();
-        packageToId.clear();
+        packageToId.clear();        
+        
+        for (auto child : _root->children) {
+            _cleanup.emplace_back(60, child);
+        }
+        
         _root->children.clear();
         assetsTree->DeleteAllItems();
         finalScene->DeleteAllItems();
@@ -246,9 +276,33 @@ void EditorMainWindow::Execute(const ConfigNotification& cmd)
     });
 }
 
+int EditorMainWindow::GetEntryTypeImage(EntryType type) {
+    switch (type)
+    {
+    case EntryType::Directory:
+        break;
+    case EntryType::Transform:
+        return _imageTransformImage;
+    case EntryType::Material:
+        return _imageMaterialImage;
+    case EntryType::Geometry:
+        return _imageGeometryImage;
+    case EntryType::Group:
+        return _imageGroupImage;
+    case EntryType::Config:
+        break;
+    default:
+        break;
+    }
+
+    return _imageErrorIcon;
+}
+
 void EditorMainWindow::UpdateConfig() {
     showTransformMenu->Check(_config->GetShowTransform());
 }
+
+
 
 void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
     wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
@@ -277,8 +331,8 @@ void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
 
             while (true) {
 
-                if (!child.IsOk()) {
-                    parent = tree->AppendItem(parent, cur.GetName());
+                if (!child.IsOk()) {                    
+                    parent = tree->AppendItem(parent, cur.GetName(), GetEntryTypeImage(cmd.Type));
                     cur = cur.GetNext();
                     break;
                 }
@@ -297,7 +351,7 @@ void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
         if (!parent.IsOk())
             return;
 
-        auto itemId = tree->AppendItem(parent, cur.GetName());
+        auto itemId = tree->AppendItem(parent, cur.GetName(), GetEntryTypeImage(cmd.Type));
         if (tree == finalScene) {
             tree->SelectItem(itemId, true);
             _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {.Path = ROOT_SCENE } });
@@ -521,10 +575,43 @@ void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent& event)
         _projectStorage = fd.GetPath().ToStdString();
     }
 
-    _dataModel->Execute(IDataModelEditor::ExportToFileCommand{ .Path = _projectStorage });
+    _dataModel->Execute(IDataModelEditor::SaveToFileCommand{ .Path = _projectStorage });
 }
 
 void EditorMainWindow::showTransformMenuOnMenuSelection(wxCommandEvent& event) {
     _config->SetShowTransform(event.IsChecked());
     _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = { ROOT_SCENE } });
+}
+
+void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent& event) {
+    
+    wxFileDialog fd{ this, "Export Final Scene", wxEmptyString, wxEmptyString, "Khora Scene Project (*.vsgb)|*.vsgb", wxFD_SAVE };
+
+    if (auto result = fd.ShowModal(); result == wxID_CANCEL)
+        return;
+
+    auto path = fd.GetPath().ToStdString();
+
+    _dataModel->Execute(IDataModelEditor::ExportToFileCommand{ .Path = path });
+}
+
+void EditorMainWindow::langAddOnButtonClick(wxCommandEvent& event) {
+    TextEnterDialog dlg(this);
+    if (auto r = dlg.ShowModal(); r == wxID_CANCEL)
+        return;
+    else if (r == wxID_OK) {
+
+    }
+}
+
+void EditorMainWindow::langRemoveOnButtonClick(wxCommandEvent& event) {
+    event.Skip();
+}
+
+void EditorMainWindow::languageListBoxOnListBox(wxCommandEvent& event) {
+    event.Skip();
+}
+
+void EditorMainWindow::languageListBoxOnListBoxDClick(wxCommandEvent& event) {
+    event.Skip();
 }

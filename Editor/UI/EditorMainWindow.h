@@ -49,9 +49,17 @@ protected:
     void showTransformMenuOnMenuSelection(wxCommandEvent& event) override;
     void addToSceneOnCombobox(wxCommandEvent& event) override;
     void navigateOnToolClicked(wxCommandEvent& event) override;
+    void exportMenuOnMenuSelection(wxCommandEvent& event) override;
+    void langAddOnButtonClick(wxCommandEvent& event);
+    void langRemoveOnButtonClick(wxCommandEvent& event);
+    void languageListBoxOnListBox(wxCommandEvent& event);
+    void languageListBoxOnListBoxDClick(wxCommandEvent& event);
 
 private:
+    
+    int GetEntryTypeImage(EntryType type);
     void UpdateConfig();
+    std::vector<std::pair<std::int32_t, vsg::ref_ptr<vsg::Node>>> _cleanup;
 
     bool reseting{ false };
     ViewerWindow* viewerWindow;
@@ -62,6 +70,12 @@ private:
     vsg::ref_ptr<vsg::Trackball> _trackball;
     std::shared_ptr<TransformPanel> _transformPanel{ nullptr };
     std::shared_ptr<ConfigEntry> _config;
+    wxImageList* _imageList;
+    int _imageErrorIcon;
+    int _imageTransformImage;
+    int _imageGroupImage;
+    int _imageGeometryImage;
+    int _imageMaterialImage;
 
     IDataModelEditor* _dataModel;
     vsg::ref_ptr<vsg::Options> _options;    

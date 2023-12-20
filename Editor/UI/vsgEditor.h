@@ -17,11 +17,14 @@
 #include <wx/string.h>
 #include <wx/sizer.h>
 #include <wx/panel.h>
-#include <wx/combobox.h>
-#include <wx/button.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
+#include <wx/button.h>
+#include <wx/listbox.h>
+#include <wx/notebook.h>
+#include <wx/imaglist.h>
+#include <wx/combobox.h>
 #include <wx/splitter.h>
 #include <wx/statusbr.h>
 #include <wx/menu.h>
@@ -30,6 +33,7 @@
 #include <wx/textctrl.h>
 #include <wx/checkbox.h>
 #include <wx/stattext.h>
+#include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +50,13 @@ class EditorMainWindowBase : public wxFrame
 		wxPanel* explorerPanel;
 		wxSplitterWindow* m_splitter3;
 		wxPanel* m_panel8;
+		wxNotebook* dataPanels;
+		wxPanel* assetsPage;
 		wxTreeCtrl* assetsTree;
+		wxPanel* localizationPage;
+		wxButton* langAdd;
+		wxButton* langRemove;
+		wxListBox* languageListBox;
 		wxPanel* m_panel9;
 		wxComboBox* addToScene;
 		wxButton* deleteFromScene;
@@ -69,6 +79,10 @@ class EditorMainWindowBase : public wxFrame
 		virtual void assetsTreeOnTreeBeginDrag( wxTreeEvent& event ) { event.Skip(); }
 		virtual void assetsTreeOnTreeEndDrag( wxTreeEvent& event ) { event.Skip(); }
 		virtual void assetsTreeOnTreeSelChanged( wxTreeEvent& event ) { event.Skip(); }
+		virtual void langAddOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void langRemoveOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void languageListBoxOnListBox( wxCommandEvent& event ) { event.Skip(); }
+		virtual void languageListBoxOnListBoxDClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void addToSceneOnCombobox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void deleteFromSceneOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnKeyDown( wxKeyEvent& event ) { event.Skip(); }
@@ -81,6 +95,7 @@ class EditorMainWindowBase : public wxFrame
 		virtual void saveProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void resetMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnImport( wxCommandEvent& event ) { event.Skip(); }
+		virtual void exportMenuOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void showTransformMenuOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void navigateOnToolClicked( wxCommandEvent& event ) { event.Skip(); }
 
@@ -163,6 +178,32 @@ class TransformPanelBase : public wxPanel
 		TransformPanelBase( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 304,263 ), long style = wxTAB_TRAVERSAL, const wxString& name = wxEmptyString );
 
 		~TransformPanelBase();
+
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// Class TextEnter
+///////////////////////////////////////////////////////////////////////////////
+class TextEnter : public wxDialog
+{
+	private:
+
+	protected:
+		wxTextCtrl* textEdit;
+		wxButton* btnOk;
+		wxButton* btnCancel;
+
+		// Virtual event handlers, override them in your derived class
+		virtual void textEditOnText( wxCommandEvent& event ) { event.Skip(); }
+		virtual void btnOkOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void btnCancelOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
+
+
+	public:
+
+		TextEnter( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_DIALOG_STYLE );
+
+		~TextEnter();
 
 };
 
