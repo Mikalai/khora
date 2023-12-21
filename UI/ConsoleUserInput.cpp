@@ -497,11 +497,11 @@ void ConsoleUserInput::SelectCityAsync(std::function<void(Cities city)> cb) {
 	});
 }
 
-void ConsoleUserInput::SelectPolicyFromDraftAsync(std::function<void(Policies policy)> cb) {
+void ConsoleUserInput::SelectPolicyFromDraftAsync(std::function<void(PoliciesType policy)> cb) {
 	std::cout << tr("Select one policy and rest give to the next player. [");
 	int index = 0;
-
-	GetPlayer().Draft().ForEach([&index](Policies policy) {
+    
+    GetPlayer().Draft().ForEach([&index](PoliciesType policy) {
 		auto& tmp = GetPolicyTemplate(policy);
 		std::cout << index << " - " << tr(tmp.GetName()) << std::endl;
 		});

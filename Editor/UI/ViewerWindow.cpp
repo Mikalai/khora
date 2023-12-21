@@ -111,8 +111,11 @@ void ViewerWindow::OnMouseWheel(wxMouseEvent &event) {
 }
 
 void ViewerWindow::OnSizing(wxSizeEvent &e) {
+    if (!window)
+        return;
+        
     vsg::clock::time_point event_time = vsg::clock::now();
-
+    
     window->bufferedEvents.push_back(vsg::ConfigureWindowEvent::create(window, event_time, e.GetRect().GetPosition().x,
                                                                        e.GetRect().GetPosition().y,
                                                                        static_cast<uint32_t>(e.GetSize().GetWidth()),

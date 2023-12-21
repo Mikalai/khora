@@ -224,7 +224,7 @@ void GeneralUserInput::ExecuteActionAsync(ActionType action, std::function<void(
 		break;
 	case ActionType::Policy:
 		PostWorldUpdateAction([this, cb](WorldLogic& world) {
-			world.GetPlayer(PlayerId()).BeginSelectPolicyFromHandsToActivate([this, cb, &world](Policies policy) {
+            world.GetPlayer(PlayerId()).BeginSelectPolicyFromHandsToActivate([this, cb, &world](PoliciesType policy) {
 				auto& p = world.GetPlayer(PlayerId());
 				if (p.CanActivatePolicy(policy)) {
 					p.ActivatePolicy(policy);

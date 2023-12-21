@@ -41,7 +41,7 @@ void SimpleCityStrategy::ExecuteActionAsync(IUserInputHandler& user, ActionType 
 	
 }
 
-void SimpleCityStrategy::SelectLawPolicy(IUserInputHandler& user, Policies a, Policies b, std::function<void(Policies selected, Policies dropped)> cb) {	
+void SimpleCityStrategy::SelectLawPolicy(IUserInputHandler& user, PoliciesType a, PoliciesType b, std::function<void(PoliciesType selected, PoliciesType dropped)> cb) {	
 	cb(a, b);
 }
 
@@ -90,14 +90,14 @@ void SimpleCityStrategy::MakeProgress(IUserInputHandler& user, const WorldLogic&
 void SimpleCityStrategy::SelectPolicy(IUserInputHandler& user, const WorldLogic& world, SelectPolicyCallback cb) {
 	auto& player = world.GetPlayer(user.PlayerId());
 	
-	auto policy = player.Policies()
+	auto policy = player.GetPolicies()
 		.InHands()
 		.Where([](const PlayerLogic& player, const PolicyTemplate& policy) 
 			{ return policy.GetEffect().CanApply(player);
 		}).FirstOrNull();
 	
 	if (policy == nullptr) {
-		cb(Policies::policy_unknown);
+        cb(PoliciesType::policy_unknown);
 		return;
 	}
 
@@ -107,12 +107,12 @@ void SimpleCityStrategy::SelectPolicy(IUserInputHandler& user, const WorldLogic&
 void SimpleCityStrategy::SelectPolicyToDrop(IUserInputHandler& user, const WorldLogic& world, SelectPolicyCallback cb) {
 	auto& player = world.GetPlayer(user.PlayerId());
 
-	auto policy = player.Policies().InHands().FirstOrNull();
+	auto policy = player.GetPolicies().InHands().FirstOrNull();
 	if (policy != nullptr) {
 		cb(policy->GetType());
 	}
 	else {
-		cb(Policies::policy_unknown);
+        cb(PoliciesType::policy_unknown);
 	}
 }
 
@@ -154,7 +154,7 @@ void SimpleCityStrategy::SelectPolicyFromActiveDeck(IUserInputHandler& user, con
 	auto& player = world.GetPlayer(user.PlayerId());
 
 	if (player.GetPoliciesInActiveDeckCount() == 0) {
-		cb(Policies::policy_unknown);
+        cb(PoliciesType::policy_unknown);
 		return;
 	}
 

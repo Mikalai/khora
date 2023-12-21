@@ -182,14 +182,14 @@ struct DiceUnlockedMessage : GameMessage {
 
 struct PolicyDroppedMessage : GameMessage {
     
-    PolicyDroppedMessage(int playerId, Policies policy)
+    PolicyDroppedMessage(int playerId, PoliciesType policy)
         : GameMessage(MessageType::MsgPolicyDropped)
         , player{ playerId }
         , policy{ policy }
     {}
 
     int player;
-    Policies policy;
+    PoliciesType policy;
 };
 
 struct DiscoveryDroppedMessage : GameMessage {
@@ -205,8 +205,8 @@ struct DiscoveryDroppedMessage : GameMessage {
 };
 
 struct PolicyAddedInHandsMessage : GameMessage {
-
-    PolicyAddedInHandsMessage(int playerId, Policies policy, bool selectFlag)
+    
+    PolicyAddedInHandsMessage(int playerId, PoliciesType policy, bool selectFlag)
         : GameMessage(MessageType::MsgPolicyTakenInHands)
         , player{ playerId }
         , policy{ policy }
@@ -214,13 +214,13 @@ struct PolicyAddedInHandsMessage : GameMessage {
     {}
 
     int player;
-    Policies policy;
+    PoliciesType policy;
     bool selectFlag;
 };
 
 struct PolicyAddedToPlayedMessage : GameMessage {
-
-    PolicyAddedToPlayedMessage(int playerId, Policies policy, int index)
+    
+    PolicyAddedToPlayedMessage(int playerId, PoliciesType policy, int index)
         : GameMessage(MessageType::MsgPolicyAddedToPlayed)
         , player{ playerId }
         , policy{ policy }
@@ -228,13 +228,13 @@ struct PolicyAddedToPlayedMessage : GameMessage {
     {}
 
     int player;
-    Policies policy;
+    PoliciesType policy;
     int index;
 };
 
 struct PolicyRemovedFromHandsMessage : GameMessage {
-
-	PolicyRemovedFromHandsMessage(int playerId, Policies policy, int index)
+    
+    PolicyRemovedFromHandsMessage(int playerId, PoliciesType policy, int index)
 		: GameMessage(MessageType::MsgPolicyRemovedFromHands)
 		, player{ playerId }
 		, policy{ policy }
@@ -242,20 +242,20 @@ struct PolicyRemovedFromHandsMessage : GameMessage {
 	{}
 
 	int player;
-	Policies policy;
+    PoliciesType policy;
     int index;
 };
 
 struct PolicyActivatedMessage : GameMessage {
     
-    PolicyActivatedMessage(int playerId, Policies policy)
+    PolicyActivatedMessage(int playerId, PoliciesType policy)
         : GameMessage(MessageType::MsgPolicyActivated)
         , player{ playerId }
         , policy{ policy }
     {}
 
     int player;
-    Policies policy;
+    PoliciesType policy;
 };
 
 struct DraftCompletedMessage : GameMessage {
@@ -266,13 +266,13 @@ struct DraftCompletedMessage : GameMessage {
 };
 
 struct PolicyTakenFromDeckMessage : GameMessage {
-
-    PolicyTakenFromDeckMessage(Policies policy)
+    
+    PolicyTakenFromDeckMessage(PoliciesType policy)
         : GameMessage{ MessageType::MsgPolicyTakenFromDeck }
         , policy{ policy } {
     }
-
-    Policies policy;
+    
+    PoliciesType policy;
 };
 
 struct PlayerCountSelectedMessage : GameMessage {
@@ -311,8 +311,8 @@ struct PoliciesShuffledMessage : GameMessage {
 };
 
 struct PolicyAddedToDeckMessage : GameMessage {
-
-    PolicyAddedToDeckMessage(int index, Policies policy)
+    
+    PolicyAddedToDeckMessage(int index, PoliciesType policy)
         : GameMessage{MessageType::MsgPolicyTakenInHandsToDeck}
         , index{index}
         , policy{ policy }
@@ -320,7 +320,7 @@ struct PolicyAddedToDeckMessage : GameMessage {
     }
 
     int index;
-    Policies policy;
+    PoliciesType policy;
 };
 
 struct EventsShuffledMessage : GameMessage {
@@ -367,7 +367,7 @@ struct EventTakenFromDeckMessage : GameMessage {
     GlobalEventType event;
 };
 struct PolicyAddedToDraftMessage : GameMessage {
-	PolicyAddedToDraftMessage(int player, Policies policy, int index)
+    PolicyAddedToDraftMessage(int player, PoliciesType policy, int index)
 		: GameMessage{MessageType::MsgPolicyAddedToDraft }
 		, player{player}
 		, policy{policy}
@@ -375,13 +375,13 @@ struct PolicyAddedToDraftMessage : GameMessage {
 	{}
 
 	int player;
-	Policies policy;
+    PoliciesType policy;
 	int index;
 };
 
 struct PolicyRemovedFromDraftMessage : GameMessage {
-
-	PolicyRemovedFromDraftMessage(int player, Policies policy, int index)
+    
+    PolicyRemovedFromDraftMessage(int player, PoliciesType policy, int index)
 		: GameMessage{ MessageType::MsgPolicyRemovedFromDraft } 
 		, player{player}
 		, policy{policy}
@@ -391,7 +391,7 @@ struct PolicyRemovedFromDraftMessage : GameMessage {
 
 	int player;
 	int index;
-	Policies policy;
+    PoliciesType policy;
 };
 
 
@@ -638,7 +638,7 @@ struct ExecuteActionMessage : GameMessage {
 };
 
 struct SelectLawPolicyMessage : GameMessage {
-    SelectLawPolicyMessage(int playerId, Policies a, Policies b)
+    SelectLawPolicyMessage(int playerId, PoliciesType a, PoliciesType b)
         : GameMessage{ MessageType::MsgSelectLawPolicy }
         , playerId{ playerId }
         , policyA{ a }
@@ -646,8 +646,8 @@ struct SelectLawPolicyMessage : GameMessage {
     }
 
     int playerId;
-    Policies policyA;
-    Policies policyB;
+    PoliciesType policyA;
+    PoliciesType policyB;
 };
 
 struct SelectExpeditionMessage : GameMessage {

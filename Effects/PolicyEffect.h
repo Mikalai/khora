@@ -7,9 +7,9 @@
 
 class PolicyEffect : public PlayerEffect {
 public:
-	PolicyEffect(Policies policy, int money, int red, int blue, int green, PlayerPerk action);
-
-	constexpr Policies GetType() const { return policy; }
+    PolicyEffect(PoliciesType policy, int money, int red, int blue, int green, PlayerPerk action);
+    
+    constexpr PoliciesType GetType() const { return policy; }
 private:
-	Policies policy;
+    PoliciesType policy;
 };

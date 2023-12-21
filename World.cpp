@@ -35,14 +35,14 @@ World::World(WorldLogic& logic)
 		});
 	
 	state_game.Transition([](const WorldLogic& world) {
-		return ui().IsIdle() && world.Players().All([](const PlayerLogic& player) {
+        return ui().IsIdle() && world.GetPlayers().All([](const PlayerLogic& player) {
 			return player.IsIdle();
 			});
 		}, &state_caculate_scores);	
 
 	state_caculate_scores.SetEnter([this](WorldLogic& logic) {
 		INFO("**** CALCULATE SCORE POINTS ****");
-		logic.Players().ForEach([](PlayerLogic& player) {
+        logic.GetPlayers().ForEach([](PlayerLogic& player) {
 			player.ExecuteEndGamePerks();
 		});
 
@@ -54,7 +54,7 @@ World::World(WorldLogic& logic)
 	});
 
 	state_caculate_scores.Transition([](const WorldLogic& world) {
-		return ui().IsIdle() && world.Players().All([](const PlayerLogic& player) {
+        return ui().IsIdle() && world.GetPlayers().All([](const PlayerLogic& player) {
 			return player.IsIdle();
 			});
 		}, &state_init);

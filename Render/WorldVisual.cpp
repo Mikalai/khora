@@ -161,8 +161,8 @@ void WorldVisual::CompileActions() {
 void WorldVisual::CompilePolicies() {
 
 	policy_back_material->addChild(policy_back_geometry);
-
-	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
+    
+    for (int i = 0; i < As<int>(PoliciesType::policies_count); ++i) {
 		policies[i] = vsg::MatrixTransform::create();
 		policies[i]->matrix = vsg::translate(0.0, 1.0, 0.0);
 		policy_materials[i]->addChild(policy_front_geometry);
@@ -373,8 +373,8 @@ void WorldVisual::CreateScene() {
 		point->addChild(_box);
 		_worldRoot->addChild(point);
 	}
-
-	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
+    
+    for (int i = 0; i < As<int>(PoliciesType::policies_count); ++i) {
 		_worldRoot->addChild(policies[i]);
 	}
 
@@ -485,7 +485,7 @@ WorldVisual::WorldVisual(WorldVisualInput vi)
 	geometry_serialization_table[str_policy_back] = &policy_back_geometry;
 
 	materials_serialization_table[str_policy_back_material] = &policy_back_material;
-	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
+    for (int i = 0; i < As<int>(PoliciesType::policies_count); ++i) {
 		materials_serialization_table[str_policy[i]] = &policy_materials[i];
 	}
 
@@ -1381,7 +1381,7 @@ void WorldVisual::SelectPolicyFromActiveDeckAsync(SelectPolicyCallback cb) {
 	auto& player = GetPlayer();
 
 	std::vector<vsg::ref_ptr<vsg::MatrixTransform>> transforms;
-	player.Policies()
+	player.GetPolicies()
 		.InActiveDeck()
 		.ForEach([this, cb, &transforms](int index, const PolicyTemplate& policy) {
 			auto p = policies[As<int>(policy.GetType())];
@@ -1393,7 +1393,7 @@ void WorldVisual::SelectPolicyFromActiveDeckAsync(SelectPolicyCallback cb) {
 				PostWorldUpdateAction([this, policyId](WorldLogic& world) {
 					OnActivateClear(policies[As<int>(policyId)]);
 					GetPlayer()
-						.Policies()
+						.GetPolicies()
 						.InActiveDeck()
 						.ForEach([this](int index, const PolicyTemplate& policy) {
 							OnActivateClear(policies[As<int>(policy.GetType())]);
@@ -1426,14 +1426,14 @@ void WorldVisual::SelectPolicyFromActiveDeckAsync(SelectPolicyCallback cb) {
 			_nextActionCallback = []() {};
 
 			GetPlayer()
-				.Policies()
+				.GetPolicies()
 				.InActiveDeck()
 				.ForEach([this](int index, const PolicyTemplate& policy) {
 					OnActivateClear(policies[As<int>(policy.GetType())]);
 				});
 		});
-
-		cb(Policies::policy_unknown);
+        
+        cb(PoliciesType::policy_unknown);
 	};
 
 	MoveToGridView(transforms.begin(), transforms.end(), 0.04, 0.07, 0.09, -0.25);
@@ -1546,7 +1546,7 @@ void WorldVisual::SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, S
 	auto& player = GetPlayer();	
 
 	std::vector<vsg::ref_ptr<vsg::MatrixTransform>> transforms;
-	player.Policies()
+	player.GetPolicies()
 		.InHands()
 		.ForEach([this, cb, &transforms](int index, const PolicyTemplate& policy) {
 			auto p = policies[As<int>(policy.GetType())];
@@ -1558,7 +1558,7 @@ void WorldVisual::SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, S
 			PostWorldUpdateAction([this, policyId](WorldLogic& world) {
 				OnActivateClear(policies[As<int>(policyId)]);
 				GetPlayer()
-					.Policies()
+					.GetPolicies()
 					.InHands()
 					.ForEach([this](int index, const PolicyTemplate& policy) {
 					OnActivateClear(policies[As<int>(policy.GetType())]);
@@ -1606,7 +1606,7 @@ void WorldVisual::SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, S
 			_nextActionCallback = []() {};
 
 			GetPlayer()
-				.Policies()
+				.GetPolicies()
 				.InHands()
 				.ForEach([this](int index, const PolicyTemplate& policy) {
 				OnActivateClear(policies[As<int>(policy.GetType())]);
@@ -1620,8 +1620,8 @@ void WorldVisual::SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, S
 				GetInvert(PlayerId()));
 
 			});
-
-		cb(Policies::policy_unknown);
+        
+        cb(PoliciesType::policy_unknown);
 	};
 
 	MoveToGridView(transforms.begin(), transforms.end(), 0.04, 0.07, 0.09, -0.25);
@@ -1695,10 +1695,10 @@ void WorldVisual::SelectExpeditionAsync(std::function<void(int expedition)> cb) 
 	};
 }
 
-void WorldVisual::SelectLawPolicyAsync(Policies a, Policies b, std::function<void(Policies selected, Policies dropped)> cb) {
-
-	if (a == Policies::policy_unknown || b == Policies::policy_unknown) {
-		if (a != Policies::policy_unknown) {
+void WorldVisual::SelectLawPolicyAsync(PoliciesType a, PoliciesType b, std::function<void(PoliciesType selected, PoliciesType dropped)> cb) {
+    
+    if (a == PoliciesType::policy_unknown || b == PoliciesType::policy_unknown) {
+        if (a != PoliciesType::policy_unknown) {
 			cb(a, b);
 		}
 		else {
@@ -1836,7 +1836,7 @@ void WorldVisual::SelectCityAsync(std::function<void(Cities city)> cb) {
 	}
 }
 
-void WorldVisual::SelectPolicyFromDraftAsync(std::function<void(Policies policy)> cb) {
+void WorldVisual::SelectPolicyFromDraftAsync(std::function<void(PoliciesType policy)> cb) {
 	_selectPolicyFromDraftCallback = cb;
 }
 

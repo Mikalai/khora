@@ -72,8 +72,13 @@
             "displayName": "Configure preset using toolchain file",
             "description": "Sets Ninja generator, build and install directory",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",            
+            "toolchainFile": "/home/mikalaj/code/vcpkg/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
+                "vsg_glslang_DIR": "/home/mikalaj/code/vulkan/VulkanSceneGraph/src/glslang",
+                "vsg_DIR": "/home/mikalaj/code/vulkan/VulkanSceneGraph/build/install/lib64/cmake/vsg",
+                "vsgXchange_DIR": "/home/mikalaj/code/vulkan/vsgXchange/build/install/lib64/cmake/vsgXchange",
+                "vsgImGui_DIR": "/home/mikalaj/code/vulkan/vsgImGui/build/install/lib64/cmake/vsgImGui",
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_TOOLCHAIN_FILE": "",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"

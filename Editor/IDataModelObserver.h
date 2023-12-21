@@ -48,13 +48,13 @@ public:
     virtual void Execute(const LogNotification& cmd) = 0;
 
     struct EntrySelectedNotification {
-        std::shared_ptr<Entry> Entry;
+        std::shared_ptr<Entry> SelectedEntry;
     };
 
     virtual void Execute(const EntrySelectedNotification& cmd) = 0;
 
     struct EntryPropertyChangedNotification {
-        std::shared_ptr<Entry> Entry;
+        std::shared_ptr<Entry> ChangedEntry;
         std::string_view Property;
     };
 

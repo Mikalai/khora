@@ -10,10 +10,10 @@ class PoliciesManipulator {
 public:
 
 	PoliciesManipulator(WorldLogic& world);
-	Policies GetNextPolicy();
+    PoliciesType GetNextPolicy();
 	bool CanTake() const;
 	void Shuffle();
-	void Drop(Policies policy);
+    void Drop(PoliciesType policy);
 
 private:
 	WorldLogic& _world;

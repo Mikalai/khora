@@ -90,14 +90,14 @@ RoundState::RoundState(WorldLogic& logic)
 		});
 
 	_achieveState.SetEnter([](WorldLogic& world) {
-		INFO("=== BEGIN: ACHIEVE STAGE ===");		
-		world.Players().ForEach([](PlayerLogic& player) {
+		INFO("=== BEGIN: ACHIEVE STAGE ===");
+        world.GetPlayers().ForEach([](PlayerLogic& player) {
 			player.ResetActions();
 			});
 		});		
 
 	_achieveState.Transition([](const WorldLogic& world) {
-		return ui().IsIdle() && world.Players().All([](const PlayerLogic& player) { return player.IsIdle(); });
+        return ui().IsIdle() && world.GetPlayers().All([](const PlayerLogic& player) { return player.IsIdle(); });
 		}, &last);
 
 	_achieveState.SetExit([](WorldLogic& world) {

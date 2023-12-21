@@ -23,7 +23,7 @@ WorldDraftState::WorldDraftState(WorldLogic& logic)
 		}
 
 		state_round[i].Transition([i](const WorldLogic& world) {
-			return ui().IsIdle() && world.Players().All([i](const PlayerLogic& p) {
+            return ui().IsIdle() && world.GetPlayers().All([i](const PlayerLogic& p) {
 				return p.GetDraftSize() == 5 - i - 1;
 				});			
 

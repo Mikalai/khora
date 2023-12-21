@@ -99,11 +99,11 @@ bool WorldLogic::IsPersipolisTaken() const {
 	return _expeditions.back() == false;
 }
 
-Players WorldLogic::Players() {
+Players WorldLogic::GetPlayers() {
 	return ::Players{ *this };
 }
 
-ConstPlayers WorldLogic::Players() const {
+ConstPlayers WorldLogic::GetPlayers() const {
 	return ::ConstPlayers{ *this };
 }
 
@@ -112,7 +112,7 @@ AllArmies WorldLogic::Armies() {
 }
 
 
-Policies WorldLogic::GetNextPolicy() {
+PoliciesType WorldLogic::GetNextPolicy() {
 	auto policy = _policyDeck.Next();
 	PolicyTakenFromDeckMessage msg{ std::get<0>(policy) };
 	Notify(msg);
@@ -132,7 +132,7 @@ GlobalEventType WorldLogic::TakeNextEvent() {
 
 void WorldLogic::CompleteDraft() {
 
-	Players().ForEach([](PlayerLogic& player) {
+    GetPlayers().ForEach([](PlayerLogic& player) {
 		player.EndDraft();
 		});
 
@@ -261,14 +261,14 @@ void WorldLogic::BeginExecuteActions() {
 void WorldLogic::BeginProgressStage() {
 	_progressState.Reset(*this);
 
-	Players().ForEach([](PlayerLogic& player) {
+    GetPlayers().ForEach([](PlayerLogic& player) {
 		player.BeginProgressStage();
 		});
 }
 
 void WorldLogic::EndProgressStage() {
 	_progressState.Complete(*this);
-	Players().ForEach([](PlayerLogic& player) {
+    GetPlayers().ForEach([](PlayerLogic& player) {
 		player.EndProgressStage();
 		});
 }
@@ -278,16 +278,16 @@ void WorldLogic::ActionExecutionState::Reset(WorldLogic& w) {
 	_world = &w;
 	int index = 0;
 	std::array<int, 4> players;
-	w.Players().OrderedByDices().Apply([&index, &players, this](PlayerLogic& p) {
+    w.GetPlayers().OrderedByDices().Apply([&index, &players, this](PlayerLogic& p) {
 		players[index] = p.GetId();
 		index++;		
 		});
 
-	firstPlayer = w.Players().OrderedByDices().First();
+    firstPlayer = w.GetPlayers().OrderedByDices().First();
 }
 
 bool WorldLogic::ActionExecutionState::IsComplete() const {
-	return world().Players().All([](const PlayerLogic& p) {
+    return world().GetPlayers().All([](const PlayerLogic& p) {
 		return p.AreActionsDone();
 		});
 }
@@ -345,7 +345,7 @@ void WorldLogic::ProgressState::Complete(WorldLogic& w) {
 
 void WorldLogic::EndGame() {
 	int index = 1;
-	Players().OrderedByPoints().Apply([&index](PlayerLogic& logic) {
+    GetPlayers().OrderedByPoints().Apply([&index](PlayerLogic& logic) {
 		INFO("Player {} took {} place with {} score points! Congratulations!!!", logic.GetId(), index++, logic.GetPoints());
 	});
 }

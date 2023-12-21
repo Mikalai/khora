@@ -6,18 +6,18 @@
 
 class PolicyTemplate {
 public:
-	PolicyTemplate(Policies policy, PolicyEffect& effect, PolicyType type);
+    PolicyTemplate(PoliciesType policy, PolicyEffect& effect, PolicyType type);
 
     const PolicyEffect& GetEffect() const;
-	Policies GetType() const;
+    PoliciesType GetType() const;
 	
 	const std::string& GetName() const;
 	const std::string& GetDescription() const;
 
 private:
-	Policies policy{ Policies::policy_unknown };    
+    PoliciesType policy{ PoliciesType::policy_unknown };    
 	PolicyEffect* effect;
 	PolicyType type;
 };
 
-const PolicyTemplate& GetPolicyTemplate(Policies policy);
+const PolicyTemplate& GetPolicyTemplate(PoliciesType policy);

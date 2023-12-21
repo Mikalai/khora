@@ -83,7 +83,7 @@ EventEffect g_effects[] = {
 	},
     { 
         GlobalEventType::RiseOfPersia, [](WorldLogic& logic) {
-			logic.Players().ForEach([](PlayerLogic& player) {
+         logic.GetPlayers().ForEach([](PlayerLogic& player) {
 				player.BeginExtraProgress(ProgressTrackType::Military, 2, [](PlayerLogic&) {});
 			});
         }
@@ -92,7 +92,7 @@ EventEffect g_effects[] = {
         GlobalEventType::Prosperity, [](WorldLogic& logic) {
             auto armies = logic.Armies();
 			armies.Max([](PlayerLogic& player) {
-				player.BeginSelectPolicyFromHands(PolicySelectionReasonType::Activate, [&player](Policies policy) {
+                player.BeginSelectPolicyFromHands(PolicySelectionReasonType::Activate, [&player](PoliciesType policy) {
 					if (player.CanActivatePolicy(policy)) {
 						player.ActivatePolicy(policy);
 					}					
@@ -103,14 +103,14 @@ EventEffect g_effects[] = {
     },
     { 
         GlobalEventType::DeliveriesFromLydia, [](WorldLogic& logic) {
-            logic.Players().ForEach([](PlayerLogic& player) {
+         logic.GetPlayers().ForEach([](PlayerLogic& player) {
                 player.AddMoney(3);
             });
         } 
     },
     { 
         GlobalEventType::Hostilities, [](WorldLogic& logic) {
-            logic.Players().ForEach([](PlayerLogic& player) {
+         logic.GetPlayers().ForEach([](PlayerLogic& player) {
                 player.RemoveArmy(std::min(2, player.GetArmySize()));
             });
         }
@@ -127,11 +127,11 @@ EventEffect g_effects[] = {
             });
 
 			logic.Armies().Min([](PlayerLogic& player) {
-				player.BeginSelectPolicyFromHandsToDrop([&player](Policies policy) {
-					if (policy != Policies::policy_unknown) {
+                player.BeginSelectPolicyFromHandsToDrop([&player](PoliciesType policy) {
+                    if (policy != PoliciesType::policy_unknown) {
 						player.RemovePolicy(policy);
-						player.BeginSelectPolicyFromHandsToDrop([&player](Policies policy) {
-							if (policy != Policies::policy_unknown) {
+                        player.BeginSelectPolicyFromHandsToDrop([&player](PoliciesType policy) {
+                            if (policy != PoliciesType::policy_unknown) {
 								player.RemovePolicy(policy);
 							}
 							else {
@@ -148,14 +148,14 @@ EventEffect g_effects[] = {
     },
     { 
         GlobalEventType::PlagueOfAthens, [](WorldLogic& logic) {
-            logic.Players().ForEach([](PlayerLogic& player) {
+         logic.GetPlayers().ForEach([](PlayerLogic& player) {
                 player.RemovePopulation(2);
             });
         }
     },
     { 
         GlobalEventType::DelphicOracle, [](WorldLogic& logic) {
-            logic.Players().ForEach([](PlayerLogic& player) {
+         logic.GetPlayers().ForEach([](PlayerLogic& player) {
                 player.BeginSelectDiscoveryFromHands([&player](discovery_type discovery) {
                     if (discovery != discovery_type::no) {
                         player.AddPhilosophy(2);
@@ -170,7 +170,7 @@ EventEffect g_effects[] = {
     },
     { 
         GlobalEventType::Drought, [](WorldLogic& logic) {
-            logic.Players().ForEach([](PlayerLogic& player) {
+         logic.GetPlayers().ForEach([](PlayerLogic& player) {
                 player.RemoveMoney(std::min(2, player.GetMoney()));
             });
         } 
@@ -196,8 +196,8 @@ EventEffect g_effects[] = {
 	{
 		GlobalEventType::MilitaryCampaignAgainstPersia, [](WorldLogic& logic) {
 			if (logic.IsPersipolisTaken()) {
-
-				logic.Players().OrderedByDices().Apply([](PlayerLogic& player) {
+             
+             logic.GetPlayers().OrderedByDices().Apply([](PlayerLogic& player) {
 					player.ResetActions();
 					player.BeginSelectAction(6, false, [&player](ActionType action) {
 						INFO("Player {} selected {} during military campaing", player.GetId(), ActionToString[As<int>(action)]);

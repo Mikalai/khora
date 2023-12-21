@@ -8,9 +8,9 @@ struct GameMessage;
 class PlayerLogic;
 class WorldLogic;
 using DropDiscoveryCallback = std::function<void(PlayerLogic& player, int count)>;
-//using SelectPolicyCallback = std::function<void(PlayerLogic& player, Policies* other, int count, int selected)>;
+//using SelectPolicyCallback = std::function<void(PlayerLogic& player, PoliciesType* other, int count, int selected)>;
 // using SelectExpeditionCallback = std::function<void(PlayerLogic& player, int expedition)>;
-using DraftStepCallback = std::function<void(PlayerLogic& player, Policies policy)>;
+using DraftStepCallback = std::function<void(PlayerLogic& player, PoliciesType policy)>;
 class IUserInputHandler;
 
 class IUserInput {

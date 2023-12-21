@@ -17,7 +17,7 @@ public:
 	void SelectPlayersCountAsync(std::function<void(int count)> cb) override;
 	void SelectCityColorAsync(std::function<void(player_color color)> cb) override;
 	void SelectCityAsync(std::function<void(Cities city)> cb) override;
-    void SelectPolicyFromDraftAsync(std::function<void(Policies policy)> cb) override;
+    void SelectPolicyFromDraftAsync(std::function<void(PoliciesType policy)> cb) override;
     //void AdvanceAnyTrackForFree() override;
     //void AdvanceAnyTrack(int discont) override;
     //void AdvanceMilitaryTrack(int discont) override;

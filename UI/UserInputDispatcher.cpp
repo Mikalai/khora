@@ -53,7 +53,7 @@ struct InitMapping {
 
 		m.On([](UserInputDispatcher& self, BeginDraftMessage& msg) {
 			auto& h = self.Handlers().Select(msg.player);
-			h.SelectPolicyFromDraftAsync([&h](Policies policy) {
+            h.SelectPolicyFromDraftAsync([&h](PoliciesType policy) {
 				h.PostWorldUpdateAction([&h, policy](WorldLogic& logic) {
 					logic.GetPlayer(h.PlayerId()).Draft().Take(policy);
 					});
@@ -90,7 +90,7 @@ struct InitMapping {
 
 		m.On([](UserInputDispatcher& self, SelectLawPolicyMessage& msg) {
 			auto& h = self.Handlers().Select(msg.playerId);
-			h.SelectLawPolicyAsync(msg.policyA, msg.policyB, [&h](Policies selected, Policies dropped) {
+            h.SelectLawPolicyAsync(msg.policyA, msg.policyB, [&h](PoliciesType selected, PoliciesType dropped) {
 				h.PostWorldUpdateAction([&h, selected, dropped](WorldLogic& world) {
 					INFO("Player {} selected policy {}, dropped policy {}", h.PlayerId(), GetPolicyTemplate(selected).GetName(), GetPolicyTemplate(dropped).GetName());
 					PlayerLogic& p = world.GetPlayer(h.PlayerId());
@@ -169,7 +169,7 @@ struct InitMapping {
 
 		m.On([](UserInputDispatcher& self, SelectPolicyFromHandsMessage& msg) {
 			auto& h = self.Handlers().Select(msg.playerId);
-			h.SelectPolicyFromHandsAsync(msg.reason, [&h, msg](Policies policy) {
+            h.SelectPolicyFromHandsAsync(msg.reason, [&h, msg](PoliciesType policy) {
 				auto tag = rand();
 				INFO("{}: Player {} selected policy {} ({})", tag, h.PlayerId(), ToString(policy), (int)policy);
 				h.PostWorldUpdateAction([&h, tag, policy, msg](WorldLogic& world) {
@@ -182,7 +182,7 @@ struct InitMapping {
 
 		m.On([](UserInputDispatcher& self, SelectPolicyFromActiveDeckMessage& msg) {
 			auto& h = self.Handlers().Select(msg.playerId);
-			h.SelectPolicyFromActiveDeckAsync([&h, msg](Policies policy) {
+            h.SelectPolicyFromActiveDeckAsync([&h, msg](PoliciesType policy) {
 				h.PostWorldUpdateAction([&h, policy, msg](WorldLogic& world) {
 					INFO("Player {} selected activated policy {} ({})", h.PlayerId(), ToString(policy), (int)policy);
 					PlayerLogic& p = world.GetPlayer(h.PlayerId());

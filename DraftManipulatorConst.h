@@ -4,11 +4,11 @@ struct DraftManipulatorConst {
 	DraftManipulatorConst(const PlayerLogic& player)
 		: _player{ player } {
 	}
-
-	void ForEach(std::function<void(Policies policy)> action);
-	Policies Select(int index) const;
+    
+    void ForEach(std::function<void(PoliciesType policy)> action);
+    PoliciesType Select(int index) const;
 	int Size() const;
-	Policies Random();
+    PoliciesType Random();
 
 private:
 	const PlayerLogic& _player;

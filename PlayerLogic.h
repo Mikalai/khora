@@ -13,7 +13,7 @@
 #include <DraftManipulatorConst.h>
 
 using DiscoveryCollection = std::vector<discovery_type>;
-using PolicyCollection = std::vector<Policies>;
+using PolicyCollection = std::vector<PoliciesType>;
 
 struct GameMessage;
 class PlayerLogic;
@@ -24,11 +24,11 @@ using MilitaryLossesPerk = std::function<int(int)>;
 using DiscoveryCostPerk = std::function<int(int)>;
 using ActionCompleteCallback = std::function<void()>;
 using DiscoveryDroppedCallback = std::function<void(int count)>;
-using PolicyDroppedCallback = std::function<void(Policies policy)>;
+using PolicyDroppedCallback = std::function<void(PoliciesType policy)>;
 using DiscoverySelectedCallback = std::function<void(discovery_type discovery)>;
 using ExtraProgressCallback = std::function<void(PlayerLogic& logic)>;
 using SelectActionCallback = std::function<void(ActionType action)>;
-using SelectPolicyCallback = std::function<void(Policies policy)>;
+using SelectPolicyCallback = std::function<void(PoliciesType policy)>;
 //enum class PlayerState {
 //	Idle,
 //	SelectPolicy
@@ -88,14 +88,14 @@ public:
 	void AddGlory(int count);
 	void AddDiscovery(discovery_type type, int fromExpedition, int indexInExpedition, int selectionIndex);
 	void RemoveDiscovery(discovery_type type);
-	void RemovePolicy(Policies policy);
+    void RemovePolicy(PoliciesType policy);
 	void RemoveGlory(int count);
 	void AddPhilosophy(int count);
 	void RemovePhilosophy(int count);
 	void AddPopulation(int count);
 	void RemovePopulation(int count);
 	player_color GetColor() const;
-	void AddPolicy(Policies policy, bool selectFlag);
+    void AddPolicy(PoliciesType policy, bool selectFlag);
 	void SetColor(player_color color);
 	Cities GetCity() const;
 	void SetCity(Cities value);
@@ -110,7 +110,7 @@ public:
 	int GetId() const;
 	int GetPhilosophyCount() const;
 	int GetPoliciesInActiveDeckCount() const;
-	Policies GetPolicyInActiveDeck(int index) const;
+    PoliciesType GetPolicyInActiveDeck(int index) const;
 	int GetPoliciesInHandCount() const;
 	int GetMilitaryLevel() const;
 	int GetCultureLevel() const;
@@ -142,16 +142,16 @@ public:
 	void DoPhilosophy(ActionCompleteCallback cb);
 
 	void BeginDoLaw(ActionCompleteCallback cb);
-	void EndDoLaw(Policies selected, Policies dropped);
+    void EndDoLaw(PoliciesType selected, PoliciesType dropped);
 
 	void DoCulture(ActionCompleteCallback cb);
 	void DoTrade(ActionCompleteCallback cb);
 	void BeginDoMilitary(ActionCompleteCallback cb);
 	void EndDoMilitary();
 	/*void BeginActivatePolicy(ActionCompleteCallback cb);*/
-	void ActivatePolicy(Policies policy);
+    void ActivatePolicy(PoliciesType policy);
 
-	bool CanActivatePolicy(Policies policy) const;
+    bool CanActivatePolicy(PoliciesType policy) const;
 	void DoExpand(ActionCompleteCallback cb);
 	void BeginExpedition(ActionCompleteCallback cb);
 	void EndExpedition(int expedition);
@@ -173,19 +173,19 @@ public:
 	void SortDices();
 
 	void DropPolicy(int index);
-	int GetPolicyIndex(Policies dropped);
+    int GetPolicyIndex(PoliciesType dropped);
 
 	//void DropDiscovery(discovery_type discovery);
 	bool IsIdle() const;
 
 	void BeginDraft();
 	void EndDraft();
-	void TakePolicyFromDraft(Policies policy);
+    void TakePolicyFromDraft(PoliciesType policy);
 	int GetDraftSize() const;
 
-	std::vector<Policies> TakeDraft();
-	void GiveDraft(std::vector<Policies>&& deck);
-	Policies GetDraftPolicy(int index) const;
+    std::vector<PoliciesType> TakeDraft();
+    void GiveDraft(std::vector<PoliciesType>&& deck);
+    PoliciesType GetDraftPolicy(int index) const;
 
 	DraftManipulator Draft();
 	DraftManipulatorConst Draft() const;
@@ -216,12 +216,12 @@ public:
 	void EndExecuteAction();
 
 	void BeginSelectPolicyFromActiveDeck(SelectPolicyCallback cb);
-	void EndSelectPolicyFromActiveDeck(Policies policy);
+    void EndSelectPolicyFromActiveDeck(PoliciesType policy);
 
 	void BeginSelectPolicyFromHandsToActivate(SelectPolicyCallback cb);
 	void BeginSelectPolicyFromHandsToDrop(SelectPolicyCallback cb);
 	void BeginSelectPolicyFromHands(PolicySelectionReasonType reason, SelectPolicyCallback cb);
-	void EndSelectPolicyFromHands(Policies policy);
+    void EndSelectPolicyFromHands(PoliciesType policy);
 
 	void BeginProgressStage();
 	bool IsProgressDone() const;
@@ -229,7 +229,7 @@ public:
 	void CompleteProgressStep();
 	void EndProgressStage();
 
-	ConstPlayerPoliciesManipulator Policies() const;
+    ConstPlayerPoliciesManipulator GetPolicies() const;
 private:
 	void SetId(int id);
 	void SetWorld(WorldLogic* logic);

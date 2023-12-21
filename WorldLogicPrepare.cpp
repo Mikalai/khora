@@ -33,15 +33,15 @@ void WorldLogicPrepare::ShuffleEvents() {
 
 void WorldLogicPrepare::GivePolicies() {
 	for (int i = 0; i < 5; ++i) {
-		_world.Players().ForEach([this](PlayerLogic& player) {
+        _world.GetPlayers().ForEach([this](PlayerLogic& player) {
 			player.AddPolicy(_world.Policies().GetNextPolicy(), false);
 			});
 	}
 }
 
 void WorldLogicPrepare::ChangeDraft() {
-	
-	assert(_world.Players().All([](const PlayerLogic& player) {
+    
+    assert(_world.GetPlayers().All([](const PlayerLogic& player) {
 		return player.GetPoliciesInHandCount() <= 5;
 		}));
 
@@ -58,7 +58,7 @@ void WorldLogicPrepare::ChangeDraft() {
 	_world.GetPlayer(0).GiveDraft(std::move(cur));
 
 	if (needDraft) {
-		_world.Players().ForEach([](PlayerLogic& logic) {
+        _world.GetPlayers().ForEach([](PlayerLogic& logic) {
 			BeginDraftMessage msg{ logic.GetId() };
 			logic.Notify(msg);
 			});
@@ -70,7 +70,7 @@ void WorldLogicPrepare::EndDraft() {
 }
 
 void WorldLogicPrepare::BeginDraft() {
-	_world.Players().ForEach([](PlayerLogic& player) {
+    _world.GetPlayers().ForEach([](PlayerLogic& player) {
 		player.BeginDraft();
 		});
 }

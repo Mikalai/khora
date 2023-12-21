@@ -111,7 +111,7 @@ void DataModel::Execute(const ResetModelCommand &cmd) {
 void DataModel::OnPropertyChanged(std::shared_ptr<Entry> sender,
                                   std::string_view name) {
   Notify(IDataModelObserver::EntryPropertyChangedNotification{
-      .Entry = sender, .Property = name});
+                                                                .ChangedEntry = sender, .Property = name});
 }
 
 void DataModel::Execute(const SelectEntryCommand &cmd) {
@@ -124,7 +124,7 @@ void DataModel::Execute(const SelectEntryCommand &cmd) {
       return;
 
     Notify(IDataModelObserver::EntrySelectedNotification{
-        .Entry = entry->CreateView(_queue)});
+                                                         .SelectedEntry = entry->CreateView(_queue)});
   });
 }
 

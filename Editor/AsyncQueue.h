@@ -1,6 +1,7 @@
 #pragma once
 
 #include <semaphore>
+#include <thread>
 #include <queue>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/deadline_timer.hpp>

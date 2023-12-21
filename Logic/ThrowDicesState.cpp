@@ -21,7 +21,7 @@ ThrowDicesState::ThrowDicesState(WorldLogic& logic)
 		});
 
 	_throwDices.Transition([](const WorldLogic& world) {
-		return ui().IsIdle() && world.Players().All([](const PlayerLogic& player) {
+        return ui().IsIdle() && world.GetPlayers().All([](const PlayerLogic& player) {
 			return player.AreDicesThrown();
 			});
 		}, & _identifyOrder);
@@ -49,7 +49,7 @@ ThrowDicesState::ThrowDicesState(WorldLogic& logic)
 		});
 
 	_selectActions.Transition([](const WorldLogic& world) {
-		return ui().IsIdle() && world.Players().All([](const PlayerLogic& player) {
+        return ui().IsIdle() && world.GetPlayers().All([](const PlayerLogic& player) {
 			return player.AreActionsSelected();
 			});
 		}, &_openActions);

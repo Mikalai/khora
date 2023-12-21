@@ -514,7 +514,7 @@ const std::string str_policy_front_supplies_from_overseas = "policy_front_suppli
 const std::string str_policy_front_western_gifts = "policy_front_western_gifts";
 const std::string str_policy_front_amnesty_for_socrat = "policy_front_amnesty_for_socrat";
 
-const std::string str_policy[As<int>(Policies::policies_count)] = {
+const std::string str_policy[As<int>(PoliciesType::policies_count)] = {
     str_policy_front_old_guard,
     str_policy_front_archives,
     str_policy_front_asket,

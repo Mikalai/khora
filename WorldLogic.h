@@ -53,8 +53,8 @@ public:
 	void CompleteExpedition(int player, int index);
     bool IsPersipolisTaken() const;
     AllArmies Armies();
-    Players Players();
-    ConstPlayers Players() const;    
+    Players GetPlayers();
+    ConstPlayers GetPlayers() const;
     void CompleteDraft();    
     void ActivateExpedition(int playerId, int expeditionId);
 
@@ -66,7 +66,7 @@ public:
 	void EndGame();
 
 private:
-    ::Policies GetNextPolicy();
+    ::PoliciesType GetNextPolicy();
 	bool HasPoliciesInDeck() const;
     GlobalEventType TakeNextEvent();
     ::PoliciesDeck& PoliciesDeck();

@@ -50,7 +50,7 @@ void AIUserInput::ThrowDiceAsync(int diceIndex, std::function<void(int diceIndex
 	cb(diceIndex, NextRandomDiceValue());
 }
 
-void AIUserInput::SelectPolicyFromDraftAsync(std::function<void(Policies policy)> cb) {
+void AIUserInput::SelectPolicyFromDraftAsync(std::function<void(PoliciesType policy)> cb) {
 	cb(GetWorld().GetPlayer(PlayerId()).Draft().Random());
 }
 
@@ -91,11 +91,11 @@ std::unique_ptr<ICityStrategy> AIUserInput::CreateCityStrategy(Cities city) {
 	return std::make_unique<SimpleCityStrategy>();
 }
 
-void AIUserInput::SelectLawPolicyAsync(Policies a, Policies b, std::function<void(Policies selected, Policies dropped)> cb) {
+void AIUserInput::SelectLawPolicyAsync(PoliciesType a, PoliciesType b, std::function<void(PoliciesType selected, PoliciesType dropped)> cb) {
 	assert(_strategy != nullptr);
-	
-	if (a == Policies::policy_unknown || b == Policies::policy_unknown) {
-		if (a != Policies::policy_unknown) {
+    
+    if (a == PoliciesType::policy_unknown || b == PoliciesType::policy_unknown) {
+        if (a != PoliciesType::policy_unknown) {
 			cb(a, b);
 		}
 		else {

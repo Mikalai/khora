@@ -57,14 +57,21 @@ if (${vsg_FOUND})
     
     find_package(Boost COMPONENTS thread) 
 
-    find_package(wxWidgets CONFIG REQUIRED)
+    find_package(wxWidgets REQUIRED gl core base OPTIONAL_COMPONENTS net)
     find_package(vsgXchange CONFIG REQUIRED)
 
 
     add_executable(Editor WIN32 ${EditorSources})
     
     target_include_directories(Editor PRIVATE ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
-    target_link_libraries(Editor PRIVATE wx::core wx::base vsg::vsg vsgXchange::vsgXchange ${Boost_LIBRARIES} KhoraLib)
+    include(${wxWidgets_USE_FILE})
+
+    find_package(PkgConfig)
+
+    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+        
+    target_include_directories(Editor PUBLIC ${GTK3_INCLUDE_DIRS})
+    target_link_libraries(Editor PRIVATE ${wxWidgets_LIBRARIES} vsg::vsg vsgXchange::vsgXchange ${Boost_LIBRARIES} KhoraLib)
 
     add_custom_command(
         TARGET Editor POST_BUILD

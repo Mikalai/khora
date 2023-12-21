@@ -246,7 +246,7 @@ void EditorMainWindow::Execute(const LogNotification& cmd)
 void EditorMainWindow::Execute(const EntrySelectedNotification& cmd)
 {
     wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-        _transformPanel->SetDataModel(cmd.Entry);
+        _transformPanel->SetDataModel(cmd.SelectedEntry);
         _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {ROOT_SCENE} });
     });
 }
@@ -260,7 +260,7 @@ static const std::unordered_set<std::string_view> PropertiesToRecompile{
 
 void EditorMainWindow::Execute(const EntryPropertyChangedNotification& cmd)
 {
-    if (!cmd.Entry)
+    if (!cmd.ChangedEntry)
         return;
 
     if (PropertiesToRecompile.contains(cmd.Property)) {

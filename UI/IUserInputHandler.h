@@ -9,14 +9,14 @@ using UpdateCallback = std::function<void(WorldLogic&)>;
 using SelectPlayersCountCallback = std::function<void(int count)>;
 using SelectCityColorCallback = std::function<void(player_color color)>;
 using SelectCityCallback = std::function<void(Cities city)>;
-using SelectPolicyFromDraftCallback = std::function<void(Policies policy)>;
+using SelectPolicyFromDraftCallback = std::function<void(PoliciesType policy)>;
 using ThrowDiceCallback = std::function<void(int diceIndex, int diceValue)>;
 using SelectActionsCallback = std::function<void(ActionType type)>;
 using ExecuteActionCallback = std::function<void()>;
-using SelectLawPolicyCallback = std::function<void(Policies selected, Policies dropped)>;
+using SelectLawPolicyCallback = std::function<void(PoliciesType selected, PoliciesType dropped)>;
 using SelectExpeditionCallback = std::function<void(int expedition)>;
 using MakeProgressCallback = std::function<void(ProgressTrackType)>;
-using SelectPolicyCallback = std::function<void(Policies policy)>;
+using SelectPolicyCallback = std::function<void(PoliciesType policy)>;
 using SelectDiscoveryCallback = std::function<void(discovery_type discovery)>;
 
 class IUserInputHandler {
@@ -54,7 +54,7 @@ public:
 	virtual void ThrowDiceAsync(int diceIndex, ThrowDiceCallback cb) = 0;
 	virtual void SelectActionAsync(int diceValue, bool allowMilitary, SelectActionsCallback cb) = 0;
 	virtual void ExecuteActionAsync(ActionType action, ExecuteActionCallback cb) = 0;
-	virtual void SelectLawPolicyAsync(Policies a, Policies b, SelectLawPolicyCallback cb) = 0;
+    virtual void SelectLawPolicyAsync(PoliciesType a, PoliciesType b, SelectLawPolicyCallback cb) = 0;
 	virtual void SelectExpeditionAsync(SelectExpeditionCallback cb) = 0;
 	virtual void MakeProgressAsync(MakeProgressCallback cb) = 0;
 	virtual void SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, SelectPolicyCallback cb) = 0;

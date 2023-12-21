@@ -5,5 +5,5 @@ fi
 
 vcpkg_path="$1"
 
-"$vcpkg_path" install boost wxWidgets glm fmt gtest --triplet=x64-linux
+"$vcpkg_path" install boost glm fmt gtest magic-enum --triplet=x64-linux --recurse
 

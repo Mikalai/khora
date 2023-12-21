@@ -81,7 +81,7 @@ WorldInitState::WorldInitState(WorldLogic& logic)
 
 	state_give_policies.SetExit([](WorldLogic& world) {
 		INFO("=== EXIT GIVE POLICIES ===");
-		assert(world.Players().All([](const PlayerLogic& player) { return player.GetPoliciesInHandCount() == 5; }));
+        assert(world.GetPlayers().All([](const PlayerLogic& player) { return player.GetPoliciesInHandCount() == 5; }));
 		});
 
 	state_draft_policies.SetEnter([](WorldLogic& world) {
@@ -100,8 +100,8 @@ WorldInitState::WorldInitState(WorldLogic& logic)
 		return ui().IsIdle();
 		}, &state_set_players_levels);
 
-	state_give_startup_money.SetEnter([](WorldLogic& world) {		
-		world.Players().ForEach([](PlayerLogic& player) {
+	state_give_startup_money.SetEnter([](WorldLogic& world) {
+        world.GetPlayers().ForEach([](PlayerLogic& player) {
 			player.AddMoney(STARTUP_MONEY);
 			});
 		});
@@ -111,7 +111,7 @@ WorldInitState::WorldInitState(WorldLogic& logic)
 		}, &state_advance_city_to_first_level);
 		
 	state_set_players_levels.SetEnter([](WorldLogic& world) {
-		world.Players().ForEach([](PlayerLogic& player) {
+        world.GetPlayers().ForEach([](PlayerLogic& player) {
 			player.SetPoints(0);
 			player.SetPopulation(3);
 			player.SetTax(0);
@@ -124,7 +124,7 @@ WorldInitState::WorldInitState(WorldLogic& logic)
 		});
 
 	state_advance_city_to_first_level.Transition([](const WorldLogic& world) {
-		return world.Players().All([](const PlayerLogic& player) {
+        return world.GetPlayers().All([](const PlayerLogic& player) {
 			return player.IsIdle();
 			}) && ui().IsIdle();
 		}, &last);

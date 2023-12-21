@@ -9,7 +9,7 @@ PoliciesManipulator::PoliciesManipulator(WorldLogic& world)
 	: _world{ world } {
 }
 
-Policies PoliciesManipulator::GetNextPolicy() {
+PoliciesType PoliciesManipulator::GetNextPolicy() {
 	return _world.GetNextPolicy();
 }
 
@@ -17,7 +17,7 @@ bool PoliciesManipulator::CanTake() const {
 	return _world._policyDeck.CanTake();
 }
 
-void PoliciesManipulator::Drop(Policies policy) {
+void PoliciesManipulator::Drop(PoliciesType policy) {
 	_world._policyDeck.Drop(policy);
 	PolicyDroppedMessage msg{ -1, policy };
 	_world.Notify(msg);
@@ -25,8 +25,8 @@ void PoliciesManipulator::Drop(Policies policy) {
 
 void PoliciesManipulator::Shuffle() {
 	_world.PoliciesDeck().Reset(true);
-
-	_world.PoliciesDeck().ForEach([this](int i, Policies p) {
+    
+    _world.PoliciesDeck().ForEach([this](int i, PoliciesType p) {
 		PolicyAddedToDeckMessage msg{ i, p };
 	_world.Notify(msg);
 		});

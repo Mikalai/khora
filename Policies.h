@@ -1,6 +1,6 @@
 #pragma once
 
-enum class Policies
+enum class PoliciesType
 {
 	policy_unknown = -1,
 	policy_front_old_guard,
@@ -47,4 +47,4 @@ enum class Policies
 	policies_count = policies_end
 };
 
-const char* ToString(Policies evt);
+const char* ToString(PoliciesType evt);

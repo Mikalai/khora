@@ -5,7 +5,7 @@
 #include <Policies.h>
 #include <Platform/NumberConverter.h>
 
-class PoliciesDeck : public Deck<Policies, static_cast<int>(Policies::policies_count), Policies::policy_unknown> {
+class PoliciesDeck : public Deck<PoliciesType, static_cast<int>(PoliciesType::policies_count), PoliciesType::policy_unknown> {
 public:
     void Reset(bool shuffle);
 };

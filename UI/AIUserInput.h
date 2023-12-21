@@ -11,10 +11,10 @@ public:
     void SelectPlayersCountAsync(std::function<void(int count)> cb) override;
     void SelectCityColorAsync(std::function<void(player_color color)> cb) override;
     void SelectCityAsync(std::function<void(Cities city)> cb) override;
-    void SelectPolicyFromDraftAsync(std::function<void(Policies policy)> cb) override;
+    void SelectPolicyFromDraftAsync(std::function<void(PoliciesType policy)> cb) override;
     void ThrowDiceAsync(int diceIndex, std::function<void(int diceIndex, int diceValue)> cb) override;
     void SelectActionAsync(int diceValue, bool allowMilitary, SelectActionsCallback cb) override;
-    void SelectLawPolicyAsync(Policies a, Policies b, std::function<void(Policies selected, Policies dropped)> cb) override;
+    void SelectLawPolicyAsync(PoliciesType a, PoliciesType b, std::function<void(PoliciesType selected, PoliciesType dropped)> cb) override;
     void SelectExpeditionAsync(std::function<void(int expedition)> cb) override;
     void MakeProgressAsync(std::function<void(ProgressTrackType)> cb) override;
     void SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, SelectPolicyCallback cb) override;

@@ -18,24 +18,24 @@ void WorldLogicRound::DeclareEvent() {
 }
 
 void WorldLogicRound::CollectTax() {
-	_world.Players().ForEach([](PlayerLogic& p) {
+    _world.GetPlayers().ForEach([](PlayerLogic& p) {
 		auto tax = p.GetTax();
 		p.AddMoney(tax);
 		p.Perks().Tax().Apply();
 		});
 }
 void WorldLogicRound::ThrowDices() {
-	_world.Players().ForEach([](PlayerLogic& player) {
+    _world.GetPlayers().ForEach([](PlayerLogic& player) {
 		player.ResetDices();		
 		});
-
-	_world.Players().ForEach([](PlayerLogic& player) {
+    
+    _world.GetPlayers().ForEach([](PlayerLogic& player) {
 		player.ThrowDices();
 		});
 }
 
-void WorldLogicRound::IdentifyOrder() {	
-	_world.Players().ForEach([](PlayerLogic& player) {
+void WorldLogicRound::IdentifyOrder() {
+    _world.GetPlayers().ForEach([](PlayerLogic& player) {
 		player.SortDices();
 		});
 }
@@ -49,7 +49,7 @@ void WorldLogicRound::ApplyThrowDicesStagePerks() {
 }
 
 void WorldLogicRound::SelectActions() {
-	_world.Players().ForEach([](PlayerLogic& player) {
+    _world.GetPlayers().ForEach([](PlayerLogic& player) {
 		player.BeginSelectAction(player.GetDice(0), true, [&player](ActionType type) {
 			INFO("Player {} selected for dice {} with value {} action {} ({})", player.GetId(), 0, player.GetDice(0), ActionToString[(int)type], (int)type);
 			player.SetAction(0, type);
@@ -76,7 +76,7 @@ void WorldLogicRound::OpenActions() {
 }
 
 bool WorldLogicRound::AllActionsDone() const {
-	return _world.Players().All([](const PlayerLogic& player) {
+    return _world.GetPlayers().All([](const PlayerLogic& player) {
 		return player.AreActionsDone();
 		});
 }
@@ -86,13 +86,13 @@ ConstWorldLogicRound::ConstWorldLogicRound(const WorldLogic& world)
 }
 
 bool ConstWorldLogicRound::AllActionsDone() const {
-	return _world.Players().All([](const PlayerLogic& player) {
+    return _world.GetPlayers().All([](const PlayerLogic& player) {
 		return player.AreActionsDone() && player.IsIdle();
 		});
 }
 
 bool ConstWorldLogicRound::AllProgressDone() const {
-	return _world.Players().All([](const PlayerLogic& player) {
+    return _world.GetPlayers().All([](const PlayerLogic& player) {
 		return player.IsProgressDone() && player.IsIdle();
 		});
 }
@@ -101,15 +101,15 @@ bool ConstWorldLogicRound::AllEventEffectsApplied() const {
 	auto& evt = _world.Events().Current();
 	if (evt.GetStage() == GlobalEventStage::DiceStage)
 		return true;
-
-	return _world.Players().All([](const PlayerLogic& player) {
+    
+    return _world.GetPlayers().All([](const PlayerLogic& player) {
 		return player.IsIdle();
 		});
 }
 
 void WorldLogicRound::BeginExecuteActions() {
 	_world.BeginExecuteActions();
-	_world.Players().ForEach([](PlayerLogic& player) {
+    _world.GetPlayers().ForEach([](PlayerLogic& player) {
 		player.BeginExecuteActions();
 		});
 }

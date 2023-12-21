@@ -177,9 +177,9 @@ public:
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, players_count> players_tablet_locations;
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, players_count> players_city_locations;
     vsg::ref_ptr<vsg::MatrixTransform> city_location;
-    std::array<std::array<vsg::ref_ptr<vsg::StateGroup>, players_count>, 6> actions_materials;    
-    std::array<vsg::ref_ptr<vsg::StateGroup>, As<int>(Policies::policies_count)> policy_materials;	   
-    std::array<vsg::ref_ptr<vsg::MatrixTransform>, As<int>(Policies::policies_count)> policies;
+    std::array<std::array<vsg::ref_ptr<vsg::StateGroup>, players_count>, 6> actions_materials;
+    std::array<vsg::ref_ptr<vsg::StateGroup>, As<int>(PoliciesType::policies_count)> policy_materials;
+    std::array<vsg::ref_ptr<vsg::MatrixTransform>, As<int>(PoliciesType::policies_count)> policies;
     std::array<vsg::ref_ptr<vsg::StateGroup>, cities_count> cities_materials;
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, max_points_locations> points_location;
     std::array<vsg::ref_ptr<vsg::MatrixTransform>, max_population_locations> population_location;
@@ -228,7 +228,7 @@ public:
     std::function<void(player_color color)> _selectColorMessageBoxCallback;
     vsg::ref_ptr<vsg::Switch> _selectCityMessageBox;
     std::function<void(Cities city)> _selectCityMessageBoxCallback;
-    std::function<void(Policies policy)> _selectPolicyFromDraftCallback;
+    std::function<void(PoliciesType policy)> _selectPolicyFromDraftCallback;
     vsg::ref_ptr<vsg::MatrixTransform> _cameraAligned;
     std::array<std::function<void(int)>, 3> _diceCallbacks;
     std::function<void()> _curEconomyActivated;
@@ -282,10 +282,10 @@ private:
     void SelectPlayersCountAsync(std::function<void(int count)> cb) override;
     void SelectCityColorAsync(std::function<void(player_color color)> cb) override;
     void SelectCityAsync(std::function<void(Cities city)> cb) override;
-    void SelectPolicyFromDraftAsync(std::function<void(Policies policy)> cb) override;
+    void SelectPolicyFromDraftAsync(std::function<void(PoliciesType policy)> cb) override;
     void ThrowDiceAsync(int diceIndex, std::function<void(int diceIndex, int diceValue)> cb) override;
     void SelectActionAsync(int diceValue, bool allowMilitary, SelectActionsCallback cb) override;
-    void SelectLawPolicyAsync(Policies a, Policies b, std::function<void(Policies selected, Policies dropped)> cb) override;
+    void SelectLawPolicyAsync(PoliciesType a, PoliciesType b, std::function<void(PoliciesType selected, PoliciesType dropped)> cb) override;
     void SelectExpeditionAsync(std::function<void(int expedition)> cb) override;
     void MakeProgressAsync(MakeProgressCallback cb) override;
     void SelectPolicyFromHandsAsync(PolicySelectionReasonType reason, SelectPolicyCallback cb) override;

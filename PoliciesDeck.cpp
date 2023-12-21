@@ -6,8 +6,8 @@
 #include <Resources.h>
 
 void PoliciesDeck::Reset(bool shuffle) {
-	for (int i = 0; i < As<int>(Policies::policies_count); ++i) {
-		_cards[i] = (Policies)i;
+    for (int i = 0; i < As<int>(PoliciesType::policies_count); ++i) {
+        _cards[i] = (PoliciesType)i;
 	}
 	if (shuffle) {
 		unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();

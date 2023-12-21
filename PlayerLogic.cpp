@@ -1,5 +1,3 @@
-#pragma once
-
 #include <cassert>
 #include <UI/UI.h>
 #include <WorldLogic.h>
@@ -287,7 +285,7 @@ int PlayerLogic::GetPoliciesInActiveDeckCount() const {
 	return static_cast<int>(_policiesInActiveDeck.size());
 }
 
-Policies PlayerLogic::GetPolicyInActiveDeck(int index) const {
+PoliciesType PlayerLogic::GetPolicyInActiveDeck(int index) const {
 	assert(index >= 0 && index < _policiesInActiveDeck.size());
 	return _policiesInActiveDeck[index];
 }
@@ -430,8 +428,8 @@ void PlayerLogic::EndExpedition(int expeditionId) {
 	EndActiveTask("expedition");
 }
 
-bool PlayerLogic::CanActivatePolicy(::Policies policy) const {
-	if (policy == Policies::policy_unknown)
+bool PlayerLogic::CanActivatePolicy(::PoliciesType policy) const {
+    if (policy == PoliciesType::policy_unknown)
 		return true;
 
 	auto& p = GetPolicyTemplate(policy);
@@ -448,9 +446,9 @@ bool PlayerLogic::CanActivatePolicy(::Policies policy) const {
 //	Notify(msg);	
 //}
 
-void PlayerLogic::ActivatePolicy(::Policies policy) {
-
-	if (policy == ::Policies::policy_unknown)
+void PlayerLogic::ActivatePolicy(::PoliciesType policy) {
+    
+    if (policy == ::PoliciesType::policy_unknown)
 		return;
 
 	auto& p = GetPolicyTemplate(policy);
@@ -764,7 +762,7 @@ void PlayerLogic::DropPolicy(int index) {
 //	Notify(msg);
 //}
 
-void PlayerLogic::AddPolicy(::Policies policy, bool selectFlag) {
+void PlayerLogic::AddPolicy(::PoliciesType policy, bool selectFlag) {
 	_policiesInHands.push_back(policy);
 	PolicyAddedInHandsMessage msg{ GetId(), policy, selectFlag };
 	Notify(msg);
@@ -794,12 +792,12 @@ void PlayerLogic::InvokeActionCallback(ActionType type) {
 	_actionCallbacks[index] = nullptr;
 }
 
-void PlayerLogic::EndDoLaw(::Policies selected, ::Policies dropped) {
-	if (selected != Policies::policy_unknown) {
+void PlayerLogic::EndDoLaw(::PoliciesType selected, ::PoliciesType dropped) {
+    if (selected != PoliciesType::policy_unknown) {
 		AddPolicy(selected, false);
 	}
 
-	if (dropped != Policies::policy_unknown) {
+    if (dropped != PoliciesType::policy_unknown) {
 		_world->Policies().Drop(dropped);
 	}
 
@@ -813,13 +811,13 @@ void PlayerLogic::BeginDoLaw(ActionCompleteCallback cb) {
 	// SetState(PlayerState::SelectPolicy);
 	BeginActiveTask("law");
 
-	auto a = Policies::policy_unknown;
+    auto a = PoliciesType::policy_unknown;
 
 	if (!World().Policies().CanTake()) {
 		a = World().Policies().GetNextPolicy();
 	}
 
-	auto b = Policies::policy_unknown;
+    auto b = PoliciesType::policy_unknown;
 
 	if (!World().Policies().CanTake()) {
 		b = World().Policies().GetNextPolicy();
@@ -864,7 +862,7 @@ void PlayerLogic::EndDraft() {
 	EndActiveTask("draft");
 }
 
-void PlayerLogic::TakePolicyFromDraft(::Policies policy) {
+void PlayerLogic::TakePolicyFromDraft(::PoliciesType policy) {
 	auto it = std::find(_policiesInDraft.begin(), _policiesInDraft.end(), policy);
 	assert(_policiesInDraft.end() != it);
 
@@ -877,7 +875,7 @@ void PlayerLogic::TakePolicyFromDraft(::Policies policy) {
 	AddPolicy(policy, false);	
 }
 
-std::vector<Policies> PlayerLogic::TakeDraft() {
+std::vector<PoliciesType> PlayerLogic::TakeDraft() {
 	assert(!_policiesInDraft.empty());
 	for (int i = 0; i < As<int>(_policiesInDraft.size()); ++i) {
 		PolicyRemovedFromDraftMessage msg{ GetId(), _policiesInDraft[i], 0 };
@@ -887,7 +885,7 @@ std::vector<Policies> PlayerLogic::TakeDraft() {
 	return std::move(_policiesInDraft);
 }
 
-void PlayerLogic::GiveDraft(std::vector<::Policies>&& deck) {
+void PlayerLogic::GiveDraft(std::vector<::PoliciesType>&& deck) {
 	assert(!deck.empty());
 
 	if (deck.size() == 1) {
@@ -903,7 +901,7 @@ void PlayerLogic::GiveDraft(std::vector<::Policies>&& deck) {
 	deck.clear();
 }
 
-Policies PlayerLogic::GetDraftPolicy(int index) const {
+PoliciesType PlayerLogic::GetDraftPolicy(int index) const {
 	assert(index >= 0 && index < GetDraftSize());
 	return _policiesInDraft[index];
 }
@@ -913,7 +911,7 @@ int PlayerLogic::GetDraftSize() const {
 }
 
 
-void DraftManipulator::ForEach(std::function<void(Policies policy)> action) {
+void DraftManipulator::ForEach(std::function<void(PoliciesType policy)> action) {
 	for (int i = 0; i < _player.GetDraftSize(); ++i) {
 		action(_player.GetDraftPolicy(i));
 	}
@@ -927,17 +925,17 @@ DraftManipulatorConst PlayerLogic::Draft() const {
 	return { *this };
 }
 
-void DraftManipulatorConst::ForEach(std::function<void(Policies policy)> action) {
+void DraftManipulatorConst::ForEach(std::function<void(PoliciesType policy)> action) {
 	for (int i = 0; i < _player.GetDraftSize(); ++i) {
 		action(_player.GetDraftPolicy(i));
 	}
 }
 
-Policies DraftManipulatorConst::Select(int index) const {
+PoliciesType DraftManipulatorConst::Select(int index) const {
 	return _player.GetDraftPolicy(index);
 }
 
-Policies DraftManipulator::Select(int index) const {
+PoliciesType DraftManipulator::Select(int index) const {
 	return _player.GetDraftPolicy(index);
 }
 
@@ -949,16 +947,16 @@ int DraftManipulatorConst::Size() const {
 	return _player.GetDraftSize();
 }
 
-void DraftManipulator::Take(Policies policy) {
+void DraftManipulator::Take(PoliciesType policy) {
 	_player.TakePolicyFromDraft(policy);
 }
 
-Policies DraftManipulator::Random() {
+PoliciesType DraftManipulator::Random() {
 	auto index = rand() % Size();
 	return _player.GetDraftPolicy(index);
 }
 
-Policies DraftManipulatorConst::Random() {
+PoliciesType DraftManipulatorConst::Random() {
 	auto index = rand() % Size();
 	return _player.GetDraftPolicy(index);
 }
@@ -1137,7 +1135,7 @@ void PlayerLogic::ExecuteNextAction() {
 	_actionExecutionState.Next();
 }
 
-int PlayerLogic::GetPolicyIndex(::Policies dropped) {
+int PlayerLogic::GetPolicyIndex(::PoliciesType dropped) {
 	auto it = std::find(_policiesInHands.begin(), _policiesInHands.end(), dropped);
 	assert(it != _policiesInHands.end());
 	return std::distance(_policiesInHands.begin(), it);
@@ -1220,7 +1218,7 @@ void PlayerLogic::EndExtraProgress() {
 	cb(*this);
 }
 
-ConstPlayerPoliciesManipulator PlayerLogic::Policies() const {
+ConstPlayerPoliciesManipulator PlayerLogic::GetPolicies() const {
 	return ConstPlayerPoliciesManipulator{ *this };
 }
 
@@ -1233,7 +1231,7 @@ ConstPlayerPoliciesManipulator PlayerLogic::Policies() const {
 //	Notify(msg);
 //}
 //
-//void PlayerLogic::EndDropPolicy(::Policies policy) {
+//void PlayerLogic::EndDropPolicy(::PoliciesType policy) {
 //
 //	assert(_dropPolicyCallback != nullptr);
 //	
@@ -1245,7 +1243,7 @@ ConstPlayerPoliciesManipulator PlayerLogic::Policies() const {
 //	EndActiveTask("drop policy");
 //}
 
-void PlayerLogic::RemovePolicy(::Policies policy) {
+void PlayerLogic::RemovePolicy(::PoliciesType policy) {
 	INFO("Player {} removing policy {}", GetId(), (int)policy);
 
 	auto it = std::find(_policiesInHands.begin(), _policiesInHands.end(), policy);
@@ -1376,7 +1374,7 @@ void PlayerLogic::BeginSelectPolicyFromActiveDeck(SelectPolicyCallback cb) {
 	Notify(msg);
 }
 
-void PlayerLogic::EndSelectPolicyFromActiveDeck(::Policies policy) {
+void PlayerLogic::EndSelectPolicyFromActiveDeck(::PoliciesType policy) {
 
 	EndActiveTask("select policy from active deck");
 
@@ -1428,7 +1426,7 @@ void PlayerLogic::BeginSelectPolicyFromHands(PolicySelectionReasonType reason, S
 	Notify(msg);
 }
 
-void PlayerLogic::EndSelectPolicyFromHands(::Policies policy) {
+void PlayerLogic::EndSelectPolicyFromHands(::PoliciesType policy) {
 
 	SelectPolicyCallback cb = std::move(_policySelected);
 	

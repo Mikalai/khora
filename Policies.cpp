@@ -2,88 +2,88 @@
 
 #include "Policies.h"
 
-const char* ToString(Policies evt) {
+const char* ToString(PoliciesType evt) {
 	switch (evt)
 	{
-	case Policies::policy_front_old_guard:
+    case PoliciesType::policy_front_old_guard:
 		return "policy_front_old_guard";
-	case Policies::policy_front_archives:
+    case PoliciesType::policy_front_archives:
 		return "policy_front_archives";
-	case Policies::policy_front_asket:
+    case PoliciesType::policy_front_asket:
 		return "policy_front_asket";
-	case Policies::policy_front_bank:
+    case PoliciesType::policy_front_bank:
 		return "policy_front_bank";
-	case Policies::policy_front_central_government:
+    case PoliciesType::policy_front_central_government:
 		return "policy_front_central_government";
-	case Policies::policy_front_coloss:
+    case PoliciesType::policy_front_coloss:
 		return "policy_front_coloss";
-	case Policies::policy_front_contribution:
+    case PoliciesType::policy_front_contribution:
 		return "policy_front_contribution";
-	case Policies::policy_front_corinthian_order:
+    case PoliciesType::policy_front_corinthian_order:
 		return "policy_front_corinthian_order";
-	case Policies::policy_front_diolk:
+    case PoliciesType::policy_front_diolk:
 		return "policy_front_diolk";
-	case Policies::policy_front_diversification:
+    case PoliciesType::policy_front_diversification:
 		return "policy_front_diversification";
-	case Policies::policy_front_evpalin_tunnel:
+    case PoliciesType::policy_front_evpalin_tunnel:
 		return "policy_front_evpalin_tunnel";
-	case Policies::policy_front_gold_reserve:
+    case PoliciesType::policy_front_gold_reserve:
 		return "policy_front_gold_reserve";
-	case Policies::policy_front_gradualism:
+    case PoliciesType::policy_front_gradualism:
 		return "policy_front_gradualism";
-	case Policies::policy_front_greek_fire:
+    case PoliciesType::policy_front_greek_fire:
 		return "policy_front_greek_fire";
-	case Policies::policy_front_helepolis:
+    case PoliciesType::policy_front_helepolis:
 		return "policy_front_helepolis";
-	case Policies::policy_front_high_tax:
+    case PoliciesType::policy_front_high_tax:
 		return "policy_front_high_tax";
-	case Policies::policy_front_hire_mercenay:
+    case PoliciesType::policy_front_hire_mercenay:
 		return "policy_front_hire_mercenay";
-	case Policies::policy_front_lighthouse:
+    case PoliciesType::policy_front_lighthouse:
 		return "policy_front_lighthouse";
-	case Policies::policy_front_lyceum_foundation:
+    case PoliciesType::policy_front_lyceum_foundation:
 		return "policy_front_lyceum_foundation";
-	case Policies::policy_front_mint:
+    case PoliciesType::policy_front_mint:
 		return "policy_front_mint";
-	case Policies::policy_front_oracle:
+    case PoliciesType::policy_front_oracle:
 		return "policy_front_oracle";
-	case Policies::policy_front_ostracism:
+    case PoliciesType::policy_front_ostracism:
 		return "policy_front_ostracism";
-	case Policies::policy_front_painter_standing:
+    case PoliciesType::policy_front_painter_standing:
 		return "policy_front_painter_standing";
-	case Policies::policy_front_peripter:
+    case PoliciesType::policy_front_peripter:
 		return "policy_front_peripter";
-	case Policies::policy_front_persia:
+    case PoliciesType::policy_front_persia:
 		return "policy_front_persia";
-	case Policies::policy_front_power:
+    case PoliciesType::policy_front_power:
 		return "policy_front_power";
-	case Policies::policy_front_proscenium:
+    case PoliciesType::policy_front_proscenium:
 		return "policy_front_proscenium";
-	case Policies::policy_front_public_market:
+    case PoliciesType::policy_front_public_market:
 		return "policy_front_public_market";
-	case Policies::policy_front_rare_collection:
+    case PoliciesType::policy_front_rare_collection:
 		return "policy_front_rare_collection";
-	case Policies::policy_front_reform:
+    case PoliciesType::policy_front_reform:
 		return "policy_front_reform";
-	case Policies::policy_front_rivalvary:
+    case PoliciesType::policy_front_rivalvary:
 		return "policy_front_rivalvary";
-	case Policies::policy_front_science_respect:
+    case PoliciesType::policy_front_science_respect:
 		return "policy_front_science_respect";
-	case Policies::policy_front_silver_mine:
+    case PoliciesType::policy_front_silver_mine:
 		return "policy_front_silver_mine";
-	case Policies::policy_front_soviet:
+    case PoliciesType::policy_front_soviet:
 		return "policy_front_soviet";
-	case Policies::policy_front_stadium:
+    case PoliciesType::policy_front_stadium:
 		return "policy_front_stadium";
-	case Policies::policy_front_statue_hall:
+    case PoliciesType::policy_front_statue_hall:
 		return "policy_front_statue_hall";
-	case Policies::policy_front_stone_mine:
+    case PoliciesType::policy_front_stone_mine:
 		return "policy_front_stone_mine";
-	case Policies::policy_front_supplies_from_overseas:
+    case PoliciesType::policy_front_supplies_from_overseas:
 		return "policy_front_supplies_from_overseas";
-	case Policies::policy_front_western_gifts:
+    case PoliciesType::policy_front_western_gifts:
 		return "policy_front_western_gifts";
-	case Policies::policy_front_amnesty_for_socrat:
+    case PoliciesType::policy_front_amnesty_for_socrat:
 		return "policy_front_amnesty_for_socrat";
 	default:
 		return "unknown";
