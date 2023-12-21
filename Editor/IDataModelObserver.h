@@ -65,5 +65,29 @@ public:
     };
 
     virtual void Execute(const ConfigNotification& cmd) = 0;
+
+    struct LanguageAddedNotification {
+        std::string Value;
+    };
+
+    virtual void Execute(const LanguageAddedNotification& cmd) = 0;
+
+    struct LanguageRemoveNotification {
+        std::string Value;
+    };
+
+    virtual void Execute(const LanguageRemoveNotification& cmd) = 0;
+
+    struct SuggestedChildrenNotification {
+        struct Suggestion {
+            std::string Type;
+            std::string Name;
+        };
+        std::string Context;
+        EntryPath Path;
+        std::vector<Suggestion> Suggestions;
+    };
+
+    virtual void Execute(const SuggestedChildrenNotification& cmd) = 0;
 };
 

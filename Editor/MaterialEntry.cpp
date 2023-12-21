@@ -23,10 +23,6 @@ vsg::ref_ptr<vsg::StateGroup> MaterialPackageEntry::GetState() const {
     return ::Clone(_state);
 }
 
-bool MaterialPackageEntry::CanAdd(std::shared_ptr<Entry> entry) {
-    return true;
-}
-
 std::shared_ptr<Entry> MaterialPackageEntry::CreateProxy(EntryPath path) {
     return std::make_shared<MaterialProxyEntry>(path);
 }
@@ -68,10 +64,6 @@ std::shared_ptr<Entry> MaterialProxyEntry::CreateProxy(EntryPath path) {
     return std::make_shared<MaterialProxyEntry>(_path);
 }
 
-bool MaterialProxyEntry::CanAdd(std::shared_ptr<Entry> entry) {
-    return true;
-}
-
 void MaterialProxyEntry::Serialize(EntryProperties& properties) const {
     MaterialEntry::Serialize(properties);
     properties["Path"] = _path.Path;
@@ -99,10 +91,6 @@ vsg::ref_ptr<vsg::StateGroup> MaterialEntryView::GetState() const {
 
 std::shared_ptr<Entry> MaterialEntryView::CreateProxy(EntryPath path) {
     return _sync->Execute([&]() { return _model->CreateProxy(path); });
-}
-
-bool MaterialEntryView::CanAdd(std::shared_ptr<Entry> entry) {
-    return _sync->Execute([&]() { return _model->CanAdd(entry); });
 }
 
 void MaterialEntryView::CloneFrom(std::shared_ptr<Entry> entry) {

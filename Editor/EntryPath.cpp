@@ -33,6 +33,9 @@ EntryPath EntryPath::Append(const std::string name) const {
     if (Path.empty()) {
         return { name };
     }
+    if (name.empty()) {
+        return *this;
+    }
     return { Path + "/" + name };
 }
 

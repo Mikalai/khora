@@ -6,6 +6,7 @@
 #include "TransformEntry.h"
 #include "MaterialEntry.h"
 #include "GeometryEntry.h"
+#include "LocalizedEntry.h"
 
 std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath parent) {
     auto name = path.GetName();
@@ -62,7 +63,7 @@ void DirectoryEntry::TraverseDownTop(const EntryPath& parent, std::function<void
     }
 }
 
-void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry)
+bool DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry)
 {
     auto name = path.GetName();
     auto next = path.GetNext();
@@ -84,6 +85,7 @@ void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_pt
             }
             else {
                 std::cerr << "Can't add " << magic_enum::enum_name(entry->GetType()) << " to " << parent.Path << ". Parent is not a directory." << std::endl;
+                return false;
             }
         }
     }
@@ -108,8 +110,10 @@ void DirectoryEntry::Add(const EntryPath& path, EntryPath parent, std::shared_pt
         }
         else {
             std::cout << "Can't add " << magic_enum::enum_name(entry->GetType()) << " to " << parent.Path << ". Already exists." << std::endl;
+            return false;
         }
     }
+    return false;
 }
 
 
@@ -183,6 +187,9 @@ void DirectoryEntry::DeserializeInternal(EntryPath path, const EntryProperties& 
             }
             else if (type == magic_enum::enum_name(EntryType::Group)) {
                 newEntry = std::make_shared<GroupEntry>();
+            }
+            else if (type == magic_enum::enum_name(EntryType::Localized)) {
+                newEntry = std::make_shared<LocalizedEntry>();
             }
 
             if (!newEntry) {

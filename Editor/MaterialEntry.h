@@ -12,6 +12,9 @@ public:
     EntryType GetType() const override;
     virtual vsg::ref_ptr<vsg::StateGroup> GetState() const = 0;
     virtual std::shared_ptr<Entry> CreateView(std::shared_ptr<AsyncQueue> sync) override;
+
+protected:
+    bool CanAdd(std::shared_ptr<Entry> entry) final { return true; }
 };
 
 class MaterialPackageEntry : public MaterialEntry {
@@ -24,7 +27,6 @@ public:
     MaterialPackageEntry() {}
 
     vsg::ref_ptr<vsg::StateGroup> GetState() const override;
-    bool CanAdd(std::shared_ptr<Entry> entry) override;
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
 
 protected:
@@ -42,7 +44,6 @@ public:
 
     vsg::ref_ptr<vsg::StateGroup> GetState() const override;    
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
-    bool CanAdd(std::shared_ptr<Entry> entry) override;
     
     void Serialize(EntryProperties& properties) const override;
     void DeserializeInternal(EntryPath path, const EntryProperties& properties) override;
@@ -68,7 +69,6 @@ public:
 
     vsg::ref_ptr<vsg::StateGroup> GetState() const override;
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
-    bool CanAdd(std::shared_ptr<Entry> entry) override;
 
 protected:
     void CloneFrom(std::shared_ptr<Entry> entry) override;

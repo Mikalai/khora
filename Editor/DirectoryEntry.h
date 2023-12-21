@@ -33,10 +33,13 @@ public:
         return _entries.empty();
     }
 
-    virtual bool CanAdd(std::shared_ptr<Entry> entry) = 0;
 
-    void Add(const EntryPath& path, std::shared_ptr<Entry> entry) {
-        Add(path, {}, entry);
+    bool Add(const EntryPath& path, std::shared_ptr<Entry> entry) {
+        
+        if (!CanAdd(entry))
+            return false;
+
+        return Add(path, {}, entry);
     }
 
     std::shared_ptr<Entry> Remove(const EntryPath& path) {
@@ -48,10 +51,11 @@ public:
     void Serialize(EntryProperties& properties) const override;
 
 protected:
+    virtual bool CanAdd(std::shared_ptr<Entry> entry) = 0;
     void DeserializeInternal(EntryPath path, const EntryProperties& properties) override;
     void CloneFrom(std::shared_ptr<Entry> entry) override;
 private:
-    void Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry);
+    bool Add(const EntryPath& path, EntryPath parent, std::shared_ptr<Entry> entry);
     std::shared_ptr<Entry> Remove(const EntryPath& path, EntryPath parent);
     void TraverseTopDown(const EntryPath& parent, std::function<void(EntryPath path, std::shared_ptr<Entry>)> cb);
     void TraverseDownTop(const EntryPath& parent, std::function<void(EntryPath path, std::shared_ptr<Entry>)> cb);

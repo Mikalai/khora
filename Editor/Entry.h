@@ -44,8 +44,7 @@ public:
     virtual std::shared_ptr<Entry> FindEntry(const EntryPath& path) const = 0;
     
     virtual void Serialize(EntryProperties& properties) const;
-    void Deserialize(const EntryProperties& properties);
-
+    void Deserialize(const EntryProperties& properties);    
 
 protected:
     virtual std::shared_ptr<Entry> CreateView(std::shared_ptr<AsyncQueue> sync) = 0;

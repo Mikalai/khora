@@ -3,7 +3,7 @@
 #include <vsg/all.h>
 #include "DirectoryEntry.h"
 
-class GroupEntry final : public DirectoryEntry {
+class GroupEntry : public DirectoryEntry {
 
 public:
 

@@ -22,6 +22,31 @@ void ConfigEntry::SetShowTransform(bool value)
     OnPropertyChanged(shared_from_this(), "ShowTransform");
 }
 
+bool ConfigEntry::AddLanguage(const std::string& value)
+{
+    auto it = std::find(_languages.begin(), _languages.end(), value);
+    if (it != _languages.end())
+        return false;
+
+    _languages.push_back(value);
+    OnPropertyChanged(shared_from_this(), "Languages");
+    return true;
+}
+
+bool ConfigEntry::RemoveLanguage(const std::string& value) {
+    auto it = std::find(_languages.begin(), _languages.end(), value);
+    if (it == _languages.end())
+        return false;
+
+    _languages.erase(it);
+    OnPropertyChanged(shared_from_this(), "Languages");
+    return true;
+}
+
+std::vector<std::string> ConfigEntry::GetLanguages() const {
+    return _languages;
+}
+
 std::shared_ptr<Entry> ConfigEntry::CreateView(std::shared_ptr<AsyncQueue> sync) {
     assert(std::dynamic_pointer_cast<ConfigEntry>(shared_from_this()));
     return std::make_shared<ConfigEntryView>(std::static_pointer_cast<ConfigEntry>(shared_from_this()), sync);
@@ -31,12 +56,22 @@ void ConfigEntry::Serialize(EntryProperties& properties) const {
     DirectoryEntry::Serialize(properties);
 
     properties["ShowTransform"] = _showTransform;
+
+    auto& langs = properties["Languages"];
+    for (auto& v : _languages) {
+        langs.push_back(v);
+    }
 }
 
 void ConfigEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
     DirectoryEntry::DeserializeInternal(path, properties);
 
     _showTransform = ::Deserialize(properties, "ShowTransform", true);
+    if (auto it = properties.find("Languages"); it != properties.end()) {
+        for (auto& e : *it) {
+            _languages.push_back(e.get<std::string>());
+        }
+    }
 }
 
 std::shared_ptr<Entry> ConfigEntry::CreateProxy(EntryPath path) {
@@ -80,6 +115,18 @@ bool ConfigEntryView::GetShowTransform() const {
 
 void ConfigEntryView::SetShowTransform(bool value) {
     _sync->Execute([&]() { return _model->SetShowTransform(value); });
+}
+
+bool ConfigEntryView::AddLanguage(const std::string& value) {
+    return _sync->Execute([&]() { return _model->AddLanguage(value); });
+}
+
+bool ConfigEntryView::RemoveLanguage(const std::string& value) {
+    return _sync->Execute([&]() { return _model->RemoveLanguage(value); });
+}
+
+std::vector<std::string> ConfigEntryView::GetLanguages() const {
+    return _sync->Execute([&]() { return _model->GetLanguages(); });
 }
 
 void ConfigEntryView::CloneFrom(std::shared_ptr<Entry> entry) {

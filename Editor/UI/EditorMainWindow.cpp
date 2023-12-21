@@ -68,12 +68,15 @@ EditorMainWindow::EditorMainWindow(IDataModelEditor* dataModel, int argc, char**
 {
     Maximize(true);
     wxSize size{ 16, 16 };
+    this->dataPanels->SetSelection(0);
+
     _imageList = new wxImageList(size.GetWidth(), size.GetHeight(), true);
     _imageErrorIcon = _imageList->Add(wxArtProvider::GetBitmap(ArtIconError, wxART_LIST, size));
     _imageTransformImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconTransform, wxART_LIST, size));
     _imageGeometryImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconGeometry, wxART_LIST, size));
     _imageGroupImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconGroup, wxART_LIST, size));
     _imageMaterialImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconMaterial, wxART_LIST, size));
+    _imageLocalizedImage = _imageList->Add(wxArtProvider::GetBitmap(ArtIconLocalization, wxART_LIST, size));
     finalScene->SetImageList(_imageList);
     assetsTree->SetImageList(_imageList);
 
@@ -276,6 +279,44 @@ void EditorMainWindow::Execute(const ConfigNotification& cmd)
     });
 }
 
+void EditorMainWindow::Execute(const LanguageAddedNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        languageListBox->AppendString(cmd.Value);
+    });
+}
+
+void EditorMainWindow::Execute(const LanguageRemoveNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        if (auto index = languageListBox->FindString(cmd.Value); index < 0)
+            return;
+        else {
+            languageListBox->Delete(index);
+        }
+    });
+}
+
+void EditorMainWindow::Execute(const SuggestedChildrenNotification& cmd)
+{
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
+        if (cmd.Context == "popup") {
+            if (cmd.Suggestions.empty())
+                return;
+            wxMenu menu;
+            for (auto e : cmd.Suggestions) {
+                auto item = menu.Append(wxID_ANY, e.Name);
+
+                menu.Bind(wxEVT_COMMAND_MENU_SELECTED, [cmd, e, this](wxCommandEvent& evt) {
+                    _dataModel->Execute(IDataModelEditor::CreateNodeCommand{ .Path = cmd.Path.Append(e.Name), .Type = e.Type });
+                    }, item->GetId());
+            }
+
+            PopupMenu(&menu);
+        }
+    });
+}
+
 int EditorMainWindow::GetEntryTypeImage(EntryType type) {
     switch (type)
     {
@@ -289,6 +330,8 @@ int EditorMainWindow::GetEntryTypeImage(EntryType type) {
         return _imageGeometryImage;
     case EntryType::Group:
         return _imageGroupImage;
+    case EntryType::Localized:
+        return _imageLocalizedImage;
     case EntryType::Config:
         break;
     default:
@@ -300,9 +343,11 @@ int EditorMainWindow::GetEntryTypeImage(EntryType type) {
 
 void EditorMainWindow::UpdateConfig() {
     showTransformMenu->Check(_config->GetShowTransform());
+    languageListBox->Clear();
+    for (auto e : _config->GetLanguages()) {
+        languageListBox->AppendString(e);
+    }
 }
-
-
 
 void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
     wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
@@ -352,6 +397,7 @@ void EditorMainWindow::Execute(const ItemAddedNotification& cmd) {
             return;
 
         auto itemId = tree->AppendItem(parent, cur.GetName(), GetEntryTypeImage(cmd.Type));
+        
         if (tree == finalScene) {
             tree->SelectItem(itemId, true);
             _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = {.Path = ROOT_SCENE } });
@@ -479,6 +525,22 @@ void EditorMainWindow::finalSceneOnTreeEndDrag(wxTreeEvent& event) {
     // _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root = EntryPath{ ROOT_SCENE } });
 }
 
+void EditorMainWindow::finalSceneOnTreeItemRightClick(wxTreeEvent& event) {
+    
+    auto item = event.GetItem();
+    if (item.IsOk()) {
+        if (!finalScene->IsSelected(item)) {
+            finalScene->SelectItem(item, true);
+        }   
+    }
+
+    auto path = GetPath(ROOT_SCENE, finalScene, item);
+
+    _dataModel->Execute(IDataModelEditor::RequestSuggestedChildrenCommand{ .Path = path, .Context = "popup" });
+
+    event.Skip();
+}
+
 void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent& event) {
     auto s = finalScene->GetSelection();
     if (!s.IsOk())
@@ -596,22 +658,40 @@ void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent& event) {
 }
 
 void EditorMainWindow::langAddOnButtonClick(wxCommandEvent& event) {
-    TextEnterDialog dlg(this);
+    TextEnterDialog dlg("Type Language Name", this);
     if (auto r = dlg.ShowModal(); r == wxID_CANCEL)
         return;
     else if (r == wxID_OK) {
-
+        auto value = dlg.GetText();
+        _dataModel->Execute(IDataModelEditor::AddLanguageCommand{ .Value = value.ToStdString() });
     }
 }
 
 void EditorMainWindow::langRemoveOnButtonClick(wxCommandEvent& event) {
-    event.Skip();
+    if (auto id = languageListBox->GetSelection(); id < 0) {
+        return;
+    }
+    else {
+        auto value = languageListBox->GetString(id).ToStdString();
+        _dataModel->Execute(IDataModelEditor::RemoveLanguageCommand{ .Value = value });
+    }
 }
 
 void EditorMainWindow::languageListBoxOnListBox(wxCommandEvent& event) {
-    event.Skip();
+    event.Skip();    
 }
 
 void EditorMainWindow::languageListBoxOnListBoxDClick(wxCommandEvent& event) {
-    event.Skip();
+    TextEnterDialog dlg("Type Language Name", this);
+    dlg.SetText(event.GetString());
+
+    if (auto r = dlg.ShowModal(); r == wxID_CANCEL)
+        return;
+    else if (r == wxID_OK) {
+        auto value = dlg.GetText();
+        _dataModel->Execute(IDataModelEditor::RenameLanguageCommand{
+            .OldValue = event.GetString().ToStdString(),
+            .NewValue = value.ToStdString()
+            });
+    }
 }
