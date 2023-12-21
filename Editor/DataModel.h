@@ -92,4 +92,12 @@ private:
     void Execute(const CreateNodeCommand& cmd) override;
     void Execute(const CopyEntryCommand& cmd) override;
     void Execute(const ExportToFileCommand& cmd) override;
+
+    // Inherited via IDataModelEditor
+    void Execute(const AddLanguageCommand& cmd) override;
+    void Execute(const RemoveLanguageCommand& cmd) override;
+    void Execute(const RenameLanguageCommand& cmd) override;
+
+    // Inherited via IDataModelEditor
+    void Execute(const RequestSuggestedChildrenCommand& cmd) override;
 };

@@ -49,6 +49,8 @@ if (${vsg_FOUND})
         "Errors.cpp"
         "ConfigEntry.h"
         "ConfigEntry.cpp"
+        "LocalizedEntry.h"
+        "LocalizedEntry.cpp"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 

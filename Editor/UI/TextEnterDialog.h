@@ -15,9 +15,11 @@ class TextEnterDialog : public TextEnter
 {
 public:
     /** Constructor */
-    TextEnterDialog(wxWindow* parent);
+    TextEnterDialog(const wxString& title, wxWindow* parent);
 
 	wxString GetText() const;
+	void SetText(const wxString& value);
+
 protected:
 	
 	void textEditOnText(wxCommandEvent& event);

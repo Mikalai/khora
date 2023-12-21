@@ -64,7 +64,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	assetsPage->SetSizer( fgSizer8 );
 	assetsPage->Layout();
 	fgSizer8->Fit( assetsPage );
-	dataPanels->AddPage( assetsPage, wxT("Assets"), false );
+	dataPanels->AddPage( assetsPage, wxT("Assets"), true );
 	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconAssets, wxART_FRAME_ICON );
 	if ( dataPanelsBitmap.Ok() )
 	{
@@ -131,6 +131,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	addToScene = new wxComboBox( m_panel9, wxID_ANY, wxT("Combo!"), wxDefaultPosition, wxDefaultSize, 0, NULL, wxCB_DROPDOWN|wxCB_READONLY );
 	addToScene->Append( wxT("Group") );
 	addToScene->Append( wxT("Transform") );
+	addToScene->Append( wxT("Localized") );
 	bSizer51->Add( addToScene, 0, wxALL, 5 );
 
 	deleteFromScene = new wxButton( m_panel9, wxID_ANY, wxT("Delete"), wxDefaultPosition, wxDefaultSize, 0 );
@@ -258,6 +259,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	finalScene->Connect( wxEVT_COMMAND_TREE_BEGIN_LABEL_EDIT, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeBeginLabelEdit ), NULL, this );
 	finalScene->Connect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndDrag ), NULL, this );
 	finalScene->Connect( wxEVT_COMMAND_TREE_END_LABEL_EDIT, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndLabelEdit ), NULL, this );
+	finalScene->Connect( wxEVT_COMMAND_TREE_ITEM_RIGHT_CLICK, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeItemRightClick ), NULL, this );
 	finalScene->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeSelChanged ), NULL, this );
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::loadProjectMenuItemOnMenuSelection ), this, loadProjectMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::saveProjectMenuItemOnMenuSelection ), this, saveProjectMenuItem->GetId());
@@ -285,6 +287,7 @@ EditorMainWindowBase::~EditorMainWindowBase()
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_BEGIN_LABEL_EDIT, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeBeginLabelEdit ), NULL, this );
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndDrag ), NULL, this );
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_END_LABEL_EDIT, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndLabelEdit ), NULL, this );
+	finalScene->Disconnect( wxEVT_COMMAND_TREE_ITEM_RIGHT_CLICK, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeItemRightClick ), NULL, this );
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeSelChanged ), NULL, this );
 	this->Disconnect( navigate->GetId(), wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( EditorMainWindowBase::navigateOnToolClicked ) );
 

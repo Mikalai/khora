@@ -31,6 +31,9 @@ public:
     virtual std::shared_ptr<Entry> CreateView(std::shared_ptr<AsyncQueue> sync) override;
 
     vsg::dmat4 GetWorldMatrix();
+
+protected:
+    bool CanAdd(std::shared_ptr<Entry> entry) final { return true; }
 };
 
 class TransformPackageEntry final : public TransformEntry {
@@ -43,7 +46,6 @@ public:
     TransformPackageEntry() {}
 
 
-    bool CanAdd(std::shared_ptr<Entry> entry) override;
     
     vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const;
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
@@ -64,7 +66,6 @@ public:
     TransformProxyEntry() {};
 
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
-    bool CanAdd(std::shared_ptr<Entry> entry) override;
     vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const override;
 
     void SetOverride(bool flag) override;
@@ -108,7 +109,6 @@ public:
     TransformEntryView() {}
     
     std::shared_ptr<Entry> CreateProxy(EntryPath path) override;
-    bool CanAdd(std::shared_ptr<Entry> entry) override;
     vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const override;
 
     void SetOverride(bool flag) override;

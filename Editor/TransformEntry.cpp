@@ -67,10 +67,6 @@ void TransformPackageEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     this->_transform = e->_transform;
 }
 
-bool TransformPackageEntry::CanAdd(std::shared_ptr<Entry> entry) {
-    return true;
-}
-
 TransformProxyEntry::TransformProxyEntry(EntryPath path)
     : _path{ path } {
 }
@@ -137,10 +133,6 @@ std::shared_ptr<Entry> TransformProxyEntry::CreateProxy(EntryPath path) {
     return std::make_shared<TransformProxyEntry>(path);
 }
 
-bool TransformProxyEntry::CanAdd(std::shared_ptr<Entry> entry) {
-    return true;
-}
-
 void TransformProxyEntry::Serialize(EntryProperties& properties) const {
     TransformEntry::Serialize(properties);
 
@@ -181,10 +173,6 @@ std::shared_ptr<Entry> TransformProxyEntry::CreateCopy() const {
 
 std::shared_ptr<Entry> TransformEntryView::CreateProxy(EntryPath path) {
     return _sync->Execute([&]() { return _model->CreateProxy(path); });
-}
-
-bool TransformEntryView::CanAdd(std::shared_ptr<Entry> entry) {
-    return _sync->Execute([&]() { return _model->CanAdd(entry); });
 }
 
 vsg::ref_ptr<vsg::MatrixTransform> TransformEntryView::GetTransform() const {

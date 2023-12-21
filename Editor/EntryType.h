@@ -6,6 +6,7 @@ enum class EntryType {
     Material,
     Geometry,
     Group,
-    Config
+    Config,
+    Localized
 };
 

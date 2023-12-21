@@ -14,6 +14,10 @@ public:
     virtual bool GetShowTransform() const;
     virtual void SetShowTransform(bool value);
 
+    virtual bool AddLanguage(const std::string& value);
+    virtual bool RemoveLanguage(const std::string& value);
+    virtual std::vector<std::string> GetLanguages() const;
+
     virtual std::shared_ptr<Entry> CreateView(std::shared_ptr<AsyncQueue> sync) override;
 
     void Serialize(EntryProperties& properties) const override;
@@ -28,6 +32,7 @@ protected:
 
 private:
     bool _showTransform{ true };
+    std::vector<std::string> _languages;
 };
 
 class ConfigEntryView : public ConfigEntry {
@@ -43,8 +48,11 @@ public:
     void Serialize(EntryProperties& properties) const override;
     void DeserializeInternal(EntryPath path, const EntryProperties& properties) override;
 
-    virtual bool GetShowTransform() const override;
-    virtual void SetShowTransform(bool value) override;
+    bool GetShowTransform() const override;
+    void SetShowTransform(bool value) override;
+    bool AddLanguage(const std::string& value) override;
+    bool RemoveLanguage(const std::string& value) override;
+    std::vector<std::string> GetLanguages() const override;
 
 protected:
     void CloneFrom(std::shared_ptr<Entry> entry) override;

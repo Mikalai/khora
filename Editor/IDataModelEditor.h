@@ -97,4 +97,30 @@ public:
     };
 
     virtual void Execute(const ExportToFileCommand& cmd) = 0;
+
+    struct AddLanguageCommand {
+        std::string Value;
+    };
+
+    virtual void Execute(const AddLanguageCommand& cmd) = 0;
+
+    struct RemoveLanguageCommand {
+        std::string Value;
+    };
+
+    virtual void Execute(const RemoveLanguageCommand& cmd) = 0;
+
+    struct RenameLanguageCommand {
+        std::string OldValue;
+        std::string NewValue;
+    };
+
+    virtual void Execute(const RenameLanguageCommand& cmd) = 0;
+
+    struct RequestSuggestedChildrenCommand {
+        EntryPath Path;
+        std::string Context;
+    };
+
+    virtual void Execute(const RequestSuggestedChildrenCommand& cmd) = 0;
 };

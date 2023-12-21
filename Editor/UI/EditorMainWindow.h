@@ -40,6 +40,7 @@ protected:
     void finalSceneOnTreeSelChanged(wxTreeEvent& event) override;
     void finalSceneOnTreeBeginDrag(wxTreeEvent& event) override;
     void finalSceneOnTreeEndDrag(wxTreeEvent& event) override;
+    void finalSceneOnTreeItemRightClick(wxTreeEvent& event) override;
     void deleteFromSceneOnButtonClick(wxCommandEvent& event) override;
     void loadProjectMenuItemOnMenuSelection(wxCommandEvent& event) override;
     void saveProjectMenuItemOnMenuSelection(wxCommandEvent& event) override;
@@ -76,6 +77,7 @@ private:
     int _imageGroupImage;
     int _imageGeometryImage;
     int _imageMaterialImage;
+    int _imageLocalizedImage;
 
     IDataModelEditor* _dataModel;
     vsg::ref_ptr<vsg::Options> _options;    
@@ -113,6 +115,13 @@ private:
 
     // Inherited via IDataModelObserver
     void Execute(const ConfigNotification& cmd) override;
+
+    // Inherited via IDataModelObserver
+    void Execute(const LanguageAddedNotification& cmd) override;
+    void Execute(const LanguageRemoveNotification& cmd) override;
+
+    // Inherited via IDataModelObserver
+    void Execute(const SuggestedChildrenNotification& cmd) override;
 };
 
 #endif // __EditorMainWindow__

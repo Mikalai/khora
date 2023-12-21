@@ -90,6 +90,7 @@ class EditorMainWindowBase : public wxFrame
 		virtual void finalSceneOnTreeBeginLabelEdit( wxTreeEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnTreeEndDrag( wxTreeEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnTreeEndLabelEdit( wxTreeEvent& event ) { event.Skip(); }
+		virtual void finalSceneOnTreeItemRightClick( wxTreeEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnTreeSelChanged( wxTreeEvent& event ) { event.Skip(); }
 		virtual void loadProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void saveProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
