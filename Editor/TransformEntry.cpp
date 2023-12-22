@@ -5,6 +5,7 @@
 #include "AsyncQueue.h"
 #include "TransformEntry.h"
 #include "Clone.h"
+#include "Errors.h"
 
 TransformEntry::TransformEntry()
 {
@@ -88,11 +89,13 @@ vsg::ref_ptr<vsg::MatrixTransform> TransformProxyEntry::GetTransform() const
                 return transform->GetTransform();
             }
             else {
-                throw std::runtime_error(std::string("Proxy transform references wrong object of type ").append(magic_enum::enum_name(entry->GetType())));
+                const_cast<TransformProxyEntry&>(*this).OnError(LogError(LOG_TYPE_MISMATCH));
+                return {};                
             }
         }
         else {
-            throw std::runtime_error("Proxy transform references object that doesn't exist.");
+            const_cast<TransformProxyEntry&>(*this).OnError(LogError(LOG_ENTRY_NOT_FOUND, this->_path.Path));
+            return {};
         }
     }
 }

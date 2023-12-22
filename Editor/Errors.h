@@ -10,6 +10,7 @@ const int LOG_ENTRY_NOT_FOUND = 5;
 const int LOG_ENTRY_ALREADY_EXISTS = 6;
 const int LOG_ENTRY_BUSY = 7;
 const int LOG_ENTRY_COMPILATION_FAILED = 8;
+const int LOG_TYPE_MISMATCH = 9;
 
 const int LOG_LEVEL_WARNING = 3;
 const int LOG_LEVEL_ERROR = 4;

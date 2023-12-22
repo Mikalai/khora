@@ -35,6 +35,7 @@ private:
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
+    void OnError(const LogNotification& cmd) override { }
 
     void matrixValueChanged(wxCommandEvent& event) override;
     void overrideChanged(wxCommandEvent& event) override;

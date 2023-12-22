@@ -84,6 +84,14 @@ void Entry::OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view na
 	});
 }
 
+void Entry::OnError(const LogNotification& cmd) {
+	std::for_each(_observers.begin(), _observers.end(), [&](auto v) {
+		if (auto p = v.lock(); p) {
+			p->OnError(cmd);
+		}
+	});
+}
+
 void Entry::CopyObserversTo(Entry& entry) {
 	std::vector<std::weak_ptr<IEntryObserver>> myObserver;
 	{

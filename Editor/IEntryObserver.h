@@ -2,6 +2,7 @@
 
 #include <memory>
 #include "EntryPath.h"
+#include "Errors.h"
 
 class Entry;
 
@@ -12,6 +13,7 @@ public:
     virtual void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) = 0;
     virtual void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) = 0;
     virtual void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) = 0;
+    virtual void OnError(const LogNotification& cmd) = 0;
 };
 
 

@@ -48,6 +48,7 @@ public:
 
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
+    void OnError(const LogNotification& cmd) override;
 
     void Subscribe(IDataModelObserver* observer) override;
 

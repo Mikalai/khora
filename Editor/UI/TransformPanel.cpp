@@ -1,9 +1,8 @@
 #include "TransformPanel.h"
+
 #include "../TransformEntry.h"
 
-TransformPanel::TransformPanel(wxWindow* parent)
-    : TransformPanelBase(parent)
-{
+TransformPanel::TransformPanel(wxWindow* parent) : TransformPanelBase(parent) {
     _matrix[0][0] = this->txt00;
     _matrix[0][1] = this->txt01;
     _matrix[0][2] = this->txt02;
@@ -38,8 +37,7 @@ TransformPanel::TransformPanel(wxWindow* parent)
     _orientation[3] = this->orient3;
 }
 
-void TransformPanel::SetDataModel(std::shared_ptr<Entry> entry)
-{
+void TransformPanel::SetDataModel(std::shared_ptr<Entry> entry) {
     if (_dataModel) {
         _dataModel->RemoveObserver(shared_from_this());
     }
@@ -50,19 +48,18 @@ void TransformPanel::SetDataModel(std::shared_ptr<Entry> entry)
         _dataModel->AddObserver(shared_from_this());
         UpdateControls();
         this->Show(true);
-    }
-    else {
+    } else {
         this->Show(false);
     }
 }
 
 void TransformPanel::UpdateControls() {
-    if (!_dataModel)
-        return;
+    if (!_dataModel) return;
 
-    this->overrideCheckBox->Set3StateValue(_dataModel->GetOverride() ? wxCHK_CHECKED : wxCHK_UNCHECKED);
+    this->overrideCheckBox->Set3StateValue(
+        _dataModel->GetOverride() ? wxCHK_CHECKED : wxCHK_UNCHECKED);
     const auto pos = _dataModel->GetPosition();
-    for (int i = 0; i < 3; ++i) {        
+    for (int i = 0; i < 3; ++i) {
         this->_position[i]->SetValue(std::to_string(pos[i]));
     }
 
@@ -76,44 +73,44 @@ void TransformPanel::UpdateControls() {
         this->_scale[i]->SetValue(std::to_string(scale[i]));
     }
 
-    const auto trans = _dataModel->GetTransform()->matrix;
-    for (int r = 0; r < 4; ++r) {
-        for (int c = 0; c < 4; ++c) {
-            this->_matrix[r][c]->SetValue(std::to_string(trans[r][c]));
+    if (auto tr = _dataModel->GetTransform(); tr) {
+        const auto trans = tr->matrix;
+        for (int r = 0; r < 4; ++r) {
+            for (int c = 0; c < 4; ++c) {
+                this->_matrix[r][c]->SetValue(std::to_string(trans[r][c]));
+            }
         }
     }
 }
 
-void TransformPanel::OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) {
-    if (_dataModel != entry)
-        return;
+void TransformPanel::OnEntryAdded(EntryPath path,
+                                  std::shared_ptr<Entry> entry) {
+    if (_dataModel != entry) return;
 }
 
-void TransformPanel::OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) {
-    if (_dataModel != entry)
-        return;
+void TransformPanel::OnEntryRemoved(EntryPath path,
+                                    std::shared_ptr<Entry> entry) {
+    if (_dataModel != entry) return;
 }
 
-void TransformPanel::OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) {
-    if (_dataModel != sender)
-        return;
+void TransformPanel::OnPropertyChanged(std::shared_ptr<Entry> sender,
+                                       std::string_view name) {
+    if (_dataModel != sender) return;
 }
 
 void TransformPanel::matrixValueChanged(wxCommandEvent& event) {
-    if (!_dataModel)
-        return;
+    if (!_dataModel) return;
 }
 
 void TransformPanel::overrideChanged(wxCommandEvent& event) {
-    if (!_dataModel)
-        return;
+    if (!_dataModel) return;
 
-    _dataModel->SetOverride(this->overrideCheckBox->Get3StateValue() == wxCHK_CHECKED);    
+    _dataModel->SetOverride(this->overrideCheckBox->Get3StateValue() ==
+                            wxCHK_CHECKED);
 }
 
 void TransformPanel::positionChanged(wxCommandEvent& event) {
-    if (!_dataModel)
-        return;
+    if (!_dataModel) return;
 
     for (int i = 0; i < 3; ++i) {
         if (_position[i] == event.GetEventObject()) {
@@ -129,9 +126,8 @@ void TransformPanel::positionChanged(wxCommandEvent& event) {
 }
 
 void TransformPanel::scaleChanged(wxCommandEvent& event) {
-    if (!_dataModel)
-        return;
-    
+    if (!_dataModel) return;
+
     for (int i = 0; i < 3; ++i) {
         if (_scale[i] == event.GetEventObject()) {
             double value;
@@ -146,8 +142,7 @@ void TransformPanel::scaleChanged(wxCommandEvent& event) {
 }
 
 void TransformPanel::orientationChanged(wxCommandEvent& event) {
-    if (!_dataModel)
-        return;
+    if (!_dataModel) return;
 
     for (int i = 0; i < 4; ++i) {
         if (_orientation[i] == event.GetEventObject()) {
