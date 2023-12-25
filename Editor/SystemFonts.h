@@ -4,13 +4,24 @@
 #include <boost/thread.hpp>
 #include "UI/EditorMainWindow.h"
 #include "Observer.h"
+#include "LongOperationNotification.h"
 
-class SystemFonts;
-using SystemFontsPtr = std::shared_ptr<SystemFonts>;
+class ISystemFonts;
+using SystemFontsPtr = std::shared_ptr<ISystemFonts>;
 
 struct FontInfo {
-    std::string Name;
+    std::string FileName;
     std::filesystem::path Path;    
+    std::string Family;
+    std::string Style;
+
+    std::string GetDisplayName() const {
+        return Family + " - " + Style;
+    }
+
+    bool IsValid() const {
+        return !FileName.empty() && !Path.empty() && !Family.empty() && !Style.empty();
+    }
 };
 
 class ISystemFontsObserver {
@@ -30,7 +41,10 @@ public:
         vsg::ref_ptr<vsg::Node> Root;
     };
 
-    virtual void Execute(const FontCompiled& cmd) = 0;
+    virtual void Execute(const FontCompiled& cmd) = 0;    
+
+    virtual void Execute(const LongOperationStarted& cmd) = 0;
+    virtual void Execute(const LongOperationEnded& cmd) = 0;
 };
 
 
@@ -44,6 +58,8 @@ public:
     void Execute(const LogNotification& cmd) override { _other.Execute(cmd); }
     void Execute(const RefreshComplete& cmd) override { _other.Execute(cmd); }
     void Execute(const FontCompiled& cmd) override { _other.Execute(cmd); }
+    void Execute(const LongOperationStarted& cmd) override { _other.Execute(cmd); }
+    void Execute(const LongOperationEnded& cmd) override { _other.Execute(cmd); }
 
 private:
     ISystemFontsObserver& _other;
@@ -64,32 +80,12 @@ public:
     virtual void Execute(const Refresh& cmd) = 0;
 
     struct CompileFont {
-        std::filesystem::path Path;
+        std::string DisplayName;
     };
 
     virtual void Execute(const CompileFont& cmd) = 0;
+
+
+    static std::shared_ptr<ISystemFonts> Create(boost::asio::io_context& ctx);
 };
 
-class SystemFonts final : public Observable<SystemFonts, ISystemFontsObserver, ISystemFonts> {    
-    using Base = Observable<SystemFonts, ISystemFontsObserver, ISystemFonts>;
-    friend class Observable<SystemFonts, ISystemFontsObserver, ISystemFonts>;
-
-protected:
-    SystemFonts(boost::asio::io_context& ctx);
-
-public:
-
-    using Callback = std::function<void(SystemFontsPtr)>;
-    
-    void Execute(const Refresh& cmd) override;
-    void Execute(const CompileFont& cmd) override;
-private:
-
-    void RefreshInternal();
-    std::vector<FontInfo> ReadFontPaths(std::filesystem::path fonts);
-    std::filesystem::path GetFontFile();
-
-private:
-    std::vector<FontInfo> _allFontFiles;
-    vsg::ref_ptr<vsg::Options> _options;
-};

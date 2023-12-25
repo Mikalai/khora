@@ -16,7 +16,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 
 	wxBoxSizer* bSizer1;
-	bSizer1 = new wxBoxSizer( wxHORIZONTAL );
+	bSizer1 = new wxBoxSizer( wxVERTICAL );
 
 	m_splitter2 = new wxSplitterWindow( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_3D );
 	m_splitter2->SetSashGravity( 0 );
@@ -48,6 +48,8 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	wxBitmap dataPanelsBitmap;
 	wxImage dataPanelsImage;
 	assetsPage = new wxPanel( dataPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	assetsPage->SetToolTip( wxT("Assets") );
+
 	wxFlexGridSizer* fgSizer8;
 	fgSizer8 = new wxFlexGridSizer( 2, 2, 0, 0 );
 	fgSizer8->AddGrowableCol( 0 );
@@ -64,7 +66,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	assetsPage->SetSizer( fgSizer8 );
 	assetsPage->Layout();
 	fgSizer8->Fit( assetsPage );
-	dataPanels->AddPage( assetsPage, wxT("Assets"), false );
+	dataPanels->AddPage( assetsPage, wxEmptyString, false );
 	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconAssets, wxART_FRAME_ICON );
 	if ( dataPanelsBitmap.Ok() )
 	{
@@ -74,6 +76,8 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 		dataPanelsIndex++;
 	}
 	localizationPage = new wxPanel( dataPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	localizationPage->SetToolTip( wxT("Localization") );
+
 	wxFlexGridSizer* fgSizer7;
 	fgSizer7 = new wxFlexGridSizer( 2, 1, 0, 0 );
 	fgSizer7->AddGrowableCol( 0, 1 );
@@ -105,7 +109,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	localizationPage->SetSizer( fgSizer7 );
 	localizationPage->Layout();
 	fgSizer7->Fit( localizationPage );
-	dataPanels->AddPage( localizationPage, wxT("Localization"), true );
+	dataPanels->AddPage( localizationPage, wxEmptyString, true );
 	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconLocalization, wxART_FRAME_ICON );
 	if ( dataPanelsBitmap.Ok() )
 	{
@@ -115,6 +119,8 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 		dataPanelsIndex++;
 	}
 	fontsPanel = new wxPanel( dataPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	fontsPanel->SetToolTip( wxT("Fonts") );
+
 	wxFlexGridSizer* fgSizer9;
 	fgSizer9 = new wxFlexGridSizer( 2, 1, 0, 0 );
 	fgSizer9->AddGrowableCol( 0, 1 );
@@ -135,14 +141,14 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 
 	fgSizer9->Add( bSizer11, 1, wxEXPAND, 5 );
 
-	fontsList = new wxListBox( fontsPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fontsList = new wxListCtrl( fontsPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT );
 	fgSizer9->Add( fontsList, 1, wxALL|wxEXPAND, 5 );
 
 
 	fontsPanel->SetSizer( fgSizer9 );
 	fontsPanel->Layout();
 	fgSizer9->Fit( fontsPanel );
-	dataPanels->AddPage( fontsPanel, wxT("Fonts"), false );
+	dataPanels->AddPage( fontsPanel, wxEmptyString, false );
 	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconFont, wxART_FRAME_ICON );
 	if ( dataPanelsBitmap.Ok() )
 	{
@@ -225,12 +231,34 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	m_splitter2->SplitVertically( explorerPanel, rightPane, 300 );
 	bSizer1->Add( m_splitter2, 1, wxEXPAND, 5 );
 
+	bottomBar = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	bottomBarSizer = new wxWrapSizer( wxHORIZONTAL, wxWRAPSIZER_DEFAULT_FLAGS );
+
+	bottomBarLongTasksSizer = new wxBoxSizer( wxVERTICAL );
+
+	showLongTasksBtn = new wxButton( bottomBar, wxID_ANY, wxT("MyButton"), wxDefaultPosition, wxDefaultSize, wxBORDER_NONE );
+	showLongTasksBtn->Hide();
+
+	bottomBarLongTasksSizer->Add( showLongTasksBtn, 0, wxALL|wxEXPAND, 0 );
+
+	busyIcon = new wxGauge( bottomBar, wxID_ANY, 30, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
+	busyIcon->SetValue( 1 );
+	busyIcon->Hide();
+
+	bottomBarLongTasksSizer->Add( busyIcon, 0, wxALL|wxEXPAND, 5 );
+
+
+	bottomBarSizer->Add( bottomBarLongTasksSizer, 1, wxEXPAND, 5 );
+
+
+	bottomBar->SetSizer( bottomBarSizer );
+	bottomBar->Layout();
+	bottomBarSizer->Fit( bottomBar );
+	bSizer1->Add( bottomBar, 0, wxEXPAND | wxALL, 0 );
+
 
 	this->SetSizer( bSizer1 );
 	this->Layout();
-	statusBar = this->CreateStatusBar( 1, wxSTB_SIZEGRIP, wxID_ANY );
-	statusBar->SetMaxSize( wxSize( 20,-1 ) );
-
 	m_menubar1 = new wxMenuBar( 0 );
 	m_menu1 = new wxMenu();
 	wxMenuItem* loadProjectMenuItem;
@@ -299,7 +327,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	languageListBox->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBoxDClick ), NULL, this );
 	fontSearch->Connect( wxEVT_COMMAND_SEARCHCTRL_SEARCH_BTN, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnSearchButton ), NULL, this );
 	fontSearch->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnText ), NULL, this );
-	fontsList->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::fontsListOnListBoxDClick ), NULL, this );
+	fontsList->Connect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( EditorMainWindowBase::fontsListOnListItemSelected ), NULL, this );
 	addToScene->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::addToSceneOnCombobox ), NULL, this );
 	deleteFromScene->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
 	finalScene->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( EditorMainWindowBase::finalSceneOnKeyDown ), NULL, this );
@@ -309,6 +337,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	finalScene->Connect( wxEVT_COMMAND_TREE_END_LABEL_EDIT, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndLabelEdit ), NULL, this );
 	finalScene->Connect( wxEVT_COMMAND_TREE_ITEM_RIGHT_CLICK, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeItemRightClick ), NULL, this );
 	finalScene->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeSelChanged ), NULL, this );
+	showLongTasksBtn->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::showLongTasksBtnOnButtonClick ), NULL, this );
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::loadProjectMenuItemOnMenuSelection ), this, loadProjectMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::saveProjectMenuItemOnMenuSelection ), this, saveProjectMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::resetMenuItemOnMenuSelection ), this, resetMenuItem->GetId());
@@ -333,7 +362,7 @@ EditorMainWindowBase::~EditorMainWindowBase()
 	languageListBox->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBoxDClick ), NULL, this );
 	fontSearch->Disconnect( wxEVT_COMMAND_SEARCHCTRL_SEARCH_BTN, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnSearchButton ), NULL, this );
 	fontSearch->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnText ), NULL, this );
-	fontsList->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::fontsListOnListBoxDClick ), NULL, this );
+	fontsList->Disconnect( wxEVT_COMMAND_LIST_ITEM_SELECTED, wxListEventHandler( EditorMainWindowBase::fontsListOnListItemSelected ), NULL, this );
 	addToScene->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::addToSceneOnCombobox ), NULL, this );
 	deleteFromScene->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
 	finalScene->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( EditorMainWindowBase::finalSceneOnKeyDown ), NULL, this );
@@ -343,6 +372,7 @@ EditorMainWindowBase::~EditorMainWindowBase()
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_END_LABEL_EDIT, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeEndLabelEdit ), NULL, this );
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_ITEM_RIGHT_CLICK, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeItemRightClick ), NULL, this );
 	finalScene->Disconnect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::finalSceneOnTreeSelChanged ), NULL, this );
+	showLongTasksBtn->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::showLongTasksBtnOnButtonClick ), NULL, this );
 	this->Disconnect( navigate->GetId(), wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( EditorMainWindowBase::navigateOnToolClicked ) );
 
 }

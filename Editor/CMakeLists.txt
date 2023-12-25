@@ -54,6 +54,7 @@ if (${vsg_FOUND})
         "SystemFonts.h"
         "SystemFonts.cpp"
         "Observer.h"
+        "LongOperationNotification.h"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 
@@ -64,11 +65,11 @@ if (${vsg_FOUND})
 
     find_package(wxWidgets REQUIRED gl core base OPTIONAL_COMPONENTS net)
     find_package(vsgXchange CONFIG REQUIRED)
-
+    find_package(Freetype REQUIRED)
 
     add_executable(Editor WIN32 ${EditorSources})
     
-    target_include_directories(Editor PRIVATE ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+    target_include_directories(Editor PRIVATE Freetype::Freetype ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
     if (vsgXchange_FOUND)
         target_compile_definitions(Editor PRIVATE vsgXchange_FOUND)

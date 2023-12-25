@@ -23,11 +23,13 @@
 #include <wx/button.h>
 #include <wx/listbox.h>
 #include <wx/srchctrl.h>
+#include <wx/listctrl.h>
 #include <wx/notebook.h>
 #include <wx/imaglist.h>
 #include <wx/combobox.h>
 #include <wx/splitter.h>
-#include <wx/statusbr.h>
+#include <wx/gauge.h>
+#include <wx/wrapsizer.h>
 #include <wx/menu.h>
 #include <wx/toolbar.h>
 #include <wx/frame.h>
@@ -60,7 +62,7 @@ class EditorMainWindowBase : public wxFrame
 		wxListBox* languageListBox;
 		wxPanel* fontsPanel;
 		wxSearchCtrl* fontSearch;
-		wxListBox* fontsList;
+		wxListCtrl* fontsList;
 		wxPanel* m_panel9;
 		wxComboBox* addToScene;
 		wxButton* deleteFromScene;
@@ -71,7 +73,11 @@ class EditorMainWindowBase : public wxFrame
 		wxBoxSizer* propertiesSizer;
 		wxPanel* renderView;
 		wxGridSizer* renderViewSizer;
-		wxStatusBar* statusBar;
+		wxPanel* bottomBar;
+		wxWrapSizer* bottomBarSizer;
+		wxBoxSizer* bottomBarLongTasksSizer;
+		wxButton* showLongTasksBtn;
+		wxGauge* busyIcon;
 		wxMenuBar* m_menubar1;
 		wxMenu* m_menu1;
 		wxMenu* m_menu2;
@@ -91,7 +97,7 @@ class EditorMainWindowBase : public wxFrame
 		virtual void languageListBoxOnListBoxDClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void fontSearchOnSearchButton( wxCommandEvent& event ) { event.Skip(); }
 		virtual void fontSearchOnText( wxCommandEvent& event ) { event.Skip(); }
-		virtual void fontsListOnListBoxDClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void fontsListOnListItemSelected( wxListEvent& event ) { event.Skip(); }
 		virtual void addToSceneOnCombobox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void deleteFromSceneOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnKeyDown( wxKeyEvent& event ) { event.Skip(); }
@@ -101,6 +107,7 @@ class EditorMainWindowBase : public wxFrame
 		virtual void finalSceneOnTreeEndLabelEdit( wxTreeEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnTreeItemRightClick( wxTreeEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnTreeSelChanged( wxTreeEvent& event ) { event.Skip(); }
+		virtual void showLongTasksBtnOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void loadProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void saveProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void resetMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }

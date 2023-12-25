@@ -88,7 +88,7 @@ bool Application::OnInit() {
     wxInitAllImageHandlers();
     wxArtProvider::Push(new MyProvider);
 
-    _fonts = SystemFonts::Create(_io_context);
+    _fonts = ISystemFonts::Create(_io_context);
     _dataModel = DataModel::Create(_io_context);
     mainWindow = new EditorMainWindow(_dataModel.get(), _fonts.get(), nullptr);
     mainWindow->Init(argc, argv);
@@ -114,6 +114,7 @@ void Application::OnIdle(wxIdleEvent& evt) {
     _accumulator = (_alpha * seconds.count()) + (1.0 - _alpha) * _accumulator;
     mainWindow->SetTitle("Editor " + std::to_string(1.0 / _accumulator));
     evt.RequestMore(true);
+    mainWindow->OnIdle();
 }
 
 std::shared_ptr<boost::asio::io_context::work> Application::InitThreadPool() {
