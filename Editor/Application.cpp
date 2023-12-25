@@ -1,7 +1,15 @@
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/algorithm.hpp>
 #include "Application.h"
 #include "UI/EditorMainWindow.h"
 #include "UI/UICommon.h"
 #include <boost/dll.hpp>
+
+#ifdef __linux__
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#endif
 
 #ifdef vsgXchange_FOUND
 #include <vsgXchange/all.h>
@@ -49,6 +57,9 @@ protected:
         else if (id == ArtIconRemove) {
             path = path / "Icons" / "RemoveIcon.png";
         }
+        else if (id == ArtIconFont) {
+            path = path / "Icons" / "FontIcon.png";
+        }
 
         wxBitmap bmp;
         bmp.LoadFile(path.native(), wxBITMAP_TYPE_ANY);
@@ -77,8 +88,10 @@ bool Application::OnInit() {
     wxInitAllImageHandlers();
     wxArtProvider::Push(new MyProvider);
 
+    _fonts = SystemFonts::Create(_io_context);
     _dataModel = DataModel::Create(_io_context);
-    mainWindow = new EditorMainWindow(_dataModel.get(), argc, argv, nullptr);
+    mainWindow = new EditorMainWindow(_dataModel.get(), _fonts.get(), nullptr);
+    mainWindow->Init(argc, argv);
     mainWindow->Show(true);
 
     Connect(wxID_ANY, wxEVT_IDLE, wxIdleEventHandler(Application::OnIdle));
@@ -99,7 +112,7 @@ void Application::OnIdle(wxIdleEvent& evt) {
 
     auto seconds = std::chrono::duration_cast<std::chrono::duration<double>>(dt);
     _accumulator = (_alpha * seconds.count()) + (1.0 - _alpha) * _accumulator;
-    mainWindow->SetTitle("Editor " + std::to_string(_accumulator));
+    mainWindow->SetTitle("Editor " + std::to_string(1.0 / _accumulator));
     evt.RequestMore(true);
 }
 

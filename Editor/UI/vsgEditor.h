@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 4.0.0-0-g0efcecf)
+// C++ code generated with wxFormBuilder (version 4.0.0-0-g0efcecf-dirty)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -22,6 +22,7 @@
 #include <wx/icon.h>
 #include <wx/button.h>
 #include <wx/listbox.h>
+#include <wx/srchctrl.h>
 #include <wx/notebook.h>
 #include <wx/imaglist.h>
 #include <wx/combobox.h>
@@ -57,6 +58,9 @@ class EditorMainWindowBase : public wxFrame
 		wxButton* langAdd;
 		wxButton* langRemove;
 		wxListBox* languageListBox;
+		wxPanel* fontsPanel;
+		wxSearchCtrl* fontSearch;
+		wxListBox* fontsList;
 		wxPanel* m_panel9;
 		wxComboBox* addToScene;
 		wxButton* deleteFromScene;
@@ -76,6 +80,8 @@ class EditorMainWindowBase : public wxFrame
 		wxToolBarToolBase* navigate;
 
 		// Virtual event handlers, override them in your derived class
+		virtual void EditorMainWindowBaseOnClose( wxCloseEvent& event ) { event.Skip(); }
+		virtual void dataPanelsOnNotebookPageChanged( wxNotebookEvent& event ) { event.Skip(); }
 		virtual void assetsTreeOnTreeBeginDrag( wxTreeEvent& event ) { event.Skip(); }
 		virtual void assetsTreeOnTreeEndDrag( wxTreeEvent& event ) { event.Skip(); }
 		virtual void assetsTreeOnTreeSelChanged( wxTreeEvent& event ) { event.Skip(); }
@@ -83,6 +89,9 @@ class EditorMainWindowBase : public wxFrame
 		virtual void langRemoveOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void languageListBoxOnListBox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void languageListBoxOnListBoxDClick( wxCommandEvent& event ) { event.Skip(); }
+		virtual void fontSearchOnSearchButton( wxCommandEvent& event ) { event.Skip(); }
+		virtual void fontSearchOnText( wxCommandEvent& event ) { event.Skip(); }
+		virtual void fontsListOnListBoxDClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void addToSceneOnCombobox( wxCommandEvent& event ) { event.Skip(); }
 		virtual void deleteFromSceneOnButtonClick( wxCommandEvent& event ) { event.Skip(); }
 		virtual void finalSceneOnKeyDown( wxKeyEvent& event ) { event.Skip(); }
@@ -96,6 +105,7 @@ class EditorMainWindowBase : public wxFrame
 		virtual void saveProjectMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void resetMenuItemOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void OnImport( wxCommandEvent& event ) { event.Skip(); }
+		virtual void importFontMenuOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void exportMenuOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void showTransformMenuOnMenuSelection( wxCommandEvent& event ) { event.Skip(); }
 		virtual void navigateOnToolClicked( wxCommandEvent& event ) { event.Skip(); }

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////
-// C++ code generated with wxFormBuilder (version 4.0.0-0-g0efcecf)
+// C++ code generated with wxFormBuilder (version 4.0.0-0-g0efcecf-dirty)
 // http://www.wxformbuilder.org/
 //
 // PLEASE DO *NOT* EDIT THIS FILE!
@@ -64,7 +64,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	assetsPage->SetSizer( fgSizer8 );
 	assetsPage->Layout();
 	fgSizer8->Fit( assetsPage );
-	dataPanels->AddPage( assetsPage, wxT("Assets"), true );
+	dataPanels->AddPage( assetsPage, wxT("Assets"), false );
 	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconAssets, wxART_FRAME_ICON );
 	if ( dataPanelsBitmap.Ok() )
 	{
@@ -107,6 +107,43 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	fgSizer7->Fit( localizationPage );
 	dataPanels->AddPage( localizationPage, wxT("Localization"), true );
 	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconLocalization, wxART_FRAME_ICON );
+	if ( dataPanelsBitmap.Ok() )
+	{
+		dataPanelsImage = dataPanelsBitmap.ConvertToImage();
+		dataPanelsImages->Add( dataPanelsImage.Scale( dataPanelsImageSize.GetWidth(), dataPanelsImageSize.GetHeight() ) );
+		dataPanels->SetPageImage( dataPanelsIndex, dataPanelsIndex );
+		dataPanelsIndex++;
+	}
+	fontsPanel = new wxPanel( dataPanels, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	wxFlexGridSizer* fgSizer9;
+	fgSizer9 = new wxFlexGridSizer( 2, 1, 0, 0 );
+	fgSizer9->AddGrowableCol( 0, 1 );
+	fgSizer9->AddGrowableRow( 1, 1 );
+	fgSizer9->SetFlexibleDirection( wxBOTH );
+	fgSizer9->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
+
+	wxBoxSizer* bSizer11;
+	bSizer11 = new wxBoxSizer( wxHORIZONTAL );
+
+	fontSearch = new wxSearchCtrl( fontsPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	#ifndef __WXMAC__
+	fontSearch->ShowSearchButton( true );
+	#endif
+	fontSearch->ShowCancelButton( false );
+	bSizer11->Add( fontSearch, 1, wxALL, 5 );
+
+
+	fgSizer9->Add( bSizer11, 1, wxEXPAND, 5 );
+
+	fontsList = new wxListBox( fontsPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 );
+	fgSizer9->Add( fontsList, 1, wxALL|wxEXPAND, 5 );
+
+
+	fontsPanel->SetSizer( fgSizer9 );
+	fontsPanel->Layout();
+	fgSizer9->Fit( fontsPanel );
+	dataPanels->AddPage( fontsPanel, wxT("Fonts"), false );
+	dataPanelsBitmap = wxArtProvider::GetBitmap( ArtIconFont, wxART_FRAME_ICON );
 	if ( dataPanelsBitmap.Ok() )
 	{
 		dataPanelsImage = dataPanelsBitmap.ConvertToImage();
@@ -216,8 +253,14 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	m_menu1->AppendSeparator();
 
 	wxMenuItem* importMenuItem;
-	importMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Import") ) + wxT('\t') + wxT("Ctrl+I"), wxEmptyString, wxITEM_NORMAL );
+	importMenuItem = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Import Package") ) + wxT('\t') + wxT("Ctrl+ALT+P"), wxEmptyString, wxITEM_NORMAL );
 	m_menu1->Append( importMenuItem );
+
+	wxMenuItem* importFontMenu;
+	importFontMenu = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Import Font") ) + wxT('\t') + wxT("CTRL+ALT+F"), wxEmptyString, wxITEM_NORMAL );
+	m_menu1->Append( importFontMenu );
+
+	m_menu1->AppendSeparator();
 
 	wxMenuItem* exportMenu;
 	exportMenu = new wxMenuItem( m_menu1, wxID_ANY, wxString( wxT("Export") ) , wxEmptyString, wxITEM_NORMAL );
@@ -245,6 +288,8 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	this->Centre( wxBOTH );
 
 	// Connect Events
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( EditorMainWindowBase::EditorMainWindowBaseOnClose ) );
+	dataPanels->Connect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( EditorMainWindowBase::dataPanelsOnNotebookPageChanged ), NULL, this );
 	assetsTree->Connect( wxEVT_COMMAND_TREE_BEGIN_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeBeginDrag ), NULL, this );
 	assetsTree->Connect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeEndDrag ), NULL, this );
 	assetsTree->Connect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeSelChanged ), NULL, this );
@@ -252,6 +297,9 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	langRemove->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::langRemoveOnButtonClick ), NULL, this );
 	languageListBox->Connect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBox ), NULL, this );
 	languageListBox->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBoxDClick ), NULL, this );
+	fontSearch->Connect( wxEVT_COMMAND_SEARCHCTRL_SEARCH_BTN, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnSearchButton ), NULL, this );
+	fontSearch->Connect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnText ), NULL, this );
+	fontsList->Connect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::fontsListOnListBoxDClick ), NULL, this );
 	addToScene->Connect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::addToSceneOnCombobox ), NULL, this );
 	deleteFromScene->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
 	finalScene->Connect( wxEVT_KEY_DOWN, wxKeyEventHandler( EditorMainWindowBase::finalSceneOnKeyDown ), NULL, this );
@@ -265,6 +313,7 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::saveProjectMenuItemOnMenuSelection ), this, saveProjectMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::resetMenuItemOnMenuSelection ), this, resetMenuItem->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::OnImport ), this, importMenuItem->GetId());
+	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::importFontMenuOnMenuSelection ), this, importFontMenu->GetId());
 	m_menu1->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::exportMenuOnMenuSelection ), this, exportMenu->GetId());
 	m_menu2->Bind(wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( EditorMainWindowBase::showTransformMenuOnMenuSelection ), this, showTransformMenu->GetId());
 	this->Connect( navigate->GetId(), wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( EditorMainWindowBase::navigateOnToolClicked ) );
@@ -273,6 +322,8 @@ EditorMainWindowBase::EditorMainWindowBase( wxWindow* parent, wxWindowID id, con
 EditorMainWindowBase::~EditorMainWindowBase()
 {
 	// Disconnect Events
+	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( EditorMainWindowBase::EditorMainWindowBaseOnClose ) );
+	dataPanels->Disconnect( wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, wxNotebookEventHandler( EditorMainWindowBase::dataPanelsOnNotebookPageChanged ), NULL, this );
 	assetsTree->Disconnect( wxEVT_COMMAND_TREE_BEGIN_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeBeginDrag ), NULL, this );
 	assetsTree->Disconnect( wxEVT_COMMAND_TREE_END_DRAG, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeEndDrag ), NULL, this );
 	assetsTree->Disconnect( wxEVT_COMMAND_TREE_SEL_CHANGED, wxTreeEventHandler( EditorMainWindowBase::assetsTreeOnTreeSelChanged ), NULL, this );
@@ -280,6 +331,9 @@ EditorMainWindowBase::~EditorMainWindowBase()
 	langRemove->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::langRemoveOnButtonClick ), NULL, this );
 	languageListBox->Disconnect( wxEVT_COMMAND_LISTBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBox ), NULL, this );
 	languageListBox->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::languageListBoxOnListBoxDClick ), NULL, this );
+	fontSearch->Disconnect( wxEVT_COMMAND_SEARCHCTRL_SEARCH_BTN, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnSearchButton ), NULL, this );
+	fontSearch->Disconnect( wxEVT_COMMAND_TEXT_UPDATED, wxCommandEventHandler( EditorMainWindowBase::fontSearchOnText ), NULL, this );
+	fontsList->Disconnect( wxEVT_COMMAND_LISTBOX_DOUBLECLICKED, wxCommandEventHandler( EditorMainWindowBase::fontsListOnListBoxDClick ), NULL, this );
 	addToScene->Disconnect( wxEVT_COMMAND_COMBOBOX_SELECTED, wxCommandEventHandler( EditorMainWindowBase::addToSceneOnCombobox ), NULL, this );
 	deleteFromScene->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( EditorMainWindowBase::deleteFromSceneOnButtonClick ), NULL, this );
 	finalScene->Disconnect( wxEVT_KEY_DOWN, wxKeyEventHandler( EditorMainWindowBase::finalSceneOnKeyDown ), NULL, this );

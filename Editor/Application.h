@@ -4,6 +4,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/thread.hpp>
 #include "DataModel.h"
+#include "SystemFonts.h"
 
 class Application : public wxApp {
 public:
@@ -13,9 +14,11 @@ public:
     void OnIdle(wxIdleEvent &evt);
 
     std::shared_ptr<boost::asio::io_context::work> InitThreadPool();
+    SystemFontsPtr GetFonts() { return _fonts; }
 
 private:
     EditorMainWindow* mainWindow;
+    SystemFontsPtr _fonts;
     boost::asio::io_context _io_context;    
     std::shared_ptr<boost::asio::io_context::work> _work;
     boost::thread_group _threads;

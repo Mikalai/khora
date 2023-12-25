@@ -17,11 +17,11 @@ By default wxWidgets generate idle event once per second. To increase amount of 
 ## Side tree view with imported packages
 
 ## Side tree view with composed final scene
-### _New knowledges_
+### _Hints_
 - To perform drag and drop ```wxDropSource``` can be used with conjunction ```wxTextDataObject wxTextDropTarget```
 
 ## Toolbar on main window
-### _New knowledges_
+### _Hints_
 - To load icons wxArtProvider can be used. 
 - By default png images can't be loaded. ```wxInitAllImageHandlers``` adds support for different image formats, thus ```wxBitmap::LoadFile``` can handle png with transparancy.
 - Convinient way to get current program location/directory ```boost::dll::program_location().parent_path()```
@@ -58,3 +58,6 @@ Entry contains draw commands and buffers.
 ## Localization
 Editor should be able to produce different export based on required final language. For locaization there is a special entry: ```LocalizedEntry```. When another entry is added to localized entry its name should represent the language. During scene compilation compiler can take into account localized entries and select only subset nodes. To add/remove/modify language a Localization can be used.  
 vsg uses compiled fonts. That is why there is a separate tab to manage fonts where nots can be imported and converted is vsgXchange is available. Once at least one font is imported it is possible to add text nodes. Text nodes can't be part of packages because text is pretty compound entity with bunch of specific properties that should be tuned inside this editor. Among this properties are: font, text.
+
+## Fonts 
+I'm a bit disappointed that wxWidgets doesn't provide path to the file, but based on forums they had reasons for that. So, usage of wxFontDialog is not an option. That is why ```SystemFonts``` is added to handle fonts. Main use case is to enumerate all .ttf files on the host, query information about it using freetype. This is another component that is based on ```AsyncQueue``` with request/reply approach. 

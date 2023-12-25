@@ -6,14 +6,17 @@
 #include "EntryPath.h"
 
 class IDataModelObserver;
+class Subscription;
+using SubscriptionPtr = std::shared_ptr<Subscription>;
 
 class IDataModelEditor {
 public:
     virtual ~IDataModelEditor();
 
     struct ImportFileCommand {
-        std::string FilePath;
+        std::string FilePath;        
         vsg::ref_ptr<vsg::Options> Options;
+        std::filesystem::path ProjectPath;
     };
 
     virtual void Execute(const ImportFileCommand& cmd) = 0;
@@ -75,7 +78,8 @@ public:
 
     virtual void Execute(const ResetModelCommand& cmd) = 0;
 
-    virtual void Subscribe(IDataModelObserver* observer) = 0;
+    [[nodiscard]]
+    virtual SubscriptionPtr Subscribe(std::shared_ptr<IDataModelObserver> observer) = 0;
 
     struct SelectEntryCommand {
         EntryPath Path;

@@ -49,8 +49,11 @@ if (${vsg_FOUND})
         "Errors.cpp"
         "ConfigEntry.h"
         "ConfigEntry.cpp"
-        "LocalizedEntry.h"
+        "LocalizedEntry.h"        
         "LocalizedEntry.cpp"
+        "SystemFonts.h"
+        "SystemFonts.cpp"
+        "Observer.h"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 
@@ -66,6 +69,12 @@ if (${vsg_FOUND})
     add_executable(Editor WIN32 ${EditorSources})
     
     target_include_directories(Editor PRIVATE ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
+
+    if (vsgXchange_FOUND)
+        target_compile_definitions(Editor PRIVATE vsgXchange_FOUND)
+        target_link_libraries(Editor PRIVATE vsgXchange::vsgXchange)
+    endif()
+
     include(${wxWidgets_USE_FILE})
 
     find_package(PkgConfig)

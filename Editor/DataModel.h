@@ -15,7 +15,7 @@
 #include "IDataModelObserver.h"
 #include "DirectoryEntry.h"
 #include "GroupEntry.h"
-#include "AsyncQueue.h"
+#include "Observer.h"
 
 const std::string ROOT_PACKAGES{ "PACKAGES" };
 const std::string ROOT_SCENE{ "SCENE" };
@@ -25,16 +25,20 @@ const std::string PACKAGE_ENTRY_TRANSFORMS{ "Transforms" };
 const std::string PACKAGE_ENTRY_GEOMETRIES{ "Geometries" };
 const std::string PACKAGE_ENTRY_MATERIALS{ "Materials" };
 
-class DataModel : 
-    public IDataModelEditor, 
-    public IEntryObserver, 
-    public std::enable_shared_from_this<DataModel> {
-protected:    
+class DataModel :
+    public Observable<DataModel, IDataModelObserver, IDataModelEditor>,
+    public IEntryObserver {
+
+using Base = Observable<DataModel, IDataModelObserver, IDataModelEditor>;
+
+friend class Observable<DataModel, IDataModelObserver, IDataModelEditor>;
+
+protected:
     DataModel(boost::asio::io_context& ctx);
 
 public:
 
-    static std::shared_ptr<DataModel> Create(boost::asio::io_context& ctx);
+    void OnCreated() override;
 
     virtual ~DataModel();
 
@@ -49,15 +53,6 @@ public:
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnError(const LogNotification& cmd) override;
-
-    void Subscribe(IDataModelObserver* observer) override;
-
-    template<typename T>
-    void Notify(T&& value) {
-        std::for_each(this->_observers.begin(), this->_observers.end(), [&](auto o) {
-            o->Execute(value);
-        });
-    }
 
 private:
     void CreateAxis();
@@ -79,16 +74,13 @@ private:
     std::int32_t _denyCompilation{ 0 };
     vsg::ref_ptr<vsg::Options> _options = vsg::Options::create();
     std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
-    std::shared_ptr<AsyncQueue> _queue;
 
     std::shared_ptr<DirectoryEntry> _dir = std::make_shared<GroupEntry>();
-    std::vector<IDataModelObserver*> _observers;
-    boost::asio::io_context& _ctx;    
+    boost::asio::io_context& _ctx;
 
     void Execute(const ResetModelCommand& cmd) override;
     void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
-    void Execute(const SelectEntryCommand& cmd) override;
-    std::shared_ptr<AsyncQueue> GetSyncContext() override;
+    void Execute(const SelectEntryCommand& cmd) override;    
     void Execute(const RenameEntryCommand& cmd) override;
     void Execute(const CreateNodeCommand& cmd) override;
     void Execute(const CopyEntryCommand& cmd) override;
@@ -101,4 +93,5 @@ private:
 
     // Inherited via IDataModelEditor
     void Execute(const RequestSuggestedChildrenCommand& cmd) override;
+    void OnSubscribed(std::shared_ptr<IDataModelObserver> observer) override;
 };

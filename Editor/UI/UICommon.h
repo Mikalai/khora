@@ -12,3 +12,4 @@
  const wxArtID ArtIconLocalization{ "art-icon-localization" };
  const wxArtID ArtIconAdd{ "art-icon-add" };
  const wxArtID ArtIconRemove{ "art-icon-remove" };
+ const wxArtID ArtIconFont{ "art-icon-font" };

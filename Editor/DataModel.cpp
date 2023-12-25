@@ -17,15 +17,14 @@
 #include "Serializer.h"
 #include "TransformEntry.h"
 
-DataModel::DataModel(boost::asio::io_context& ctx) : _ctx{ctx} {
-    (_queue = std::make_shared<AsyncQueue>(ctx))->Start();
+DataModel::DataModel(boost::asio::io_context& ctx)
+    : Base{ ctx }
+    , _ctx{ ctx } {
 }
 
-std::shared_ptr<DataModel> DataModel::Create(boost::asio::io_context& ctx) {
-    std::shared_ptr<DataModel> r{new DataModel{ctx}};
-    r->CreateAxis();
-    r->Execute(IDataModelEditor::ResetModelCommand{});
-    return r;
+void DataModel::OnCreated() {
+    CreateAxis();
+    Execute(IDataModelEditor::ResetModelCommand{});
 }
 
 DataModel::~DataModel() {}
@@ -35,29 +34,45 @@ void DataModel::Execute(const ImportFileCommand& cmd) {
 
     boost::asio::post(_ctx, [this, cmd]() {
         auto importFile = [&]() {
-            std::filesystem::path programPath =
-                boost::dll::program_location().parent_path().native();
+
             std::filesystem::path requestedPath = cmd.FilePath;
+            auto newPath = cmd.ProjectPath / "Raw" / requestedPath.filename();
+
+            if (!std::filesystem::equivalent(requestedPath.parent_path(), newPath)) {
+                auto oldPath = requestedPath;
+                if (oldPath.is_relative()) {
+                    oldPath = cmd.ProjectPath / oldPath;
+                }
+                if (oldPath != newPath) {
+                    std::error_code ec;
+                    if (!std::filesystem::copy_file(oldPath, newPath, std::filesystem::copy_options::overwrite_existing, ec)) {
+                        Notify(LogError(LOG_IO_ERROR, ec.message()));
+                        return;
+                    }
+                }
+                requestedPath = newPath;
+            }
+
             if (requestedPath.is_relative()) {
-                requestedPath = programPath / requestedPath;
+                requestedPath = cmd.ProjectPath / requestedPath;
             }
 
             if (auto root = vsg::read_cast<vsg::Node>(requestedPath.native(),
-                                                      cmd.Options);
+                cmd.Options);
                 root) {
                 auto relPath =
-                    std::filesystem::relative(cmd.FilePath, programPath);
+                    std::filesystem::relative(requestedPath, cmd.ProjectPath);
 
                 Notify(IDataModelObserver::CompileCommand{
                     .Object = root,
-                    .OnComplete = [&](auto object, auto result) {}});
+                    .OnComplete = [&](auto object, auto result) {} });
 
                 auto packageName =
                     std::filesystem::path(relPath).filename().string();
 
                 _queue->Enqueue([=]() {
                     _packagePreviewRoots[packageName] =
-                        PackageInfo{.Path = relPath, .Root = root};
+                        PackageInfo{ .Path = relPath, .Root = root };
 
                     WorldCompiler compiler;
                     root->accept(compiler);
@@ -66,82 +81,79 @@ void DataModel::Execute(const ImportFileCommand& cmd) {
                         std::string path = o.first;
 
                         if (auto tr = std::get<0>(o.second)
-                                          .cast<vsg::MatrixTransform>();
+                            .cast<vsg::MatrixTransform>();
                             tr) {
                             _dir->Add(
-                                {ROOT_PACKAGES + "/" + packageName + "/" +
-                                 PACKAGE_ENTRY_TRANSFORMS + "/" + o.first},
+                                { ROOT_PACKAGES + "/" + packageName + "/" +
+                                 PACKAGE_ENTRY_TRANSFORMS + "/" + o.first },
                                 std::make_shared<TransformPackageEntry>(tr));
 
                             for (auto child : tr->children) {
                                 if (auto m = child.cast<vsg::StateGroup>(); m) {
                                     _dir->Add(
-                                        {ROOT_PACKAGES + "/" + packageName +
+                                        { ROOT_PACKAGES + "/" + packageName +
                                          "/" + PACKAGE_ENTRY_MATERIALS + "/" +
-                                         o.first},
+                                         o.first },
                                         std::make_shared<MaterialPackageEntry>(
                                             m));
                                 }
                             }
                         }
                         if (auto tr = std::get<0>(o.second)
-                                          .cast<vsg::VertexIndexDraw>();
+                            .cast<vsg::VertexIndexDraw>();
                             tr) {
                             _dir->Add(
-                                {ROOT_PACKAGES + "/" + packageName + "/" +
-                                 PACKAGE_ENTRY_GEOMETRIES + "/" + path},
+                                { ROOT_PACKAGES + "/" + packageName + "/" +
+                                 PACKAGE_ENTRY_GEOMETRIES + "/" + path },
                                 std::make_shared<GeometryPackageEntry>(tr));
                         }
                         if (auto tr =
-                                std::get<0>(o.second).cast<vsg::StateGroup>();
+                            std::get<0>(o.second).cast<vsg::StateGroup>();
                             tr) {
                             _dir->Add(
-                                {ROOT_PACKAGES + "/" + packageName + "/" +
-                                 PACKAGE_ENTRY_MATERIALS + "/" + path},
+                                { ROOT_PACKAGES + "/" + packageName + "/" +
+                                 PACKAGE_ENTRY_MATERIALS + "/" + path },
                                 std::make_shared<MaterialPackageEntry>(tr));
                         }
                     }
-                });
+                    });
             }
-        };
+            };
 
         importFile();
         AllowCompilation();
-    });
+        });
 }
 
-void DataModel::Subscribe(IDataModelObserver* observer) {
-    _queue->Enqueue([=]() {
-        _observers.push_back(observer);
-        observer->Execute(IDataModelObserver::ConfigNotification{
-            .Config = std::static_pointer_cast<ConfigEntry>(
-                GetConfig()->CreateView(_queue))});
-    });
-}
 
 void DataModel::Execute(const ResetModelCommand& cmd) {
     _queue->Enqueue([=]() {
         _dir = std::make_shared<GroupEntry>();
-        _dir->AddObserver(shared_from_this());
-        _dir->Add({ROOT_CONFIG}, std::make_shared<ConfigEntry>());
+        _dir->AddObserver(Self());
+        _dir->Add({ ROOT_CONFIG }, std::make_shared<ConfigEntry>());
         _packagePreviewRoots.clear();
         Notify(IDataModelObserver::ModelResetNotification{});
         Notify(IDataModelObserver::ConfigNotification{
             .Config = std::static_pointer_cast<ConfigEntry>(
-                GetConfig()->CreateView(_queue))});
-    });
+                GetConfig()->CreateView(_queue)) });
+        });
 }
 
 void DataModel::OnPropertyChanged(std::shared_ptr<Entry> sender,
-                                  std::string_view name) {
+    std::string_view name) {
     Notify(IDataModelObserver::EntryPropertyChangedNotification{
-        .ChangedEntry = sender, .Property = name});
+        .ChangedEntry = sender, .Property = name });
 }
 
 void DataModel::OnError(const LogNotification& cmd) { Notify(cmd); }
 
 void DataModel::Execute(const SelectEntryCommand& cmd) {
     _queue->Enqueue([=]() {
+
+        if (!CanCompile()) {
+            return;
+        }
+
         auto entry = _dir->FindEntry(cmd.Path);
 
         _activeEntry = entry;
@@ -149,11 +161,9 @@ void DataModel::Execute(const SelectEntryCommand& cmd) {
         if (!entry) return;
 
         Notify(IDataModelObserver::EntrySelectedNotification{
-            .SelectedEntry = entry->CreateView(_queue)});
-    });
+            .SelectedEntry = entry->CreateView(_queue) });
+        });
 }
-
-std::shared_ptr<AsyncQueue> DataModel::GetSyncContext() { return _queue; }
 
 void DataModel::Execute(const RenameEntryCommand& cmd) {
     _queue->Enqueue([=]() {
@@ -172,7 +182,7 @@ void DataModel::Execute(const RenameEntryCommand& cmd) {
         oldEntry = _dir->Remove(cmd.OldPath);
         assert(oldEntry);
         _dir->Add(cmd.NewPath, oldEntry);
-    });
+        });
 }
 
 void DataModel::Execute(const CreateNodeCommand& cmd) {
@@ -181,23 +191,25 @@ void DataModel::Execute(const CreateNodeCommand& cmd) {
         auto path = cmd.Path;
 
         while (auto node = _dir->FindEntry(path)) {
-            path = {cmd.Path.Path + "." + std::to_string(suffix++)};
+            path = { cmd.Path.Path + "." + std::to_string(suffix++) };
         }
 
         std::shared_ptr<Entry> entry;
 
         if (cmd.Type == "Group") {
             entry = std::make_shared<GroupEntry>();
-        } else if (cmd.Type == "Transform") {
+        }
+        else if (cmd.Type == "Transform") {
             entry = std::make_shared<TransformProxyEntry>(EntryPath{});
-        } else if (cmd.Type == "Localized") {
+        }
+        else if (cmd.Type == "Localized") {
             entry = std::make_shared<LocalizedEntry>();
         }
 
         if (entry) {
             _dir->Add(path, entry);
         }
-    });
+        });
 }
 
 void DataModel::Execute(const SaveToFileCommand& cmd) {
@@ -216,7 +228,7 @@ void DataModel::Execute(const SaveToFileCommand& cmd) {
         {
             auto& dir = j["catalog"];
 
-            auto scene = _dir->FindEntry({ROOT_SCENE});
+            auto scene = _dir->FindEntry({ ROOT_SCENE });
 
             if (scene) {
                 scene->Serialize(dir);
@@ -226,7 +238,7 @@ void DataModel::Execute(const SaveToFileCommand& cmd) {
         {
             auto& dir = j["config"];
 
-            auto config = _dir->FindEntry({ROOT_CONFIG});
+            auto config = _dir->FindEntry({ ROOT_CONFIG });
 
             if (config) {
                 config->Serialize(dir);
@@ -238,22 +250,113 @@ void DataModel::Execute(const SaveToFileCommand& cmd) {
             auto str = j.dump(4);
             stream.write(str.data(), str.size());
         }
-    });
+        });
 }
+
+// template <typename Output, typename... Next>
+// class GeneratorBlock {
+// public:
+//     GeneratorBlock(std::function<Output()> fn) : _fn{ fn } {}
+
+
+// private:
+//     std::function<Output()> _fn;
+//     std::tuple<Next...> _next;
+// };
+
+// template <typename Derived, typename Input, typename Output, typename... Next>
+// class TransformBlock {
+// public:
+
+//     void operator () (Input i) {
+//         auto o = Derived::Transform(i);
+//         std::apply([&](auto&&... args) {
+//             (args(o), ...);
+//             }, this->_next);
+//     }
+
+// private:
+//     std::tuple<Next...> _next;
+// };
+
+// template <typename Derived, typename Input>
+// class FinalBlock {
+// public:
+
+//     void operator() (Input inp) {
+//         Derived::operator() (inp);
+//     }
+
+// };
+
+// template<typename... Next>
+// class OpenBinaryStream : public TransformBlock<std::filesystem::path, std::shared_ptr<std::ifstream>, Next...> {
+//     using Base = TransformBlock<std::filesystem::path, std::shared_ptr<std::ifstream>, Next...>;
+// public:
+
+//     std::shared_ptr<std::ifstream> Transform(std::filesystem::path path) {
+//         return std::make_shared<std::ifstream>(path, std::ios::binary);
+//     }
+
+// };
+
+// class ValidateStream : public FinalBlock<ValidateStream, std::shared_ptr<std::ifstream>> {
+//     using Base = FinalBlock<ValidateStream, std::shared_ptr<std::ifstream>>;
+// public:
+
+//     void operator() (std::shared_ptr<std::ifstream> stream) {
+//         // if (!stream.is_open()) {
+//         //         Notify(LogNotification{.Code = EDITOR_ERROR_FILE_NOT_FOUND,
+//         //                                .StrParamter = cmd.Path.string()});
+//         //         return;
+//         //     }
+//         // }
+//     }
+// };
+
+// template<typename... Next>
+// class ReadAllTextFromStream : public TransformBlock<ReadAllTextFromStream<Next...>, std::shared_ptr<std::ifstream>, std::string, Next...> {
+// public:
+
+//     std::string Transform(std::shared_ptr<std::ifstream> stream) {
+//         return std::string(std::istreambuf_iterator<char>(stream),
+//             std::istreambuf_iterator<char>());
+//     }
+// };
+
+// template<typename... Next>
+// class StringToJsonTransform : public TransformBlock<StringToJsonTransform<Next...>, std::shared_ptr<std::ifstream>, std::string, Next...> {
+//     public:
+
+//         nlohmann::json Transform(std::string stream) {
+//         return std::string(std::istreambuf_iterator<char>(stream),
+//             std::istreambuf_iterator<char>());
+//     }
+// };
 
 void DataModel::Execute(const ImportFromFileCommand& cmd) {
     DenyCompilation();
 
     _queue->Enqueue([=]() {
+
+        {
+            // Ensure required folders exists
+            auto parent = std::filesystem::path(cmd.Path).parent_path();
+            auto rawFolder = parent / "Raw";
+            if (!std::filesystem::exists(rawFolder)) {
+                std::filesystem::create_directory(rawFolder);
+            }
+        }
+
         std::ifstream stream(cmd.Path, std::ios::binary);
         if (!stream.is_open()) {
-            Notify(LogNotification{.Code = EDITOR_ERROR_FILE_NOT_FOUND,
-                                   .StrParamter = cmd.Path.string()});
+            Notify(LogNotification{ .Code = EDITOR_ERROR_FILE_NOT_FOUND,
+                                   .StrParamter = cmd.Path.string() });
             return;
         }
 
         std::string text((std::istreambuf_iterator<char>(stream)),
-                         std::istreambuf_iterator<char>());
+            std::istreambuf_iterator<char>());
 
         try {
             auto o = nlohmann::json::parse(text);
@@ -266,9 +369,13 @@ void DataModel::Execute(const ImportFromFileCommand& cmd) {
                         continue;
                     }
                     Execute(IDataModelEditor::ImportFileCommand{
-                        .FilePath = path, .Options = _options});
+                        .FilePath = path,
+                        .Options = _options,
+                        .ProjectPath = cmd.Path.parent_path()
+                        });
                 }
-            } else {
+            }
+            else {
                 throw std::runtime_error("'packages' section not found.");
             }
 
@@ -277,26 +384,28 @@ void DataModel::Execute(const ImportFromFileCommand& cmd) {
 
                 if (auto it = o.find("catalog"); it != o.end()) {
                     scene->Deserialize(*it);
-                    _dir->Add({ROOT_SCENE}, scene);
-                } else {
+                    _dir->Add({ ROOT_SCENE }, scene);
+                }
+                else {
                     throw std::runtime_error("'catalog' section not found.");
                 }
             }
 
             {
-                auto config = _dir->FindEntry({ROOT_CONFIG});
+                auto config = _dir->FindEntry({ ROOT_CONFIG });
                 assert(config);
 
                 if (auto it = o.find("config"); it != o.end()) {
                     config->Deserialize(*it);
                 }
             }
-        } catch (const std::exception& e) {
-            Notify(
-                LogNotification{.Code = EDITOR_ERROR_PROJECT_FILE_IS_NOT_VALID,
-                                .StrParamter = e.what() + text});
         }
-    });
+        catch (const std::exception& e) {
+            Notify(
+                LogNotification{ .Code = EDITOR_ERROR_PROJECT_FILE_IS_NOT_VALID,
+                                .StrParamter = e.what() + text });
+        }
+        });
 
     AllowCompilation();
 }
@@ -306,12 +415,12 @@ void DataModel::Execute(const MoveEntryCommand& cmd) {
         auto o = _dir->Remove(cmd.SourcePath);
         if (!o) {
             std::cerr << "Can't move entry " << cmd.SourcePath.Path << " to "
-                      << cmd.TargetPath.Path << " because source is not found.";
+                << cmd.TargetPath.Path << " because source is not found.";
             return;
         }
 
         _dir->Add(cmd.TargetPath.Append(cmd.SourcePath.GetLeafName()), o);
-    });
+        });
 }
 
 void DataModel::Execute(const CopyEntryCommand& cmd) {
@@ -319,14 +428,14 @@ void DataModel::Execute(const CopyEntryCommand& cmd) {
         auto o = _dir->FindEntry(cmd.SourcePath);
         if (!o) {
             std::cerr << "Can't clone entry " << cmd.SourcePath.Path << " to "
-                      << cmd.TargetPath.Path << " because source is not found.";
+                << cmd.TargetPath.Path << " because source is not found.";
             return;
         }
 
         auto obj = o->Clone();
 
         _dir->Add(cmd.TargetPath.Append(cmd.SourcePath.GetLeafName()), obj);
-    });
+        });
 }
 
 void DataModel::Execute(const RemoveEntryCommand& cmd) {
@@ -334,13 +443,13 @@ void DataModel::Execute(const RemoveEntryCommand& cmd) {
 }
 
 void DataModel::OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) {
-    Notify(IDataModelObserver::ItemAddedNotification{.Path = path,
-                                                     .Type = entry->GetType()});
+    Notify(IDataModelObserver::ItemAddedNotification{ .Path = path,
+                                                     .Type = entry->GetType() });
 }
 
 void DataModel::OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) {
     Notify(IDataModelObserver::ItemRemovedNotification{
-        .Path = path, .Type = entry->GetType()});
+        .Path = path, .Type = entry->GetType() });
 }
 
 void DataModel::Execute(const CopyNodeCommand& cmd) {
@@ -349,15 +458,15 @@ void DataModel::Execute(const CopyNodeCommand& cmd) {
 
         if (!entry) {
             std::cerr << "Can't copy " << cmd.SourcePath.Path << " to "
-                      << cmd.TargetPath.Path << ". Entry not found."
-                      << std::endl;
+                << cmd.TargetPath.Path << ". Entry not found."
+                << std::endl;
             return;
         }
 
         auto localPath =
             cmd.TargetPath.Path + "/" + cmd.SourcePath.GetLeafName();
-        _dir->Add({localPath}, entry->CreateProxy(cmd.SourcePath));
-    });
+        _dir->Add({ localPath }, entry->CreateProxy(cmd.SourcePath));
+        });
 }
 
 struct CompilationState {
@@ -368,7 +477,7 @@ struct CompilationState {
 };
 
 vsg::ref_ptr<vsg::Node> Compile(const CompilationState& state,
-                                std::shared_ptr<Entry> entry) {
+    std::shared_ptr<Entry> entry) {
     if (!entry) return {};
 
     if (auto g = std::dynamic_pointer_cast<GeometryEntry>(entry))
@@ -378,7 +487,7 @@ vsg::ref_ptr<vsg::Node> Compile(const CompilationState& state,
 
     if (!dir) {
         std::cerr << "Unexpected entry type "
-                  << magic_enum::enum_name(entry->GetType()) << std::endl;
+            << magic_enum::enum_name(entry->GetType()) << std::endl;
         return {};
     }
 
@@ -402,7 +511,7 @@ vsg::ref_ptr<vsg::Node> Compile(const CompilationState& state,
 
     if (!group) {
         std::cerr << "Unexpected directory type "
-                  << magic_enum::enum_name(entry->GetType()) << std::endl;
+            << magic_enum::enum_name(entry->GetType()) << std::endl;
         return {};
     }
 
@@ -415,7 +524,7 @@ vsg::ref_ptr<vsg::Node> Compile(const CompilationState& state,
         if (child) {
             group->addChild(child);
         }
-    });
+        });
 
     return group;
 }
@@ -458,9 +567,11 @@ void DataModel::CreateAxis() {
 }
 
 void DataModel::Execute(const CompileSceneCommand& cmd) {
+
     _queue->Enqueue([=]() {
+
         if (!CanCompile()) {
-            Notify(IDataModelObserver::SceneCompeledNotification{.Root = {}});
+            Notify(IDataModelObserver::SceneCompeledNotification{ .Root = {} });
             return;
         }
 
@@ -471,30 +582,31 @@ void DataModel::Execute(const CompileSceneCommand& cmd) {
         scale->matrix = vsg::scale(0.01f, 0.01f, 0.01f);
         scale->addChild(_axis);
 
-        CompilationState state{.ShowTransforms = config->GetShowTransform(),
+        CompilationState state{ .ShowTransforms = config->GetShowTransform(),
                                .TransformProxy = scale,
                                .ActiveCursor = scale,
-                               .ActiveEntry = _activeEntry};
+                               .ActiveEntry = _activeEntry };
 
         if (cmd.Root.GetName() == ROOT_SCENE) {
-            auto root = Compile(state, _dir->FindEntry({cmd.Root.GetName()}));
-            Notify(IDataModelObserver::SceneCompeledNotification{.Root = root});
-        } else if (cmd.Root.GetName() == ROOT_PACKAGES) {
+            auto root = Compile(state, _dir->FindEntry({ cmd.Root.GetName() }));
+            Notify(IDataModelObserver::SceneCompeledNotification{ .Root = root });
+        }
+        else if (cmd.Root.GetName() == ROOT_PACKAGES) {
             auto it = _packagePreviewRoots.find(cmd.Root.GetNext().GetName());
             if (it == _packagePreviewRoots.end()) {
                 std::cerr << "Package " << cmd.Root.GetNext().GetName()
-                          << " preview not found" << std::endl;
+                    << " preview not found" << std::endl;
                 return;
             }
             Notify(IDataModelObserver::SceneCompeledNotification{
-                .Root = it->second.Root});
+                .Root = it->second.Root });
         }
-    });
+        });
 }
 
 std::shared_ptr<ConfigEntry> DataModel::GetConfig() {
     return std::static_pointer_cast<ConfigEntry>(
-        _dir->FindEntry({ROOT_CONFIG}));
+        _dir->FindEntry({ ROOT_CONFIG }));
 }
 
 void DataModel::DenyCompilation() {
@@ -512,12 +624,12 @@ void DataModel::Execute(const ExportToFileCommand& cmd) {
             return;
         }
 
-        CompilationState state{.ShowTransforms = false,
+        CompilationState state{ .ShowTransforms = false,
                                .TransformProxy = {},
                                .ActiveCursor = {},
-                               .ActiveEntry = nullptr};
+                               .ActiveEntry = nullptr };
 
-        const auto root = Compile(state, _dir->FindEntry({ROOT_SCENE}));
+        const auto root = Compile(state, _dir->FindEntry({ ROOT_SCENE }));
 
         if (!root) {
             Notify(LogError(LOG_ENTRY_COMPILATION_FAILED, ROOT_SCENE));
@@ -525,7 +637,7 @@ void DataModel::Execute(const ExportToFileCommand& cmd) {
         }
 
         vsg::write(root, cmd.Path);
-    });
+        });
 }
 
 void DataModel::Execute(const AddLanguageCommand& cmd) {
@@ -537,8 +649,8 @@ void DataModel::Execute(const AddLanguageCommand& cmd) {
         }
 
         Notify(
-            IDataModelObserver::LanguageAddedNotification{.Value = cmd.Value});
-    });
+            IDataModelObserver::LanguageAddedNotification{ .Value = cmd.Value });
+        });
 }
 
 void DataModel::Execute(const RemoveLanguageCommand& cmd) {
@@ -550,8 +662,8 @@ void DataModel::Execute(const RemoveLanguageCommand& cmd) {
         }
 
         Notify(
-            IDataModelObserver::LanguageRemoveNotification{.Value = cmd.Value});
-    });
+            IDataModelObserver::LanguageRemoveNotification{ .Value = cmd.Value });
+        });
 }
 
 void DataModel::Execute(const RenameLanguageCommand& cmd) {
@@ -574,10 +686,10 @@ void DataModel::Execute(const RenameLanguageCommand& cmd) {
         cfg->AddLanguage(cmd.NewValue);
 
         Notify(IDataModelObserver::LanguageRemoveNotification{
-            .Value = cmd.OldValue});
-        Notify(IDataModelObserver::LanguageAddedNotification{.Value =
-                                                                 cmd.NewValue});
-    });
+            .Value = cmd.OldValue });
+        Notify(IDataModelObserver::LanguageAddedNotification{ .Value =
+                                                                 cmd.NewValue });
+        });
 }
 
 void DataModel::Execute(const RequestSuggestedChildrenCommand& cmd) {
@@ -593,30 +705,36 @@ void DataModel::Execute(const RequestSuggestedChildrenCommand& cmd) {
         r.Path = cmd.Path;
 
         switch (entry->GetType()) {
-            case EntryType::Transform:
-            case EntryType::Material:
-            case EntryType::Group:
-                r.Suggestions.emplace_back("Group", "Group");
-                // r.Suggestions.emplace_back(magic_enum::enum_name(EntryType::Material),
-                // magic_enum::enum_name(EntryType::Material));
-                r.Suggestions.emplace_back("Transform", "Transform");
-                r.Suggestions.emplace_back("Localized", "Localized");
-                break;
+        case EntryType::Transform:
+        case EntryType::Material:
+        case EntryType::Group:
+            r.Suggestions.emplace_back("Group", "Group");
+            // r.Suggestions.emplace_back(magic_enum::enum_name(EntryType::Material),
+            // magic_enum::enum_name(EntryType::Material));
+            r.Suggestions.emplace_back("Transform", "Transform");
+            r.Suggestions.emplace_back("Localized", "Localized");
+            break;
 
-            case EntryType::Geometry:
-            case EntryType::Config:
-                break;
+        case EntryType::Geometry:
+        case EntryType::Config:
+            break;
 
-            case EntryType::Localized: {
-                auto config = GetConfig();
-                for (auto l : config->GetLanguages()) {
-                    if (!_dir->FindEntry(cmd.Path.Append(l))) {
-                        r.Suggestions.emplace_back("Group", l);
-                    }
+        case EntryType::Localized: {
+            auto config = GetConfig();
+            for (auto l : config->GetLanguages()) {
+                if (!_dir->FindEntry(cmd.Path.Append(l))) {
+                    r.Suggestions.emplace_back("Group", l);
                 }
-            } break;
+            }
+        } break;
         }
 
         Notify(r);
-    });
+        });
+}
+
+void DataModel::OnSubscribed(std::shared_ptr<IDataModelObserver> observer) {
+    observer->Execute(IDataModelObserver::ConfigNotification{
+                    .Config = std::static_pointer_cast<ConfigEntry>(
+                        GetConfig()->CreateView(this->_queue)) });
 }
