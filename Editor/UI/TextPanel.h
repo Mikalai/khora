@@ -38,7 +38,7 @@ class TextPanel : public TextPanelBase,
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnPropertyChanged(std::shared_ptr<Entry> sender,
                            std::string_view name) override;
-    void OnError(const LogNotification& cmd) const override {}
+    void OnError(const LogNotification&) const override {}
 
     void fontColorPickerOnColourChanged(wxColourPickerEvent& event) override;
     void offsetXEditOnText(wxCommandEvent& event) override;

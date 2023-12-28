@@ -117,10 +117,10 @@ class DataModel
     void Execute(const RequestSuggestedChildrenCommand& cmd) override;
     void OnSubscribed(std::shared_ptr<IDataModelObserver> observer) override;
 
-    void Execute(const LogNotification& log) override {}
+    void Execute(const LogNotification&) override {}
     void Execute(const RefreshComplete& cmd) override;
     void Execute(const FontCompiled& cmd) override;
-    void Execute(const LongOperationStarted& cmd) override {}
-    void Execute(const LongOperationEnded& cmd) override {}
+    void Execute(const LongOperationStarted&) override {}
+    void Execute(const LongOperationEnded&) override {}
     void Execute(const SetActiveLanguageRequest& cmd) override;
 };
