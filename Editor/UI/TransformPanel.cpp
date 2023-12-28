@@ -98,11 +98,11 @@ void TransformPanel::OnPropertyChanged(std::shared_ptr<Entry> sender,
     if (_dataModel != sender) return;
 }
 
-void TransformPanel::matrixValueChanged(wxCommandEvent& event) {
+void TransformPanel::matrixValueChanged(wxCommandEvent&) {
     if (!_dataModel) return;
 }
 
-void TransformPanel::overrideChanged(wxCommandEvent& event) {
+void TransformPanel::overrideChanged(wxCommandEvent&) {
     if (!_dataModel) return;
 
     _dataModel->SetOverride(this->overrideCheckBox->Get3StateValue() ==
@@ -154,5 +154,77 @@ void TransformPanel::orientationChanged(wxCommandEvent& event) {
                 return;
             }
         }
+    }
+}
+
+void TransformPanel::copyPosXOnButtonClick(wxCommandEvent&) {
+    _copyPosition[0] = _position[0]->GetValue();
+}
+
+void TransformPanel::pastePosXOnButtonClick(wxCommandEvent&) {
+    _position[0]->SetValue(_copyPosition[0]);
+}
+
+void TransformPanel::copyPosYOnButtonClick(wxCommandEvent&) {
+    _copyPosition[1] = _position[1]->GetValue();
+}
+
+void TransformPanel::pastePosYOnButtonClick(wxCommandEvent&) {
+    _position[1]->SetValue(_copyPosition[1]);
+}
+
+void TransformPanel::copyPosZOnButtonClick(wxCommandEvent&) {
+    _copyPosition[2] = _position[2]->GetValue();
+}
+
+void TransformPanel::pastePosZOnButtonClick(wxCommandEvent&) {
+    _position[2]->SetValue(_copyPosition[2]);
+}
+
+void TransformPanel::pastePosOnButtonClick(wxCommandEvent&) {
+    for (int i = 0; i < 3; ++i) {
+        _position[i]->SetValue(_copyPosition[i]);
+    }
+}
+
+void TransformPanel::copyPosOnButtonClick(wxCommandEvent&) {
+    for (int i = 0; i < 3; ++i) {
+        _copyPosition[i] = _position[i]->GetValue();
+    }
+}
+
+void TransformPanel::copyScaleXOnButtonClick(wxCommandEvent&) {
+    _scale[0]->SetValue(_copyScale[0]);
+}
+
+void TransformPanel::pasteScaleXOnButtonClick(wxCommandEvent&) {
+    _scale[0]->SetValue(_copyScale[0]);
+}
+
+void TransformPanel::copyScaleYOnButtonClick(wxCommandEvent&) {
+    _copyScale[1] = _scale[1]->GetValue();
+}
+
+void TransformPanel::pasteScaleYOnButtonClick(wxCommandEvent&) {
+    _scale[1]->SetValue(_copyScale[1]);
+}
+
+void TransformPanel::copyScaleZOnButtonClick(wxCommandEvent&) {    
+    _copyScale[2] = _scale[2]->GetValue();
+}
+
+void TransformPanel::pasteScaleZOnButtonClick(wxCommandEvent&) {
+    _scale[2]->SetValue(_copyScale[2]);
+}
+
+void TransformPanel::copyScaleOnButtonClick(wxCommandEvent&) {
+    for (int i = 0; i < 3; ++i) {
+        _copyScale[i] = _scale[i]->GetValue();
+    }
+}
+
+void TransformPanel::pasteScaleOnButtonClick(wxCommandEvent&) {
+    for (int i = 0; i < 3; ++i) {
+        _scale[i]->SetValue(_copyScale[i]);
     }
 }

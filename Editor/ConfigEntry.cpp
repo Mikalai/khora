@@ -1,32 +1,26 @@
 #pragma once
 
-#include <magic_enum.hpp>
-#include "Serializer.h"
-#include "AsyncQueue.h"
 #include "ConfigEntry.h"
+
+#include <magic_enum.hpp>
+
+#include "AsyncQueue.h"
 #include "Clone.h"
+#include "Serializer.h"
 
-EntryType ConfigEntry::GetType() const {
-    return EntryType::Config;
-}
+EntryType ConfigEntry::GetType() const { return EntryType::Config; }
 
-bool ConfigEntry::GetShowTransform() const {
-    return _showTransform;
-}
+bool ConfigEntry::GetShowTransform() const { return _showTransform; }
 
-void ConfigEntry::SetShowTransform(bool value)
-{
-    if (_showTransform == value)
-        return;
+void ConfigEntry::SetShowTransform(bool value) {
+    if (_showTransform == value) return;
     _showTransform = value;
     OnPropertyChanged(shared_from_this(), "ShowTransform");
 }
 
-bool ConfigEntry::AddLanguage(const std::string& value)
-{
+bool ConfigEntry::AddLanguage(const std::string& value) {
     auto it = std::find(_languages.begin(), _languages.end(), value);
-    if (it != _languages.end())
-        return false;
+    if (it != _languages.end()) return false;
 
     _languages.push_back(value);
     OnPropertyChanged(shared_from_this(), "Languages");
@@ -35,8 +29,7 @@ bool ConfigEntry::AddLanguage(const std::string& value)
 
 bool ConfigEntry::RemoveLanguage(const std::string& value) {
     auto it = std::find(_languages.begin(), _languages.end(), value);
-    if (it == _languages.end())
-        return false;
+    if (it == _languages.end()) return false;
 
     _languages.erase(it);
     OnPropertyChanged(shared_from_this(), "Languages");
@@ -47,9 +40,29 @@ std::vector<std::string> ConfigEntry::GetLanguages() const {
     return _languages;
 }
 
-std::shared_ptr<Entry> ConfigEntry::CreateView(std::shared_ptr<AsyncQueue> sync) {
+std::string ConfigEntry::GetActiveLanguage() const { return _activeLanguage; }
+
+bool ConfigEntry::SetActiveLanguage(const std::string& value) {
+    if (_activeLanguage == value) {
+        return false;
+    }
+
+    if (auto it = std::find(_languages.begin(), _languages.end(), value);
+        it == _languages.end()) {
+        OnError(LogError(LOG_ENTRY_NOT_FOUND, value));
+        return false;
+    }
+
+    _activeLanguage = value;
+    OnPropertyChanged(shared_from_this(), "ActiveLanguage");
+    return true;
+}
+
+std::shared_ptr<Entry> ConfigEntry::CreateView(
+    std::shared_ptr<AsyncQueue> sync) {
     assert(std::dynamic_pointer_cast<ConfigEntry>(shared_from_this()));
-    return std::make_shared<ConfigEntryView>(std::static_pointer_cast<ConfigEntry>(shared_from_this()), sync);
+    return std::make_shared<ConfigEntryView>(
+        std::static_pointer_cast<ConfigEntry>(shared_from_this()), sync);
 }
 
 void ConfigEntry::Serialize(EntryProperties& properties) const {
@@ -61,9 +74,12 @@ void ConfigEntry::Serialize(EntryProperties& properties) const {
     for (auto& v : _languages) {
         langs.push_back(v);
     }
+
+    properties["ActiveLanguage"] = _activeLanguage;
 }
 
-void ConfigEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+void ConfigEntry::DeserializeInternal(EntryPath path,
+                                      const EntryProperties& properties) {
     DirectoryEntry::DeserializeInternal(path, properties);
 
     _showTransform = ::Deserialize(properties, "ShowTransform", true);
@@ -72,15 +88,16 @@ void ConfigEntry::DeserializeInternal(EntryPath path, const EntryProperties& pro
             _languages.push_back(e.get<std::string>());
         }
     }
+
+    _activeLanguage =
+        ::Deserialize(properties, "ActiveLanguage", std::string{});
 }
 
 std::shared_ptr<Entry> ConfigEntry::CreateProxy(EntryPath path) {
     throw std::runtime_error("Config doesn't have proxy.");
 }
 
-bool ConfigEntry::CanAdd(std::shared_ptr<Entry> entry) {
-    return true;
-}
+bool ConfigEntry::CanAdd(std::shared_ptr<Entry> entry) { return true; }
 
 void ConfigEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     DirectoryEntry::CloneFrom(entry);
@@ -105,7 +122,8 @@ void ConfigEntryView::Serialize(EntryProperties& properties) const {
     throw std::runtime_error("ConfigEntryView is not serializable.");
 }
 
-void ConfigEntryView::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+void ConfigEntryView::DeserializeInternal(EntryPath path,
+                                          const EntryProperties& properties) {
     throw std::runtime_error("ConfigEntryView is not deserializable.");
 }
 
@@ -127,6 +145,14 @@ bool ConfigEntryView::RemoveLanguage(const std::string& value) {
 
 std::vector<std::string> ConfigEntryView::GetLanguages() const {
     return _sync->Execute([&]() { return _model->GetLanguages(); });
+}
+
+std::string ConfigEntryView::GetActiveLanguage() const {
+    return _sync->Execute([&]() { return _model->GetActiveLanguage(); });
+}
+
+bool ConfigEntryView::SetActiveLanguage(const std::string& value) {
+    return _sync->Execute([&]() { return _model->SetActiveLanguage(value); });
 }
 
 void ConfigEntryView::CloneFrom(std::shared_ptr<Entry> entry) {

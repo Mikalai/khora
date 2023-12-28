@@ -14,6 +14,7 @@ const int LOG_TYPE_MISMATCH = 9;
 const int LOG_IO_ERROR = 10;
 const int LOG_VSGXCHANGE_NOT_FOUND = 11;
 const int LOG_FILE_LOAD_FAILED = 12;
+const int LOG_OPERATION_NOT_SUPPORTED  = 13;
 
 const int LOG_LEVEL_WARNING = 3;
 const int LOG_LEVEL_ERROR = 4;

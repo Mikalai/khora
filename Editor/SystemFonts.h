@@ -1,8 +1,8 @@
 #pragma once
 
+#include <filesystem>
+#include <vsg/all.h>
 #include <boost/asio/io_context.hpp>
-#include <boost/thread.hpp>
-#include "UI/EditorMainWindow.h"
 #include "Observer.h"
 #include "LongOperationNotification.h"
 
@@ -37,8 +37,10 @@ public:
     virtual void Execute(const RefreshComplete& cmd) = 0;
 
     struct FontCompiled {
+        std::string DisplayName;
         vsg::ref_ptr<vsg::Font> Font;
         vsg::ref_ptr<vsg::Node> Root;
+        std::shared_ptr<CustomState> State;
     };
 
     virtual void Execute(const FontCompiled& cmd) = 0;    
@@ -81,6 +83,7 @@ public:
 
     struct CompileFont {
         std::string DisplayName;
+        std::shared_ptr<CustomState> State;
     };
 
     virtual void Execute(const CompileFont& cmd) = 0;

@@ -89,7 +89,7 @@ bool Application::OnInit() {
     wxArtProvider::Push(new MyProvider);
 
     _fonts = ISystemFonts::Create(_io_context);
-    _dataModel = DataModel::Create(_io_context);
+    _dataModel = DataModel::Create(_fonts, _io_context);
     mainWindow = new EditorMainWindow(_dataModel.get(), _fonts.get(), nullptr);
     mainWindow->Init(argc, argv);
     mainWindow->Show(true);

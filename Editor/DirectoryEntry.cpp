@@ -7,6 +7,7 @@
 #include "MaterialEntry.h"
 #include "GeometryEntry.h"
 #include "LocalizedEntry.h"
+#include "TextEntry.h"
 
 std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path, EntryPath parent) {
     auto name = path.GetName();
@@ -190,6 +191,9 @@ void DirectoryEntry::DeserializeInternal(EntryPath path, const EntryProperties& 
             }
             else if (type == magic_enum::enum_name(EntryType::Localized)) {
                 newEntry = std::make_shared<LocalizedEntry>();
+            }
+            else if (type == magic_enum::enum_name(EntryType::Text)) {
+                newEntry = std::make_shared<TextEntry>();
             }
 
             if (!newEntry) {

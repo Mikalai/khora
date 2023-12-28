@@ -26,22 +26,45 @@ public:
 
 private:
     std::array<std::array<wxTextCtrl*, 4>, 4> _matrix;
+    std::array<wxString, 3> _copyPosition;
     std::array<wxTextCtrl*, 3> _position;
+    
     std::array<wxTextCtrl*, 4> _orientation;
+    
+    std::array<wxString, 3> _copyScale;
     std::array<wxTextCtrl*, 3> _scale;
+    
     std::shared_ptr<TransformEntry> _dataModel;
 
     // Inherited via IEntryObserver
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
-    void OnError(const LogNotification& cmd) override { }
+    void OnError(const LogNotification& cmd) const override { }
 
     void matrixValueChanged(wxCommandEvent& event) override;
     void overrideChanged(wxCommandEvent& event) override;
     void positionChanged(wxCommandEvent& event) override;
     void scaleChanged(wxCommandEvent& event) override;
     void orientationChanged(wxCommandEvent& event) override;
+
+    void copyPosXOnButtonClick( wxCommandEvent& event ) override;
+	void pastePosXOnButtonClick( wxCommandEvent& event ) override;
+	void copyPosYOnButtonClick( wxCommandEvent& event ) override;
+	void pastePosYOnButtonClick( wxCommandEvent& event ) override;
+	void copyPosZOnButtonClick( wxCommandEvent& event ) override;
+	void pastePosZOnButtonClick( wxCommandEvent& event ) override;
+	void pastePosOnButtonClick( wxCommandEvent& event ) override;
+	void copyPosOnButtonClick( wxCommandEvent& event ) override;
+
+    void copyScaleXOnButtonClick( wxCommandEvent& event ) override;
+    void pasteScaleXOnButtonClick( wxCommandEvent& event ) override;
+    void copyScaleYOnButtonClick( wxCommandEvent& event ) override;
+    void pasteScaleYOnButtonClick( wxCommandEvent& event ) override;
+    void copyScaleZOnButtonClick( wxCommandEvent& event ) override;
+    void pasteScaleZOnButtonClick( wxCommandEvent& event ) override;
+    void copyScaleOnButtonClick( wxCommandEvent& event ) override;
+    void pasteScaleOnButtonClick( wxCommandEvent& event ) override;
 
 private:
     void UpdateControls();

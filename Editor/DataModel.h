@@ -1,43 +1,49 @@
 #pragma once
 
-#include <queue>
 #include <vsg/all.h>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/bind/bind.hpp>
-#include <vector>
-#include <algorithm>
-#include <string>
-#include <memory>
 
-#include "IDataModelEditor.h"
-#include "IEntryObserver.h"
-#include "IDataModelObserver.h"
+#include <algorithm>
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/bind/bind.hpp>
+#include <memory>
+#include <queue>
+#include <string>
+#include <vector>
+
 #include "DirectoryEntry.h"
 #include "GroupEntry.h"
+#include "IDataModelEditor.h"
+#include "IDataModelObserver.h"
+#include "IEntryObserver.h"
 #include "Observer.h"
+#include "SystemFonts.h"
 
-const std::string ROOT_PACKAGES{ "PACKAGES" };
-const std::string ROOT_SCENE{ "SCENE" };
-const std::string ROOT_CONFIG{ "CONFIG" };
+const std::string ROOT_PACKAGES{"PACKAGES"};
+const std::string ROOT_SCENE{"SCENE"};
+const std::string ROOT_CONFIG{"CONFIG"};
 
-const std::string PACKAGE_ENTRY_TRANSFORMS{ "Transforms" };
-const std::string PACKAGE_ENTRY_GEOMETRIES{ "Geometries" };
-const std::string PACKAGE_ENTRY_MATERIALS{ "Materials" };
+const std::string PACKAGE_ENTRY_TRANSFORMS{"Transforms"};
+const std::string PACKAGE_ENTRY_GEOMETRIES{"Geometries"};
+const std::string PACKAGE_ENTRY_MATERIALS{"Materials"};
 
-class DataModel :
-    public Observable<DataModel, IDataModelObserver, IDataModelEditor>,
-    public IEntryObserver {
+class ISystemFonts;
+class CompilationState;
+class TextEntry;
 
-using Base = Observable<DataModel, IDataModelObserver, IDataModelEditor>;
+class DataModel
+    : public Observable<DataModel, IDataModelObserver, IDataModelEditor>,
+      public IEntryObserver,
+      public ISystemFontsObserver {
+    using Base = Observable<DataModel, IDataModelObserver, IDataModelEditor>;
 
-friend class Observable<DataModel, IDataModelObserver, IDataModelEditor>;
+    friend class Observable<DataModel, IDataModelObserver, IDataModelEditor>;
 
-protected:
-    DataModel(boost::asio::io_context& ctx);
+   protected:
+    DataModel(std::shared_ptr<ISystemFonts> fonts,
+              boost::asio::io_context& ctx);
 
-public:
-
+   public:
     void OnCreated() override;
 
     virtual ~DataModel();
@@ -52,15 +58,30 @@ public:
 
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
-    void OnError(const LogNotification& cmd) override;
+    void OnError(const LogNotification& cmd) const override;
 
-private:
+   private:
     void CreateAxis();
     vsg::StateInfo stateInfo;
     vsg::ref_ptr<vsg::Builder> _builder = vsg::Builder::create();
     vsg::ref_ptr<vsg::Group> _axis;
     std::shared_ptr<Entry> _activeEntry;
     std::shared_ptr<ConfigEntry> GetConfig();
+    std::unordered_map<std::string, FontInfo> _fontsCache;
+    std::shared_ptr<ISystemFonts> _fonts;
+    SubscriptionPtr _fontsSubscription;
+
+    void CompileFonts(std::shared_ptr<CompilationState> state,
+                      std::shared_ptr<Entry> entry);
+    vsg::ref_ptr<vsg::Node> Compile(std::shared_ptr<CompilationState> state,
+                                    std::shared_ptr<Entry> entry);
+
+    struct TextConfig {
+        std::shared_ptr<TextEntry> Entry;
+        vsg::ref_ptr<vsg::Font> Font;
+    };
+
+    vsg::ref_ptr<vsg::Text> CompileText(TextConfig& cfg);
 
     void DenyCompilation();
     void AllowCompilation();
@@ -71,7 +92,7 @@ private:
         vsg::ref_ptr<vsg::Node> Root;
     };
 
-    std::int32_t _denyCompilation{ 0 };
+    std::int32_t _denyCompilation{0};
     vsg::ref_ptr<vsg::Options> _options = vsg::Options::create();
     std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
 
@@ -79,8 +100,9 @@ private:
     boost::asio::io_context& _ctx;
 
     void Execute(const ResetModelCommand& cmd) override;
-    void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
-    void Execute(const SelectEntryCommand& cmd) override;    
+    void OnPropertyChanged(std::shared_ptr<Entry> sender,
+                           std::string_view name) override;
+    void Execute(const SelectEntryCommand& cmd) override;
     void Execute(const RenameEntryCommand& cmd) override;
     void Execute(const CreateNodeCommand& cmd) override;
     void Execute(const CopyEntryCommand& cmd) override;
@@ -94,4 +116,11 @@ private:
     // Inherited via IDataModelEditor
     void Execute(const RequestSuggestedChildrenCommand& cmd) override;
     void OnSubscribed(std::shared_ptr<IDataModelObserver> observer) override;
+
+    void Execute(const LogNotification& log) override {}
+    void Execute(const RefreshComplete& cmd) override;
+    void Execute(const FontCompiled& cmd) override;
+    void Execute(const LongOperationStarted& cmd) override {}
+    void Execute(const LongOperationEnded& cmd) override {}
+    void Execute(const SetActiveLanguageRequest& cmd) override;
 };

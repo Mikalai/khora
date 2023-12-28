@@ -54,7 +54,7 @@ protected:
     void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
     void OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view name) override;
-    void OnError(const LogNotification& cmd) override;
+    void OnError(const LogNotification& cmd) const override;
 
     void CopyObserversTo(Entry& entry);
     virtual void CloneFrom(std::shared_ptr<Entry> entry);

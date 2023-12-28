@@ -10,6 +10,8 @@ if (${vsg_FOUND})
         "UI/EditorMainWindow.h"
         "UI/TextEnterDialog.cpp"
         "UI/TextEnterDialog.h"
+        "UI/TextPanel.cpp"
+        "UI/TextPanel.h"
         "UI/vsgEditor.cpp"
         "UI/vsgEditor.h"
         "UI/UICommon.h"
@@ -55,6 +57,8 @@ if (${vsg_FOUND})
         "SystemFonts.cpp"
         "Observer.h"
         "LongOperationNotification.h"
+        "TextEntry.h"
+        "TextEntry.cpp"
     )
 
     set(Boost_USE_STATIC_LIBS ON) 
@@ -64,11 +68,18 @@ if (${vsg_FOUND})
     find_package(Boost COMPONENTS thread) 
 
     find_package(wxWidgets REQUIRED gl core base OPTIONAL_COMPONENTS net)
+    
+    find_package(vsg REQUIRED)
+
+    vsg_setup_dir_vars()
+    vsg_setup_build_vars()
+    
     find_package(vsgXchange CONFIG REQUIRED)
     find_package(Freetype REQUIRED)
 
     add_executable(Editor WIN32 ${EditorSources})
     
+    message("vsg: " ${vsg_INCLUDE_DIR})
     target_include_directories(Editor PRIVATE Freetype::Freetype ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
     if (vsgXchange_FOUND)

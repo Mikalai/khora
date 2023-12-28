@@ -27,6 +27,8 @@ const std::string ErrorToString(const LogNotification& error) {
         return "Editor was build without vsgXchange support.";
     case LOG_FILE_LOAD_FAILED:
         return "Failed to load file '" + error.StrParamter + "'";
+    case LOG_OPERATION_NOT_SUPPORTED:
+        return "Operation is not supported. " + error.StrParamter;
     default:
         return "Error " + error.StrParamter + "; " +
             std::to_string(error.IntParameter) +

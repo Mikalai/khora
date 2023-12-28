@@ -11,6 +11,11 @@
 #include <string>
 #include <memory>
 
+class CustomState : public std::enable_shared_from_this<CustomState> {
+public:
+    virtual std::string GetName() { return ""; }
+};
+
 class AsyncQueue : public std::enable_shared_from_this<AsyncQueue> {
 public:
     AsyncQueue(boost::asio::io_context& ctx)

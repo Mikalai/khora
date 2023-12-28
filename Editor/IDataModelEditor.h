@@ -1,8 +1,10 @@
 #pragma once
 
-#include <filesystem>
-#include "AsyncQueue.h"
 #include <vsg/all.h>
+
+#include <filesystem>
+
+#include "AsyncQueue.h"
 #include "EntryPath.h"
 
 class IDataModelObserver;
@@ -10,11 +12,11 @@ class Subscription;
 using SubscriptionPtr = std::shared_ptr<Subscription>;
 
 class IDataModelEditor {
-public:
+   public:
     virtual ~IDataModelEditor();
 
     struct ImportFileCommand {
-        std::string FilePath;        
+        std::string FilePath;
         vsg::ref_ptr<vsg::Options> Options;
         std::filesystem::path ProjectPath;
     };
@@ -73,13 +75,12 @@ public:
 
     virtual void Execute(const ImportFromFileCommand& cmd) = 0;
 
-    struct ResetModelCommand {
-    };
+    struct ResetModelCommand {};
 
     virtual void Execute(const ResetModelCommand& cmd) = 0;
 
-    [[nodiscard]]
-    virtual SubscriptionPtr Subscribe(std::shared_ptr<IDataModelObserver> observer) = 0;
+    [[nodiscard]] virtual SubscriptionPtr Subscribe(
+        std::shared_ptr<IDataModelObserver> observer) = 0;
 
     struct SelectEntryCommand {
         EntryPath Path;
@@ -127,4 +128,10 @@ public:
     };
 
     virtual void Execute(const RequestSuggestedChildrenCommand& cmd) = 0;
+
+    struct SetActiveLanguageRequest {
+        std::string Language;
+    };
+
+    virtual void Execute(const SetActiveLanguageRequest& cmd) = 0;
 };

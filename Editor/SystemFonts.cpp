@@ -47,6 +47,13 @@ class SystemFonts final
 
    private:
     std::map<std::string, FontInfo> _allFontFiles;
+
+    struct CompiledFont {
+        vsg::ref_ptr<vsg::Font> Font;
+        vsg::ref_ptr<vsg::Node> Root;
+    };
+
+    std::unordered_map<std::string, CompiledFont> _compiledFontsCache;
     vsg::ref_ptr<vsg::Options> _options;
     FT_Library _library;
     bool _supportsFT{false};
@@ -74,20 +81,30 @@ void SystemFonts::Execute(const Refresh& cmd) {
     });
 }
 
-void SystemFonts::Execute(const CompileFont& cmd) {    
+void SystemFonts::Execute(const CompileFont& cmd) {
+    GetSyncContext()->Enqueue([this, cmd]() {
+        LongOperationScope scope{
+            *this, &SystemFonts::Notify<LongOperationStarted>,
+            &SystemFonts::Notify<LongOperationEnded>,
+            LongOperation{.Name = "Compile font: " + cmd.DisplayName}};
 
-    GetSyncContext()->Enqueue([this, cmd]() {                
+        if (auto it = _compiledFontsCache.find(cmd.DisplayName);
+            it != _compiledFontsCache.end()) {
+            Notify(ISystemFontsObserver::FontCompiled{
+                .DisplayName = cmd.DisplayName,
+                .Font = it->second.Font,
+                .Root = it->second.Root,
+                .State = cmd.State});
+            return;
+        }
 
-        LongOperationScope scope {*this
-                    , &SystemFonts::Notify<LongOperationStarted>
-                    , &SystemFonts::Notify<LongOperationEnded>
-                    , LongOperation{.Name = "Compile font: " + cmd.DisplayName} };
-
-        if (auto it = this->_allFontFiles.find(cmd.DisplayName); it == this->_allFontFiles.end()) {
+        if (auto it = this->_allFontFiles.find(cmd.DisplayName);
+            it == this->_allFontFiles.end()) {
             Notify(LogError(LOG_ENTRY_NOT_FOUND, cmd.DisplayName));
             return;
-        } else if (auto object = vsg::read(it->second.Path.string(), _options); object) {
-            if (auto font = object.cast<vsg::Font>(); font) {                                
+        } else if (auto object = vsg::read(it->second.Path.string(), _options);
+                   object) {
+            if (auto font = object.cast<vsg::Font>(); font) {
                 auto scenegraph = vsg::MatrixTransform::create();
 
                 auto layout = vsg::StandardLayout::create();
@@ -104,12 +121,12 @@ void SystemFonts::Execute(const CompileFont& cmd) {
                 size_t num_glyphs = characters.size();
                 size_t row_length =
                     static_cast<size_t>(ceil(sqrt(float(num_glyphs))));
-                
-                if (row_length == 0) {                    
+
+                if (row_length == 0) {
                     Notify(LogError(LOG_FILE_LOAD_FAILED, cmd.DisplayName));
-                    return;                
+                    return;
                 }
-                
+
                 size_t num_rows = num_glyphs / row_length;
                 if ((num_glyphs % num_rows) != 0) ++num_rows;
 
@@ -142,8 +159,13 @@ void SystemFonts::Execute(const CompileFont& cmd) {
 
                 scenegraph->addChild(text);
 
-                Notify(ISystemFontsObserver::FontCompiled{.Font = font,
-                                                          .Root = scenegraph});
+                _compiledFontsCache[cmd.DisplayName] = { .Font = font, .Root = scenegraph };
+
+                Notify(ISystemFontsObserver::FontCompiled{
+                    .DisplayName = cmd.DisplayName,
+                    .Font = font,
+                    .Root = scenegraph,
+                    .State = cmd.State});
             } else {
                 Notify(LogError(LOG_FILE_LOAD_FAILED, cmd.DisplayName));
             }

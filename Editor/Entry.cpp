@@ -84,7 +84,7 @@ void Entry::OnPropertyChanged(std::shared_ptr<Entry> sender, std::string_view na
 	});
 }
 
-void Entry::OnError(const LogNotification& cmd) {
+void Entry::OnError(const LogNotification& cmd) const {
 	std::for_each(_observers.begin(), _observers.end(), [&](auto v) {
 		if (auto p = v.lock(); p) {
 			p->OnError(cmd);
