@@ -4,5 +4,4 @@
 
 class ObjectEntry : public Entry {
 public:
-
 };

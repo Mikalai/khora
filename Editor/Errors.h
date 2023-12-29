@@ -20,21 +20,21 @@ const int LOG_LEVEL_WARNING = 3;
 const int LOG_LEVEL_ERROR = 4;
 
 struct LogNotification {
-    int Level{};
-    int Code{};
-    std::string StrParamter{};
-    int IntParameter{};
-    double RealParameter{};
+  int Level{};
+  int Code{};
+  std::string StrParamter{};
+  int IntParameter{};
+  double RealParameter{};
 };
 
 inline auto LogWarning(auto... args) {
-    LogNotification r{LOG_LEVEL_WARNING, args...};
-    return r;
+  LogNotification r{LOG_LEVEL_WARNING, args...};
+  return r;
 }
 
 inline auto LogError(auto... args) {
-    LogNotification r{LOG_LEVEL_ERROR, args...};
-    return r;
+  LogNotification r{LOG_LEVEL_ERROR, args...};
+  return r;
 }
 
-const std::string ErrorToString(const LogNotification& error);
+const std::string ErrorToString(const LogNotification &error);

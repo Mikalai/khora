@@ -1,105 +1,124 @@
+project(Editor VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${BUILD_VERSION}.${BUILD_REVISION} LANGUAGES C CXX)
 
-if (${vsg_FOUND})
+find_package(vsg REQUIRED)
+find_package(vsgXchange CONFIG REQUIRED)
+find_package(Freetype REQUIRED)
 
-    set(EditorSources 
-        "UI/ViewerWindow.cpp"
-        "UI/ViewerWindow.h"
-        "UI/TransformPanel.cpp"
-        "UI/TransformPanel.h"
-        "UI/EditorMainWindow.cpp"
-        "UI/EditorMainWindow.h"
-        "UI/TextEnterDialog.cpp"
-        "UI/TextEnterDialog.h"
-        "UI/TextPanel.cpp"
-        "UI/TextPanel.h"
-        "UI/vsgEditor.cpp"
-        "UI/vsgEditor.h"
-        "UI/UICommon.h"
-        "Application.cpp"
-        "Application.h"
-        "DataModel.h"
-        "DataModel.cpp"
-        "GeometryEntry.cpp"
-        "GeometryEntry.h"
-        "TransformEntry.cpp"
-        "TransformEntry.h"
-        "MaterialEntry.h"
-        "MaterialEntry.cpp"
-        "GroupEntry.h"
-        "DirectoryEntry.h"
-        "DirectoryEntry.cpp"
-        "IEntryObserver.h"
-        "ObjectEntry.cpp"
-        "ObjectEntry.h"
-        "Entry.cpp"
-        "Entry.h"
-        "IDataModelEditor.cpp"
-        "IDataModelEditor.h"
-        "EntryType.h"
-        "IDataModelObserver.cpp"
-        "IDataModelObserver.h"
-        "EntryPath.cpp"
-        "EntryPath.h"
-        "GroupEntry.cpp"
-        "Clone.h"
-        "Clone.cpp"
-        "Serializer.h"
-        "Serializer.cpp"
-        "AsyncQueue.h"
-        "AsyncQueue.cpp"
-        "Errors.h"
-        "Errors.cpp"
-        "ConfigEntry.h"
-        "ConfigEntry.cpp"
-        "LocalizedEntry.h"        
-        "LocalizedEntry.cpp"
-        "SystemFonts.h"
-        "SystemFonts.cpp"
-        "Observer.h"
-        "LongOperationNotification.h"
-        "TextEntry.h"
-        "TextEntry.cpp"
-    )
+set(EditorSources 
+    "UI/ViewerWindow.cpp"
+    "UI/ViewerWindow.h"
+    "UI/TransformPanel.cpp"
+    "UI/TransformPanel.h"
+    "UI/EditorMainWindow.cpp"
+    "UI/EditorMainWindow.h"
+    "UI/TextEnterDialog.cpp"
+    "UI/TextEnterDialog.h"
+    "UI/TextPanel.cpp"
+    "UI/TextPanel.h"
+    "UI/vsgEditor.cpp"
+    "UI/vsgEditor.h"
+    "UI/UICommon.h"
+    "Application.cpp"
+    "Application.h"
+    "DataModel.h"
+    "DataModel.cpp"
+    "GeometryEntry.cpp"
+    "GeometryEntry.h"
+    "TransformEntry.cpp"
+    "TransformEntry.h"
+    "MaterialEntry.h"
+    "MaterialEntry.cpp"
+    "GroupEntry.h"
+    "DirectoryEntry.h"
+    "DirectoryEntry.cpp"
+    "IEntryObserver.h"
+    "ObjectEntry.cpp"
+    "ObjectEntry.h"
+    "Entry.cpp"
+    "Entry.h"
+    "IDataModelEditor.cpp"
+    "IDataModelEditor.h"
+    "EntryType.h"
+    "IDataModelObserver.cpp"
+    "IDataModelObserver.h"
+    "EntryPath.cpp"
+    "EntryPath.h"
+    "GroupEntry.cpp"
+    "Clone.h"
+    "Clone.cpp"
+    "Serializer.h"
+    "Serializer.cpp"
+    "AsyncQueue.h"
+    "AsyncQueue.cpp"
+    "Errors.h"
+    "Errors.cpp"
+    "ConfigEntry.h"
+    "ConfigEntry.cpp"
+    "LocalizedEntry.h"        
+    "LocalizedEntry.cpp"
+    "SystemFonts.h"
+    "SystemFonts.cpp"
+    "Observer.h"
+    "LongOperationNotification.h"
+    "TextEntry.h"
+    "TextEntry.cpp")
 
-    set(Boost_USE_STATIC_LIBS ON) 
-    set(Boost_USE_MULTITHREADED ON)  
-    set(Boost_USE_STATIC_RUNTIME ON) 
-    
-    find_package(Boost COMPONENTS thread) 
+set(Boost_USE_STATIC_LIBS ON) 
+set(Boost_USE_MULTITHREADED ON)  
+set(Boost_USE_STATIC_RUNTIME ON) 
 
-    find_package(wxWidgets REQUIRED gl core base OPTIONAL_COMPONENTS net)
-    
-    find_package(vsg REQUIRED)
+find_package(Boost COMPONENTS thread) 
 
-    vsg_setup_dir_vars()
-    vsg_setup_build_vars()
-    
-    find_package(vsgXchange CONFIG REQUIRED)
-    find_package(Freetype REQUIRED)
+# find_package(wxWidgets REQUIRED gl core base OPTIONAL_COMPONENTS net)
+find_package(wxWidgets REQUIRED gl core base OPTIONAL_COMPONENTS net)
 
-    add_executable(Editor WIN32 ${EditorSources})
-    
-    message("vsg: " ${vsg_INCLUDE_DIR})
-    target_include_directories(Editor PRIVATE Freetype::Freetype ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
-    if (vsgXchange_FOUND)
-        target_compile_definitions(Editor PRIVATE vsgXchange_FOUND)
-        target_link_libraries(Editor PRIVATE vsgXchange::vsgXchange)
-    endif()
+# vsg_setup_dir_vars()
+# vsg_setup_build_vars()
 
-    include(${wxWidgets_USE_FILE})
 
-    find_package(PkgConfig)
+add_executable(Editor WIN32 ${EditorSources})
+target_include_directories(Editor PRIVATE Freetype::Freetype ${vsg_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 
-    pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
-        
-    target_include_directories(Editor PUBLIC ${GTK3_INCLUDE_DIRS})
-    target_link_libraries(Editor PRIVATE ${wxWidgets_LIBRARIES} vsg::vsg vsgXchange::vsgXchange ${Boost_LIBRARIES} KhoraLib)
-
-    add_custom_command(
-        TARGET Editor POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_SOURCE_DIR}/UI/Icons
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Icons)
-
+if (vsgXchange_FOUND)
+    target_compile_definitions(Editor PRIVATE vsgXchange_FOUND)
+    target_link_libraries(Editor PRIVATE vsgXchange::vsgXchange)
 endif()
+
+include(${wxWidgets_USE_FILE})
+
+find_package(PkgConfig)
+
+pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
+    
+target_include_directories(Editor PUBLIC ${GTK3_INCLUDE_DIRS})
+target_link_libraries(Editor PRIVATE ${wxWidgets_LIBRARIES} vsg::vsg vsgXchange::vsgXchange ${Boost_LIBRARIES} KhoraLib)
+
+add_custom_command(
+    TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_CURRENT_SOURCE_DIR}/UI/Icons
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Icons)
+
+find_program(CLANGFORMAT clang-format)
+
+if (CLANGFORMAT)
+    message("Clang format found " ${PROJECT_NAME})
+
+    file(GLOB FILES_TO_FORMAT ${EditorSources}
+    )
+    foreach(EXCLUDE ${ARGS_EXCLUDES})
+        list(REMOVE_ITEM FILES_TO_FORMAT ${EXCLUDE})
+    endforeach()
+    if (NOT TARGET clang-format)
+        add_custom_target(clang-format)
+    endif()
+    add_custom_target(clang-format-${PROJECT_NAME}
+        COMMAND ${CLANGFORMAT} -i ${FILES_TO_FORMAT}
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        COMMENT "Automated code format using clang-format"
+    )
+    set_target_properties(clang-format-${PROJECT_NAME} PROPERTIES FOLDER "${PROJECT_NAME} Folder")
+    add_dependencies(clang-format clang-format-${PROJECT_NAME})
+endif()
+        

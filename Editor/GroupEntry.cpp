@@ -1,34 +1,23 @@
 
 #include "GroupEntry.h"
 
-GroupEntry::GroupEntry()
-{
-}
+GroupEntry::GroupEntry() {}
 
-vsg::ref_ptr<vsg::Group> GroupEntry::GetGroup() {
-    return vsg::Group::create();
-}
+vsg::ref_ptr<vsg::Group> GroupEntry::GetGroup() { return vsg::Group::create(); }
 
-EntryType GroupEntry::GetType() const
-{
-    return EntryType::Group;
-}
+EntryType GroupEntry::GetType() const { return EntryType::Group; }
 
-bool GroupEntry::CanAdd(std::shared_ptr<Entry>)
-{
-    return true;
-}
+bool GroupEntry::CanAdd(std::shared_ptr<Entry>) { return true; }
 
-std::shared_ptr<Entry> GroupEntry::CreateProxy(EntryPath)
-{
-    throw std::runtime_error("Group entry is not supposed to have proxies. At least for now.");
+std::shared_ptr<Entry> GroupEntry::CreateProxy(EntryPath) {
+  throw std::runtime_error(
+      "Group entry is not supposed to have proxies. At least for now.");
 }
 
 void GroupEntry::CloneFrom(std::shared_ptr<Entry> entry) {
-    DirectoryEntry::CloneFrom(entry);
-
+  DirectoryEntry::CloneFrom(entry);
 }
 
 std::shared_ptr<Entry> GroupEntry::CreateCopy() const {
-    return std::make_shared<GroupEntry>();
+  return std::make_shared<GroupEntry>();
 }

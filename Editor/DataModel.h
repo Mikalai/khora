@@ -35,92 +35,91 @@ class DataModel
     : public Observable<DataModel, IDataModelObserver, IDataModelEditor>,
       public IEntryObserver,
       public ISystemFontsObserver {
-    using Base = Observable<DataModel, IDataModelObserver, IDataModelEditor>;
+  using Base = Observable<DataModel, IDataModelObserver, IDataModelEditor>;
 
-    friend class Observable<DataModel, IDataModelObserver, IDataModelEditor>;
+  friend class Observable<DataModel, IDataModelObserver, IDataModelEditor>;
 
-   protected:
-    DataModel(std::shared_ptr<ISystemFonts> fonts,
-              boost::asio::io_context& ctx);
+protected:
+  DataModel(std::shared_ptr<ISystemFonts> fonts,
+            std::shared_ptr<boost::asio::io_context> ctx);
 
-   public:
-    void OnCreated() override;
+public:
+  void OnCreated() override;
 
-    virtual ~DataModel();
+  virtual ~DataModel();
 
-    void Execute(const ImportFileCommand& cmd) override;
-    void Execute(const CompileSceneCommand& cmd) override;
-    void Execute(const CopyNodeCommand& cmd) override;
-    void Execute(const MoveEntryCommand& cmd) override;
-    void Execute(const RemoveEntryCommand& cmd) override;
-    void Execute(const SaveToFileCommand& cmd) override;
-    void Execute(const ImportFromFileCommand& cmd) override;
+  void Execute(const ImportFileCommand &cmd) override;
+  void Execute(const CompileSceneCommand &cmd) override;
+  void Execute(const CopyNodeCommand &cmd) override;
+  void Execute(const MoveEntryCommand &cmd) override;
+  void Execute(const RemoveEntryCommand &cmd) override;
+  void Execute(const SaveToFileCommand &cmd) override;
+  void Execute(const ImportFromFileCommand &cmd) override;
 
-    void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
-    void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
-    void OnError(const LogNotification& cmd) const override;
+  void OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) override;
+  void OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) override;
+  void OnError(const LogNotification &cmd) const override;
 
-   private:
-    void CreateAxis();
-    vsg::StateInfo stateInfo;
-    vsg::ref_ptr<vsg::Builder> _builder = vsg::Builder::create();
-    vsg::ref_ptr<vsg::Group> _axis;
-    std::shared_ptr<Entry> _activeEntry;
-    std::shared_ptr<ConfigEntry> GetConfig();
-    std::unordered_map<std::string, FontInfo> _fontsCache;
-    boost::asio::io_context& _ctx;
-    std::shared_ptr<ISystemFonts> _fonts;
-    SubscriptionPtr _fontsSubscription;
+private:
+  void CreateAxis();
+  vsg::StateInfo stateInfo;
+  vsg::ref_ptr<vsg::Builder> _builder = vsg::Builder::create();
+  vsg::ref_ptr<vsg::Group> _axis;
+  std::shared_ptr<Entry> _activeEntry;
+  std::shared_ptr<ConfigEntry> GetConfig();
+  std::unordered_map<std::string, FontInfo> _fontsCache;
+  std::shared_ptr<ISystemFonts> _fonts;
+  SubscriptionPtr _fontsSubscription;
 
-    void CompileFonts(std::shared_ptr<CompilationState> state,
-                      std::shared_ptr<Entry> entry);
-    vsg::ref_ptr<vsg::Node> Compile(std::shared_ptr<CompilationState> state,
-                                    std::shared_ptr<Entry> entry);
+  void CompileFonts(std::shared_ptr<CompilationState> state,
+                    std::shared_ptr<Entry> entry);
+  vsg::ref_ptr<vsg::Node> Compile(std::shared_ptr<CompilationState> state,
+                                  std::shared_ptr<Entry> entry);
 
-    struct TextConfig {
-        std::shared_ptr<TextEntry> Entry;
-        vsg::ref_ptr<vsg::Font> Font;
-    };
+  struct TextConfig {
+    std::shared_ptr<TextEntry> Entry;
+    vsg::ref_ptr<vsg::Font> Font;
+  };
 
-    vsg::ref_ptr<vsg::Text> CompileText(TextConfig& cfg);
+  vsg::ref_ptr<vsg::Text> CompileText(TextConfig &cfg);
 
-    void DenyCompilation();
-    void AllowCompilation();
-    bool CanCompile() const { return _denyCompilation == 0; }
+  void DenyCompilation();
+  void AllowCompilation();
+  bool CanCompile() const { return _denyCompilation == 0; }
 
-    struct PackageInfo {
-        std::filesystem::path Path;
-        vsg::ref_ptr<vsg::Node> Root;
-    };
+  struct PackageInfo {
+    std::filesystem::path Path;
+    vsg::ref_ptr<vsg::Node> Root;
+  };
 
-    std::int32_t _denyCompilation{0};
-    vsg::ref_ptr<vsg::Options> _options = vsg::Options::create();
-    std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
+  std::int32_t _denyCompilation{0};
+  vsg::ref_ptr<vsg::Options> _options = vsg::Options::create();
+  std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
 
-    std::shared_ptr<DirectoryEntry> _dir = std::make_shared<GroupEntry>();
+  std::shared_ptr<DirectoryEntry> _dir = std::make_shared<GroupEntry>();
 
-    void Execute(const ResetModelCommand& cmd) override;
-    void OnPropertyChanged(std::shared_ptr<Entry> sender,
-                           std::string_view name) override;
-    void Execute(const SelectEntryCommand& cmd) override;
-    void Execute(const RenameEntryCommand& cmd) override;
-    void Execute(const CreateNodeCommand& cmd) override;
-    void Execute(const CopyEntryCommand& cmd) override;
-    void Execute(const ExportToFileCommand& cmd) override;
+  void Execute(const ResetModelCommand &cmd) override;
+  void OnPropertyChanged(std::shared_ptr<Entry> sender,
+                         std::string_view name) override;
+  void Execute(const SelectEntryCommand &cmd) override;
+  void Execute(const RenameEntryCommand &cmd) override;
+  void Execute(const CreateNodeCommand &cmd) override;
+  void Execute(const CopyEntryCommand &cmd) override;
+  void Execute(const ExportToFileCommand &cmd) override;
 
-    // Inherited via IDataModelEditor
-    void Execute(const AddLanguageCommand& cmd) override;
-    void Execute(const RemoveLanguageCommand& cmd) override;
-    void Execute(const RenameLanguageCommand& cmd) override;
+  // Inherited via IDataModelEditor
+  void Execute(const AddLanguageCommand &cmd) override;
+  void Execute(const RemoveLanguageCommand &cmd) override;
+  void Execute(const RenameLanguageCommand &cmd) override;
 
-    // Inherited via IDataModelEditor
-    void Execute(const RequestSuggestedChildrenCommand& cmd) override;
-    void OnSubscribed(std::shared_ptr<IDataModelObserver> observer) override;
+  // Inherited via IDataModelEditor
+  void Execute(const RequestSuggestedChildrenCommand &cmd) override;
+  void OnSubscribed(std::shared_ptr<IDataModelObserver> observer) override;
 
-    void Execute(const LogNotification&) override {}
-    void Execute(const RefreshComplete& cmd) override;
-    void Execute(const FontCompiled& cmd) override;
-    void Execute(const LongOperationStarted&) override {}
-    void Execute(const LongOperationEnded&) override {}
-    void Execute(const SetActiveLanguageRequest& cmd) override;
+  void Execute(const LogNotification &) override {}
+  void Execute(const RefreshComplete &cmd) override;
+  void Execute(const FontCompiled &cmd) override;
+  void Execute(const LongOperationStarted &) override {}
+  void Execute(const LongOperationEnded &) override {}
+  void Execute(const SetActiveLanguageRequest &cmd) override;
 };

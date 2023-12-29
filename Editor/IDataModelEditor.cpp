@@ -1,5 +1,3 @@
 #include "IDataModelEditor.h"
 
-IDataModelEditor::~IDataModelEditor() {
-
-}
+IDataModelEditor::~IDataModelEditor() {}

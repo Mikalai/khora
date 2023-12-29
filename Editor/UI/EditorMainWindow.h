@@ -23,144 +23,144 @@ class ConfigEntry;
 class EditorMainWindow : public EditorMainWindowBase,
                          public IDataModelObserver,
                          public ISystemFontsObserver {
-   public:
-    EditorMainWindow(IDataModelEditor* dataModel, ISystemFonts* systemFonts,
-                     wxWindow* parent);
-    void Paint();
+public:
+  EditorMainWindow(IDataModelEditor *dataModel, ISystemFonts *systemFonts,
+                   wxWindow *parent);
+  void Paint();
 
-    void Execute(const CompileCommand& cmd) override;
+  void Execute(const CompileCommand &cmd) override;
 
-    void Init(int argc, char** argv);
+  void Init(int argc, char **argv);
 
-    void OnIdle();
+  void OnIdle();
 
-   protected:
-    void OnImport(wxCommandEvent& event) override;
-    void assetsTreeOnTreeSelChanged(wxTreeEvent& event) override;
+protected:
+  void OnImport(wxCommandEvent &event) override;
+  void assetsTreeOnTreeSelChanged(wxTreeEvent &event) override;
 
-    /*void assetsTreeOnTreeBeginDrag(wxTreeEvent& event) override;
-    void assetsTreeOnTreeEndDrag(wxTreeEvent& event) override;
-    void finalSceneOnTreeBeginDrag(wxTreeEvent& event) override;
-    void finalSceneOnTreeEndDrag(wxTreeEvent& event) override;*/
+  /*void assetsTreeOnTreeBeginDrag(wxTreeEvent& event) override;
+  void assetsTreeOnTreeEndDrag(wxTreeEvent& event) override;
+  void finalSceneOnTreeBeginDrag(wxTreeEvent& event) override;
+  void finalSceneOnTreeEndDrag(wxTreeEvent& event) override;*/
 
-    void assetsTreeOnTreeBeginDrag(wxTreeEvent& event) override;
-    void assetsTreeOnTreeEndDrag(wxTreeEvent& event) override;
-    void finalSceneOnTreeSelChanged(wxTreeEvent& event) override;
-    void finalSceneOnTreeBeginDrag(wxTreeEvent& event) override;
-    void finalSceneOnTreeEndDrag(wxTreeEvent& event) override;
-    void finalSceneOnTreeItemRightClick(wxTreeEvent& event) override;
-    void deleteFromSceneOnButtonClick(wxCommandEvent& event) override;
-    void loadProjectMenuItemOnMenuSelection(wxCommandEvent& event) override;
-    void saveProjectMenuItemOnMenuSelection(wxCommandEvent& event) override;
-    void resetMenuItemOnMenuSelection(wxCommandEvent& event) override;
-    void finalSceneOnTreeBeginLabelEdit(wxTreeEvent& event) override;
-    void finalSceneOnTreeEndLabelEdit(wxTreeEvent& event) override;
-    void finalSceneOnKeyDown(wxKeyEvent& event) override;
-    void showTransformMenuOnMenuSelection(wxCommandEvent& event) override;
-    void addToSceneOnCombobox(wxCommandEvent& event) override;
-    void navigateOnToolClicked(wxCommandEvent& event) override;
-    void exportMenuOnMenuSelection(wxCommandEvent& event) override;
-    void langAddOnButtonClick(wxCommandEvent& event) override;
-    void langRemoveOnButtonClick(wxCommandEvent& event) override;
-    void languageListBoxOnListBoxDClick(wxListEvent& event) override;
-    void importFontMenuOnMenuSelection(wxCommandEvent& event) override;
-    void fontSearchOnSearchButton(wxCommandEvent& event) override;
-    void fontSearchOnText(wxCommandEvent& event) override;
-    void dataPanelsOnNotebookPageChanged(wxNotebookEvent& event) override;
-    void fontsListOnListItemSelected(wxListEvent& event) override;
+  void assetsTreeOnTreeBeginDrag(wxTreeEvent &event) override;
+  void assetsTreeOnTreeEndDrag(wxTreeEvent &event) override;
+  void finalSceneOnTreeSelChanged(wxTreeEvent &event) override;
+  void finalSceneOnTreeBeginDrag(wxTreeEvent &event) override;
+  void finalSceneOnTreeEndDrag(wxTreeEvent &event) override;
+  void finalSceneOnTreeItemRightClick(wxTreeEvent &event) override;
+  void deleteFromSceneOnButtonClick(wxCommandEvent &event) override;
+  void loadProjectMenuItemOnMenuSelection(wxCommandEvent &event) override;
+  void saveProjectMenuItemOnMenuSelection(wxCommandEvent &event) override;
+  void resetMenuItemOnMenuSelection(wxCommandEvent &event) override;
+  void finalSceneOnTreeBeginLabelEdit(wxTreeEvent &event) override;
+  void finalSceneOnTreeEndLabelEdit(wxTreeEvent &event) override;
+  void finalSceneOnKeyDown(wxKeyEvent &event) override;
+  void showTransformMenuOnMenuSelection(wxCommandEvent &event) override;
+  void addToSceneOnCombobox(wxCommandEvent &event) override;
+  void navigateOnToolClicked(wxCommandEvent &event) override;
+  void exportMenuOnMenuSelection(wxCommandEvent &event) override;
+  void langAddOnButtonClick(wxCommandEvent &event) override;
+  void langRemoveOnButtonClick(wxCommandEvent &event) override;
+  void languageListBoxOnListBoxDClick(wxListEvent &event) override;
+  void importFontMenuOnMenuSelection(wxCommandEvent &event) override;
+  void fontSearchOnSearchButton(wxCommandEvent &event) override;
+  void fontSearchOnText(wxCommandEvent &event) override;
+  void dataPanelsOnNotebookPageChanged(wxNotebookEvent &event) override;
+  void fontsListOnListItemSelected(wxListEvent &event) override;
 
-   private:
-    void UpdateFonts();
-    int GetEntryTypeImage(EntryType type);
-    void UpdateConfig();
-    std::set<LongOperation> _longOperations;
-    std::vector<std::pair<std::int32_t, vsg::ref_ptr<vsg::Node>>> _cleanup;
-    std::string _fontFilter;
-    std::vector<FontInfo> _fontsCache;
+private:
+  void UpdateFonts();
+  int GetEntryTypeImage(EntryType type);
+  void UpdateConfig();
+  std::set<LongOperation> _longOperations;
+  std::vector<std::pair<std::int32_t, vsg::ref_ptr<vsg::Node>>> _cleanup;
+  std::string _fontFilter;
+  std::vector<FontInfo> _fontsCache;
 
-    int _bulkOperation{0};
-    std::vector<std::string> _bulkErrors;
+  int _bulkOperation{0};
+  std::vector<std::string> _bulkErrors;
 
-    bool reseting{false};
-    ViewerWindow* viewerWindow;
-    std::filesystem::path _projectStorage;
-    vsg::ref_ptr<vsg::Group> _root = vsg::Group::create();
-    vsg::ref_ptr<vsg::Camera> _camera;
-    vsg::ref_ptr<vsg::LookAt> _lookAt;
-    vsg::ref_ptr<vsg::Trackball> _trackball;
-    std::shared_ptr<TransformPanel> _transformPanel{nullptr};
-    std::shared_ptr<TextPanel> _textPanel{};
+  bool reseting{false};
+  ViewerWindow *viewerWindow;
+  std::filesystem::path _projectStorage;
+  vsg::ref_ptr<vsg::Group> _root = vsg::Group::create();
+  vsg::ref_ptr<vsg::Camera> _camera;
+  vsg::ref_ptr<vsg::LookAt> _lookAt;
+  vsg::ref_ptr<vsg::Trackball> _trackball;
+  std::shared_ptr<TransformPanel> _transformPanel{nullptr};
+  std::shared_ptr<TextPanel> _textPanel{};
 
-    std::shared_ptr<ConfigEntry> _config;
-    wxImageList* _imageList;
-    int _imageErrorIcon;
-    int _imageTransformImage;
-    int _imageGroupImage;
-    int _imageGeometryImage;
-    int _imageMaterialImage;
-    int _imageLocalizedImage;
-    int _imageTextImage;
-    int _imagePlusImage;
+  std::shared_ptr<ConfigEntry> _config;
+  wxImageList *_imageList;
+  int _imageErrorIcon;
+  int _imageTransformImage;
+  int _imageGroupImage;
+  int _imageGeometryImage;
+  int _imageMaterialImage;
+  int _imageLocalizedImage;
+  int _imageTextImage;
+  int _imagePlusImage;
 
-    EntryPath _copyNode;
+  EntryPath _copyNode;
 
-    IDataModelEditor* _dataModel;
-    std::shared_ptr<DataModelObserverAdapter> _dataObserverAdapter;
-    SubscriptionPtr _dataModelSubscription;
-    ISystemFonts* _systemFonts;
-    std::shared_ptr<SystemFontsObserverAdapter> _systemFontsObserverAdapter;
-    SubscriptionPtr _systemFontsSubscription;
+  IDataModelEditor *_dataModel;
+  std::shared_ptr<DataModelObserverAdapter> _dataObserverAdapter;
+  SubscriptionPtr _dataModelSubscription;
+  ISystemFonts *_systemFonts;
+  std::shared_ptr<SystemFontsObserverAdapter> _systemFontsObserverAdapter;
+  SubscriptionPtr _systemFontsSubscription;
 
-    vsg::ref_ptr<vsg::Options> _options;
+  vsg::ref_ptr<vsg::Options> _options;
 
-    struct Package {
-        wxTreeItemId Root;
-        wxTreeItemId Transforms;
-        wxTreeItemId Geometries;
-        wxTreeItemId Materials;
-        vsg::ref_ptr<vsg::Node> RootNode;
-    };
+  struct Package {
+    wxTreeItemId Root;
+    wxTreeItemId Transforms;
+    wxTreeItemId Geometries;
+    wxTreeItemId Materials;
+    vsg::ref_ptr<vsg::Node> RootNode;
+  };
 
-    std::unordered_map<std::string, Package> packageToId;
+  std::unordered_map<std::string, Package> packageToId;
 
-    // void Execute(const SetRootNodeCommand& cmd) override;
-    void Execute(const ItemAddedNotification& cmd) override;
-    void Execute(const ItemRemovedNotification& cmd) override;
+  // void Execute(const SetRootNodeCommand& cmd) override;
+  void Execute(const ItemAddedNotification &cmd) override;
+  void Execute(const ItemRemovedNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const SceneCompeledNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const SceneCompeledNotification &cmd) override;
 
-    EntryPath _oldPath;
+  EntryPath _oldPath;
 
-    // Inherited via IDataModelObserver
-    void Execute(const ModelResetNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const ModelResetNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const LogNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const LogNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const EntrySelectedNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const EntrySelectedNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const EntryPropertyChangedNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const EntryPropertyChangedNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const ConfigNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const ConfigNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const LanguageAddedNotification& cmd) override;
-    void Execute(const LanguageRemoveNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const LanguageAddedNotification &cmd) override;
+  void Execute(const LanguageRemoveNotification &cmd) override;
 
-    // Inherited via IDataModelObserver
-    void Execute(const SuggestedChildrenNotification& cmd) override;
-    void Execute(const BulkOperationStartedNotification& cmd) override;
-    void Execute(const BulkOperationEndedNotification& cmd) override;
+  // Inherited via IDataModelObserver
+  void Execute(const SuggestedChildrenNotification &cmd) override;
+  void Execute(const BulkOperationStartedNotification &cmd) override;
+  void Execute(const BulkOperationEndedNotification &cmd) override;
 
-    void Execute(const RefreshComplete& cmd) override;
-    void Execute(const FontCompiled& cmd) override;
-    void Execute(const LongOperationStarted& cmd) override;
-    void Execute(const LongOperationEnded& cmd) override;
-    void Execute(const ActiveLanguageChanged& cmd) override;
+  void Execute(const RefreshComplete &cmd) override;
+  void Execute(const FontCompiled &cmd) override;
+  void Execute(const LongOperationStarted &cmd) override;
+  void Execute(const LongOperationEnded &cmd) override;
+  void Execute(const ActiveLanguageChanged &cmd) override;
 };
 
-#endif  // __EditorMainWindow__
+#endif // __EditorMainWindow__
