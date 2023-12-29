@@ -30,7 +30,7 @@ void TextPanel::fontColorPickerOnColourChanged(wxColourPickerEvent& event) {
     _dataModel->SetColor(r, g, b, a);
 }
 
-void TextPanel::offsetXEditOnText(wxCommandEvent& event) {
+void TextPanel::offsetXEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (offsetXEdit->GetValue().ToCDouble(&value)) {
@@ -38,7 +38,7 @@ void TextPanel::offsetXEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::offsetYEditOnText(wxCommandEvent& event) {
+void TextPanel::offsetYEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (offsetYEdit->GetValue().ToCDouble(&value)) {
@@ -46,7 +46,7 @@ void TextPanel::offsetYEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::offsetZEditOnText(wxCommandEvent& event) {
+void TextPanel::offsetZEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (offsetZEdit->GetValue().ToCDouble(&value)) {
@@ -54,7 +54,7 @@ void TextPanel::offsetZEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::horAxisXEditOnText(wxCommandEvent& event) {
+void TextPanel::horAxisXEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (horAxisXEdit->GetValue().ToCDouble(&value)) {
@@ -62,7 +62,7 @@ void TextPanel::horAxisXEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::horAxisYEditOnText(wxCommandEvent& event) {
+void TextPanel::horAxisYEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (horAxisYEdit->GetValue().ToCDouble(&value)) {
@@ -70,7 +70,7 @@ void TextPanel::horAxisYEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::horAxisZEditOnText(wxCommandEvent& event) {
+void TextPanel::horAxisZEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (horAxisZEdit->GetValue().ToCDouble(&value)) {
@@ -78,7 +78,7 @@ void TextPanel::horAxisZEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::vertAxisXEditOnText(wxCommandEvent& event) {
+void TextPanel::vertAxisXEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (vertAxisXEdit->GetValue().ToCDouble(&value)) {
@@ -86,7 +86,7 @@ void TextPanel::vertAxisXEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::vertAxisYEditOnText(wxCommandEvent& event) {
+void TextPanel::vertAxisYEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (vertAxisYEdit->GetValue().ToCDouble(&value)) {
@@ -94,7 +94,7 @@ void TextPanel::vertAxisYEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::vertAxisZEditOnText(wxCommandEvent& event) {
+void TextPanel::vertAxisZEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (vertAxisZEdit->GetValue().ToCDouble(&value)) {
@@ -102,7 +102,7 @@ void TextPanel::vertAxisZEditOnText(wxCommandEvent& event) {
     }
 }
 
-void TextPanel::horAlignmentOnCombobox(wxCommandEvent& event) {
+void TextPanel::horAlignmentOnCombobox(wxCommandEvent&) {
     if (!_dataModel) return;
     auto value = magic_enum::enum_cast<TextHorizontalAlignment>(
                      horAlignment->GetValue().ToStdString())
@@ -110,7 +110,7 @@ void TextPanel::horAlignmentOnCombobox(wxCommandEvent& event) {
     _dataModel->SetHorizontalAlignment(value);
 }
 
-void TextPanel::vertAlignmentOnCombobox(wxCommandEvent& event) {
+void TextPanel::vertAlignmentOnCombobox(wxCommandEvent&) {
     if (!_dataModel) return;
     auto value = magic_enum::enum_cast<TextVerticalAlignment>(
                      vertAlignment->GetValue().ToStdString())
@@ -118,7 +118,7 @@ void TextPanel::vertAlignmentOnCombobox(wxCommandEvent& event) {
     _dataModel->SetVerticalAlignment(value);
 }
 
-void TextPanel::lineSpacingEditOnText(wxCommandEvent& event) {
+void TextPanel::lineSpacingEditOnText(wxCommandEvent&) {
     if (!_dataModel) return;
     double value;
     if (lineSpacingEdit->GetValue().ToCDouble(&value)) {

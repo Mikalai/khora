@@ -1,22 +1,20 @@
-#pragma once
+#include "MaterialEntry.h"
 
 #include <magic_enum.hpp>
-#include "Serializer.h"
-#include "MaterialEntry.h"
-#include "Clone.h"
+
 #include "AsyncQueue.h"
+#include "Clone.h"
+#include "Serializer.h"
 
-MaterialEntry::MaterialEntry()
-{
-}
+MaterialEntry::MaterialEntry() {}
 
-EntryType MaterialEntry::GetType() const {
-    return EntryType::Material;
-}
+EntryType MaterialEntry::GetType() const { return EntryType::Material; }
 
-std::shared_ptr<Entry> MaterialEntry::CreateView(std::shared_ptr<AsyncQueue> sync) {
+std::shared_ptr<Entry> MaterialEntry::CreateView(
+    std::shared_ptr<AsyncQueue> sync) {
     assert(std::dynamic_pointer_cast<MaterialEntry>(shared_from_this()));
-    return std::make_shared<MaterialEntryView>(std::static_pointer_cast<MaterialEntry>(shared_from_this()), sync);
+    return std::make_shared<MaterialEntryView>(
+        std::static_pointer_cast<MaterialEntry>(shared_from_this()), sync);
 }
 
 vsg::ref_ptr<vsg::StateGroup> MaterialPackageEntry::GetState() const {
@@ -31,38 +29,39 @@ void MaterialPackageEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     MaterialEntry::CloneFrom(entry);
     assert(std::dynamic_pointer_cast<MaterialPackageEntry>(entry));
     auto e = std::static_pointer_cast<MaterialPackageEntry>(entry);
-    this->_state = e->_state;    
+    this->_state = e->_state;
 }
 
 std::shared_ptr<Entry> MaterialPackageEntry::CreateCopy() const {
     return std::make_shared<MaterialPackageEntry>();
 }
 
-MaterialProxyEntry::MaterialProxyEntry(EntryPath path)
-    : _path{ path } {
-}
+MaterialProxyEntry::MaterialProxyEntry(EntryPath path) : _path{path} {}
 
 vsg::ref_ptr<vsg::StateGroup> MaterialProxyEntry::GetState() const {
     auto root = GetRoot();
     if (!root)
-        throw std::runtime_error("Proxy material references object in the catalog that doesn't exist.");
+        throw std::runtime_error(
+            "Proxy material references object in the catalog that doesn't "
+            "exist.");
 
     if (auto entry = root->FindEntry(_path); entry) {
-        if (auto transform = std::dynamic_pointer_cast<MaterialEntry>(entry); transform) {
+        if (auto transform = std::dynamic_pointer_cast<MaterialEntry>(entry);
+            transform) {
             return transform->GetState();
+        } else {
+            const_cast<MaterialProxyEntry&>(*this).OnError(
+                LogError(LOG_TYPE_MISMATCH));
+            return {};
         }
-        else {
-            const_cast<MaterialProxyEntry&>(*this).OnError(LogError(LOG_TYPE_MISMATCH));
-            return {};                
-        }
-    }
-    else {
-        const_cast<MaterialProxyEntry&>(*this).OnError(LogError(LOG_ENTRY_NOT_FOUND, this->_path.Path));
+    } else {
+        const_cast<MaterialProxyEntry&>(*this).OnError(
+            LogError(LOG_ENTRY_NOT_FOUND, this->_path.Path));
         return {};
     }
 }
 
-std::shared_ptr<Entry> MaterialProxyEntry::CreateProxy(EntryPath path) {
+std::shared_ptr<Entry> MaterialProxyEntry::CreateProxy(EntryPath) {
     return std::make_shared<MaterialProxyEntry>(_path);
 }
 
@@ -71,7 +70,8 @@ void MaterialProxyEntry::Serialize(EntryProperties& properties) const {
     properties["Path"] = _path.Path;
 }
 
-void MaterialProxyEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+void MaterialProxyEntry::DeserializeInternal(
+    EntryPath path, const EntryProperties& properties) {
     MaterialEntry::DeserializeInternal(path, properties);
     _path.Path = ::Deserialize(properties, "Path", std::string{});
 }

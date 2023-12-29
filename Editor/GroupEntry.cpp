@@ -14,12 +14,12 @@ EntryType GroupEntry::GetType() const
     return EntryType::Group;
 }
 
-bool GroupEntry::CanAdd(std::shared_ptr<Entry> entry)
+bool GroupEntry::CanAdd(std::shared_ptr<Entry>)
 {
     return true;
 }
 
-std::shared_ptr<Entry> GroupEntry::CreateProxy(EntryPath path)
+std::shared_ptr<Entry> GroupEntry::CreateProxy(EntryPath)
 {
     throw std::runtime_error("Group entry is not supposed to have proxies. At least for now.");
 }

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <magic_enum.hpp>
 #include "AsyncQueue.h"
 #include "Serializer.h"
@@ -38,7 +36,7 @@ std::shared_ptr<Entry> GeometryPackageEntry::CreateCopy() const {
     return std::make_shared<GeometryPackageEntry>();
 }
 
-std::shared_ptr<Entry> GeometryEntry::FindEntry(const EntryPath& path) const {
+std::shared_ptr<Entry> GeometryEntry::FindEntry(const EntryPath&) const {
     return {};
 }
 

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Serializer.h"
 
 void Serialize(nlohmann::json& o, const vsg::dvec3& v) {

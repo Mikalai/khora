@@ -1,12 +1,7 @@
-#pragma once
-
 #include "IUserInput.h"
+
 #include "IUserInputIdleMarker.h"
 
-IUserInputIdleMarker::~IUserInputIdleMarker() {
+IUserInputIdleMarker::~IUserInputIdleMarker() {}
 
-}
-
-IUserInput::~IUserInput() {
-
-}
+IUserInput::~IUserInput() {}

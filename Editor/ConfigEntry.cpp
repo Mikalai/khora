@@ -1,5 +1,3 @@
-#pragma once
-
 #include "ConfigEntry.h"
 
 #include <magic_enum.hpp>
@@ -93,11 +91,11 @@ void ConfigEntry::DeserializeInternal(EntryPath path,
         ::Deserialize(properties, "ActiveLanguage", std::string{});
 }
 
-std::shared_ptr<Entry> ConfigEntry::CreateProxy(EntryPath path) {
+std::shared_ptr<Entry> ConfigEntry::CreateProxy(EntryPath) {
     throw std::runtime_error("Config doesn't have proxy.");
 }
 
-bool ConfigEntry::CanAdd(std::shared_ptr<Entry> entry) { return true; }
+bool ConfigEntry::CanAdd(std::shared_ptr<Entry>) { return true; }
 
 void ConfigEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     DirectoryEntry::CloneFrom(entry);
@@ -118,12 +116,11 @@ bool ConfigEntryView::CanAdd(std::shared_ptr<Entry> entry) {
     return _sync->Execute([&]() { return _model->CanAdd(entry); });
 }
 
-void ConfigEntryView::Serialize(EntryProperties& properties) const {
+void ConfigEntryView::Serialize(EntryProperties&) const {
     throw std::runtime_error("ConfigEntryView is not serializable.");
 }
 
-void ConfigEntryView::DeserializeInternal(EntryPath path,
-                                          const EntryProperties& properties) {
+void ConfigEntryView::DeserializeInternal(EntryPath, const EntryProperties&) {
     throw std::runtime_error("ConfigEntryView is not deserializable.");
 }
 

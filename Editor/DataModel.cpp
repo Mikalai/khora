@@ -70,8 +70,7 @@ void DataModel::Execute(const ImportFileCommand& cmd) {
                     std::filesystem::relative(requestedPath, cmd.ProjectPath);
 
                 Notify(IDataModelObserver::CompileCommand{
-                    .Object = root,
-                    .OnComplete = [&](auto object, auto result) {}});
+                    .Object = root, .OnComplete = [&](auto, auto) {}});
 
                 auto packageName =
                     std::filesystem::path(relPath).filename().string();
@@ -131,8 +130,8 @@ void DataModel::Execute(const ImportFileCommand& cmd) {
     });
 }
 
-void DataModel::Execute(const ResetModelCommand& cmd) {
-    _queue->Enqueue([=]() {
+void DataModel::Execute(const ResetModelCommand&) {
+    _queue->Enqueue([this]() {
         _dir = std::make_shared<GroupEntry>();
         _dir->AddObserver(Self());
         _dir->Add({ROOT_CONFIG}, std::make_shared<ConfigEntry>());
@@ -153,7 +152,7 @@ void DataModel::OnPropertyChanged(std::shared_ptr<Entry> sender,
 void DataModel::OnError(const LogNotification& cmd) const { Notify(cmd); }
 
 void DataModel::Execute(const SelectEntryCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         if (!CanCompile()) {
             return;
         }
@@ -170,7 +169,7 @@ void DataModel::Execute(const SelectEntryCommand& cmd) {
 }
 
 void DataModel::Execute(const RenameEntryCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         auto oldEntry = _dir->FindEntry(cmd.OldPath);
         if (!oldEntry) {
             Notify(LogError(LOG_ENTRY_NOT_FOUND, cmd.OldPath.Path));
@@ -190,7 +189,7 @@ void DataModel::Execute(const RenameEntryCommand& cmd) {
 }
 
 void DataModel::Execute(const CreateNodeCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         int suffix = 0;
         auto path = cmd.Path;
 
@@ -217,7 +216,7 @@ void DataModel::Execute(const CreateNodeCommand& cmd) {
 }
 
 void DataModel::Execute(const SaveToFileCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         nlohmann::json j;
 
         auto& packages = j["packages"];
@@ -353,7 +352,7 @@ void DataModel::Execute(const SaveToFileCommand& cmd) {
 void DataModel::Execute(const ImportFromFileCommand& cmd) {
     DenyCompilation();
 
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([this, cmd]() {
         {
             // Ensure required folders exists
             auto parent = std::filesystem::path(cmd.Path).parent_path();
@@ -365,7 +364,8 @@ void DataModel::Execute(const ImportFromFileCommand& cmd) {
 
         std::ifstream stream(cmd.Path, std::ios::binary);
         if (!stream.is_open()) {
-            Notify(LogNotification{.Code = EDITOR_ERROR_FILE_NOT_FOUND,
+            Notify(LogNotification{.Level = LOG_LEVEL_ERROR,
+                                   .Code = EDITOR_ERROR_FILE_NOT_FOUND,
                                    .StrParamter = cmd.Path.string()});
             return;
         }
@@ -422,7 +422,7 @@ void DataModel::Execute(const ImportFromFileCommand& cmd) {
 }
 
 void DataModel::Execute(const MoveEntryCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         auto o = _dir->Remove(cmd.SourcePath);
         if (!o) {
             std::cerr << "Can't move entry " << cmd.SourcePath.Path << " to "
@@ -435,7 +435,7 @@ void DataModel::Execute(const MoveEntryCommand& cmd) {
 }
 
 void DataModel::Execute(const CopyEntryCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([this, cmd]() {
         auto o = _dir->FindEntry(cmd.SourcePath);
         if (!o) {
             std::cerr << "Can't clone entry " << cmd.SourcePath.Path << " to "
@@ -450,7 +450,7 @@ void DataModel::Execute(const CopyEntryCommand& cmd) {
 }
 
 void DataModel::Execute(const RemoveEntryCommand& cmd) {
-    _queue->Enqueue([=]() { _dir->Remove(cmd.Path); });
+    _queue->Enqueue([cmd, this]() { _dir->Remove(cmd.Path); });
 }
 
 void DataModel::OnEntryAdded(EntryPath path, std::shared_ptr<Entry> entry) {
@@ -464,7 +464,7 @@ void DataModel::OnEntryRemoved(EntryPath path, std::shared_ptr<Entry> entry) {
 }
 
 void DataModel::Execute(const CopyNodeCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         auto entry = _dir->FindEntry(cmd.SourcePath);
 
         if (!entry) {
@@ -514,7 +514,7 @@ void DataModel::CompileFonts(std::shared_ptr<CompilationState> state,
 
     if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry); dir) {
         dir->ForEachEntry(
-            [&](auto path, auto centry) { CompileFonts(state, centry); });
+            [&](auto, auto centry) { CompileFonts(state, centry); });
     }
 }
 
@@ -632,9 +632,9 @@ vsg::ref_ptr<vsg::Node> DataModel::Compile(
 
     if (auto localized = std::dynamic_pointer_cast<LocalizedEntry>(dir);
         localized) {
-        localized->ForEachEntry([&](auto name, auto entry) {
+        localized->ForEachEntry([&](auto name, auto centry) {
             if (name == state->Language) {
-                auto child = Compile(state, entry);
+                auto child = Compile(state, centry);
                 if (child) {
                     group->addChild(child);
                 }
@@ -642,8 +642,8 @@ vsg::ref_ptr<vsg::Node> DataModel::Compile(
         });
 
     } else {
-        dir->ForEachEntry([&](auto name, auto entry) {
-            auto child = Compile(state, entry);
+        dir->ForEachEntry([&](auto, auto centry) {
+            auto child = Compile(state, centry);
             if (child) {
                 group->addChild(child);
             }
@@ -691,7 +691,7 @@ void DataModel::CreateAxis() {
 }
 
 void DataModel::Execute(const CompileSceneCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         if (!CanCompile()) {
             Notify(IDataModelObserver::SceneCompeledNotification{.Root = {}});
             return;
@@ -739,15 +739,15 @@ std::shared_ptr<ConfigEntry> DataModel::GetConfig() {
 }
 
 void DataModel::DenyCompilation() {
-    _queue->Enqueue([=]() { _denyCompilation++; });
+    _queue->Enqueue([this]() { _denyCompilation++; });
 }
 
 void DataModel::AllowCompilation() {
-    _queue->Enqueue([=]() { _denyCompilation--; });
+    _queue->Enqueue([this]() { _denyCompilation--; });
 }
 
 void DataModel::Execute(const ExportToFileCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([this, cmd]() {
         if (!CanCompile()) {
             Notify(LogError(LOG_ENTRY_BUSY));
             return;
@@ -772,7 +772,7 @@ void DataModel::Execute(const ExportToFileCommand& cmd) {
 }
 
 void DataModel::Execute(const AddLanguageCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         auto cfg = GetConfig();
         if (!cfg->AddLanguage(cmd.Value)) {
             Notify(LogError(LOG_ENTRY_ALREADY_EXISTS, cmd.Value));
@@ -785,7 +785,7 @@ void DataModel::Execute(const AddLanguageCommand& cmd) {
 }
 
 void DataModel::Execute(const RemoveLanguageCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         auto cfg = GetConfig();
         if (!cfg->RemoveLanguage(cmd.Value)) {
             Notify(LogError(LOG_ENTRY_NOT_FOUND, cmd.Value));
@@ -798,7 +798,7 @@ void DataModel::Execute(const RemoveLanguageCommand& cmd) {
 }
 
 void DataModel::Execute(const RenameLanguageCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([cmd, this]() {
         auto cfg = GetConfig();
         auto langs = cfg->GetLanguages();
         if (auto it = std::find(langs.begin(), langs.end(), cmd.OldValue);
@@ -824,7 +824,7 @@ void DataModel::Execute(const RenameLanguageCommand& cmd) {
 }
 
 void DataModel::Execute(const RequestSuggestedChildrenCommand& cmd) {
-    _queue->Enqueue([=]() {
+    _queue->Enqueue([this, cmd]() {
         auto entry = _dir->FindEntry(cmd.Path);
         if (!entry) {
             Notify(LogError(LOG_ENTRY_NOT_FOUND, cmd.Path.Path));
@@ -839,6 +839,7 @@ void DataModel::Execute(const RequestSuggestedChildrenCommand& cmd) {
             case EntryType::Transform:
             case EntryType::Material:
             case EntryType::Group:
+            case EntryType::Directory:
                 r.Suggestions.emplace_back("Group", "Group");
                 // r.Suggestions.emplace_back(magic_enum::enum_name(EntryType::Material),
                 // magic_enum::enum_name(EntryType::Material));
@@ -872,7 +873,7 @@ void DataModel::OnSubscribed(std::shared_ptr<IDataModelObserver> observer) {
             GetConfig()->CreateView(this->_queue))});
 }
 
-void DataModel::Execute(const RefreshComplete& cmd) {}
+void DataModel::Execute(const RefreshComplete&) {}
 
 void DataModel::Execute(const FontCompiled& cmd) {
     GetSyncContext()->Enqueue([this, cmd]() {

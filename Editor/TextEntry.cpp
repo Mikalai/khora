@@ -19,7 +19,7 @@ std::shared_ptr<Entry> TextEntry::CreateView(std::shared_ptr<AsyncQueue> sync) {
         std::static_pointer_cast<TextEntry>(shared_from_this()), sync);
 }
 
-std::shared_ptr<Entry> TextEntry::CreateProxy(EntryPath path) {
+std::shared_ptr<Entry> TextEntry::CreateProxy(EntryPath) {
     OnError(LogError(LOG_OPERATION_NOT_SUPPORTED, "TextEntry::CreateProxy"));
     return {};
 }
@@ -208,10 +208,10 @@ void TextEntry::DeserializeInternal(EntryPath path,
     _fontName = ::Deserialize(properties, "Font", std::string{});
     _value = ::Deserialize(properties, "Value", std::u8string{});
 
-    _offset = ::DeserializeVector(properties, "Offset", {0, 0, 0});
-    _horAxis = ::DeserializeVector(properties, "HorizontalAxis", {1, 0, 0});
-    _vertAxis = ::DeserializeVector(properties, "VerticalAxis", {0, 0, 1});
-    _color = ::DeserializeColor(properties, "Color", {0, 0, 0, 1});
+    _offset = ::DeserializeVector(properties, "Offset", {{0, 0, 0}});
+    _horAxis = ::DeserializeVector(properties, "HorizontalAxis", {{1, 0, 0}});
+    _vertAxis = ::DeserializeVector(properties, "VerticalAxis", {{0, 0, 1}});
+    _color = ::DeserializeColor(properties, "Color", {{0, 0, 0, 1}});
 
     _horAlignment =
         magic_enum::enum_cast<TextHorizontalAlignment>(

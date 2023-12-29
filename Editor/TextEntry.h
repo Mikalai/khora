@@ -90,10 +90,10 @@ class TextEntry : public Entry {
     std::string _fontName;
     std::u8string _value;
 
-    std::array<double, 3> _offset{0, 0, 0};
-    std::array<double, 3> _horAxis{1, 0, 0};
-    std::array<double, 3> _vertAxis{0, 0, 1};
-    std::array<double, 4> _color{0, 0, 0, 1};
+    std::array<double, 3> _offset{{0, 0, 0}};
+    std::array<double, 3> _horAxis{{1, 0, 0}};
+    std::array<double, 3> _vertAxis{{0, 0, 1}};
+    std::array<double, 4> _color{{0, 0, 0, 1}};
 
     TextHorizontalAlignment _horAlignment{TextHorizontalAlignment::Center};
     TextVerticalAlignment _vertAlignment{TextVerticalAlignment::Center};

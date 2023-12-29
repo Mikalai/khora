@@ -11,7 +11,7 @@
 #include "TextEntry.h"
 #include "TransformEntry.h"
 
-std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path,
+std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath &path,
                                               EntryPath parent) {
     auto name = path.GetName();
     if (auto it = _nameToIndex.find(name); it != _nameToIndex.end()) {
@@ -35,9 +35,9 @@ std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path,
             auto root = parent.Append(name);
             if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry);
                 dir) {
-                dir->TraverseDownTop([&](auto name, auto entry) {
-                    auto path = root.Append(name.Path);
-                    OnEntryRemoved(path, entry);
+                dir->TraverseDownTop([&](auto сname, auto centry) {
+                    auto cpath = root.Append(сname.Path);
+                    OnEntryRemoved(cpath, centry);
                 });
             }
 
@@ -52,9 +52,9 @@ std::shared_ptr<Entry> DirectoryEntry::Remove(const EntryPath& path,
 }
 
 void DirectoryEntry::TraverseTopDown(
-    const EntryPath& parent,
+    const EntryPath &parent,
     std::function<void(EntryPath path, std::shared_ptr<Entry>)> cb) {
-    for (auto& [name, entry] : _entries) {
+    for (auto &[name, entry] : _entries) {
         cb(parent.Append(name), entry);
 
         if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry); dir) {
@@ -64,9 +64,9 @@ void DirectoryEntry::TraverseTopDown(
 }
 
 void DirectoryEntry::TraverseDownTop(
-    const EntryPath& parent,
+    const EntryPath &parent,
     std::function<void(EntryPath path, std::shared_ptr<Entry>)> cb) {
-    for (auto& [name, entry] : _entries) {
+    for (auto &[name, entry] : _entries) {
         if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry); dir) {
             dir->TraverseDownTop(parent.Append(name), cb);
         }
@@ -75,7 +75,7 @@ void DirectoryEntry::TraverseDownTop(
     }
 }
 
-bool DirectoryEntry::Add(const EntryPath& path, EntryPath parent,
+bool DirectoryEntry::Add(const EntryPath &path, EntryPath parent,
                          std::shared_ptr<Entry> entry) {
     auto name = path.GetName();
     auto next = path.GetNext();
@@ -116,10 +116,10 @@ bool DirectoryEntry::Add(const EntryPath& path, EntryPath parent,
             auto root = parent.Append(name);
             if (auto dir = std::dynamic_pointer_cast<DirectoryEntry>(entry);
                 dir) {
-                dir->TraverseTopDown([&](auto localPath, auto entry) {
-                    auto path = root.Append(localPath.Path);
-                    CopyObserversTo(*entry);
-                    OnEntryAdded(path, entry);
+                dir->TraverseTopDown([&](auto localPath, auto сentry) {
+                    auto сpath = root.Append(localPath.Path);
+                    CopyObserversTo(*сentry);
+                    OnEntryAdded(сpath, сentry);
                 });
             } else {
             }
@@ -141,7 +141,7 @@ DirectoryEntry::DirectoryEntry() {}
 //     }
 // }
 
-std::shared_ptr<Entry> DirectoryEntry::FindEntry(const EntryPath& path) const {
+std::shared_ptr<Entry> DirectoryEntry::FindEntry(const EntryPath &path) const {
     auto name = path.GetName();
     if (auto it = _nameToIndex.find(name); it != _nameToIndex.end()) {
         auto next = path.GetNext();
@@ -162,7 +162,7 @@ std::shared_ptr<Entry> DirectoryEntry::FindEntry(const EntryPath& path) const {
     return {};
 }
 
-void DirectoryEntry::Serialize(EntryProperties& properties) const {
+void DirectoryEntry::Serialize(EntryProperties &properties) const {
     Entry::Serialize(properties);
     EntryProperties entries;
     for (auto [name, entry] : _entries) {
@@ -175,7 +175,7 @@ void DirectoryEntry::Serialize(EntryProperties& properties) const {
 }
 
 void DirectoryEntry::DeserializeInternal(EntryPath path,
-                                         const EntryProperties& properties) {
+                                         const EntryProperties &properties) {
     Entry::DeserializeInternal(path, properties);
     if (auto it = properties.find("Entries"); it == properties.end())
         return;
@@ -228,8 +228,8 @@ void DirectoryEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     assert(std::dynamic_pointer_cast<DirectoryEntry>(entry));
     auto dir = std::static_pointer_cast<DirectoryEntry>(entry);
 
-    for (auto [name, entry] : dir->_entries) {
-        auto e = entry->Clone();
+    for (auto [name, сentry] : dir->_entries) {
+        auto e = сentry->Clone();
         e->SetParent(shared_from_this());
         CopyObserversTo(*e);
         _nameToIndex[name] = _entries.size();

@@ -83,18 +83,16 @@ void TransformPanel::UpdateControls() {
     }
 }
 
-void TransformPanel::OnEntryAdded(EntryPath path,
-                                  std::shared_ptr<Entry> entry) {
+void TransformPanel::OnEntryAdded(EntryPath, std::shared_ptr<Entry> entry) {
     if (_dataModel != entry) return;
 }
 
-void TransformPanel::OnEntryRemoved(EntryPath path,
-                                    std::shared_ptr<Entry> entry) {
+void TransformPanel::OnEntryRemoved(EntryPath, std::shared_ptr<Entry> entry) {
     if (_dataModel != entry) return;
 }
 
 void TransformPanel::OnPropertyChanged(std::shared_ptr<Entry> sender,
-                                       std::string_view name) {
+                                       std::string_view) {
     if (_dataModel != sender) return;
 }
 
@@ -209,7 +207,7 @@ void TransformPanel::pasteScaleYOnButtonClick(wxCommandEvent&) {
     _scale[1]->SetValue(_copyScale[1]);
 }
 
-void TransformPanel::copyScaleZOnButtonClick(wxCommandEvent&) {    
+void TransformPanel::copyScaleZOnButtonClick(wxCommandEvent&) {
     _copyScale[2] = _scale[2]->GetValue();
 }
 

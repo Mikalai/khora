@@ -1,5 +1,3 @@
-#pragma once
-
 #include "Errors.h"
 
 const std::string ErrorToString(const LogNotification& error) {

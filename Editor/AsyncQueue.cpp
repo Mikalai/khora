@@ -16,7 +16,7 @@ void AsyncQueue::Enqueue(Task task) {
     }
 }
 
-void AsyncQueue::Process(boost::system::error_code ec) {
+void AsyncQueue::Process(boost::system::error_code) {
     Task task;
     while (true)
     {

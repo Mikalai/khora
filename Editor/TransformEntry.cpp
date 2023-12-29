@@ -1,20 +1,16 @@
-#pragma once
+#include "TransformEntry.h"
 
 #include <magic_enum.hpp>
-#include "Serializer.h"
+
 #include "AsyncQueue.h"
-#include "TransformEntry.h"
 #include "Clone.h"
 #include "Errors.h"
+#include "Serializer.h"
 
-TransformEntry::TransformEntry()
-{
-}
+TransformEntry::TransformEntry() {}
 
 TransformEntry::TransformEntry(const TransformEntry& entry)
-    : DirectoryEntry{entry}
-{
-}
+    : DirectoryEntry{entry} {}
 
 vsg::dmat4 TransformEntry::GetWorldMatrix() {
     std::vector<vsg::ref_ptr<vsg::MatrixTransform>> path;
@@ -37,13 +33,13 @@ vsg::dmat4 TransformEntry::GetWorldMatrix() {
     return r;
 }
 
-EntryType TransformEntry::GetType() const {
-    return EntryType::Transform;
-}
+EntryType TransformEntry::GetType() const { return EntryType::Transform; }
 
-std::shared_ptr<Entry> TransformEntry::CreateView(std::shared_ptr<AsyncQueue> sync) {
+std::shared_ptr<Entry> TransformEntry::CreateView(
+    std::shared_ptr<AsyncQueue> sync) {
     assert(std::dynamic_pointer_cast<TransformEntry>(shared_from_this()));
-    return std::make_shared<TransformEntryView>(std::static_pointer_cast<TransformEntry>(shared_from_this()), sync);
+    return std::make_shared<TransformEntryView>(
+        std::static_pointer_cast<TransformEntry>(shared_from_this()), sync);
 }
 
 vsg::ref_ptr<vsg::MatrixTransform> TransformPackageEntry::GetTransform() const {
@@ -59,7 +55,6 @@ std::shared_ptr<Entry> TransformPackageEntry::CreateCopy() const {
 }
 
 void TransformPackageEntry::CloneFrom(std::shared_ptr<Entry> entry) {
-    
     TransformEntry::CloneFrom(entry);
 
     assert(std::dynamic_pointer_cast<TransformPackageEntry>(entry));
@@ -68,67 +63,65 @@ void TransformPackageEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     this->_transform = e->_transform;
 }
 
-TransformProxyEntry::TransformProxyEntry(EntryPath path)
-    : _path{ path } {
-}
+TransformProxyEntry::TransformProxyEntry(EntryPath path) : _path{path} {}
 
-vsg::ref_ptr<vsg::MatrixTransform> TransformProxyEntry::GetTransform() const
-{
+vsg::ref_ptr<vsg::MatrixTransform> TransformProxyEntry::GetTransform() const {
     auto root = GetRoot();
     if (!root)
-        throw std::runtime_error("Proxy transform references object in the catalog that doesn't exist.");
+        throw std::runtime_error(
+            "Proxy transform references object in the catalog that doesn't "
+            "exist.");
 
     if (_override || !_path.IsValid()) {
-        vsg::ref_ptr<vsg::MatrixTransform> transform = vsg::MatrixTransform::create();
-        transform->matrix = vsg::translate(_position) * vsg::rotate(_orientation) * vsg::scale(_scale);
+        vsg::ref_ptr<vsg::MatrixTransform> transform =
+            vsg::MatrixTransform::create();
+        transform->matrix = vsg::translate(_position) *
+                            vsg::rotate(_orientation) * vsg::scale(_scale);
         return transform;
-    }
-    else {
+    } else {
         if (auto entry = root->FindEntry(_path); entry) {
-            if (auto transform = std::dynamic_pointer_cast<TransformEntry>(entry); transform) {
+            if (auto transform =
+                    std::dynamic_pointer_cast<TransformEntry>(entry);
+                transform) {
                 return transform->GetTransform();
+            } else {
+                const_cast<TransformProxyEntry&>(*this).OnError(
+                    LogError(LOG_TYPE_MISMATCH));
+                return {};
             }
-            else {
-                const_cast<TransformProxyEntry&>(*this).OnError(LogError(LOG_TYPE_MISMATCH));
-                return {};                
-            }
-        }
-        else {
-            const_cast<TransformProxyEntry&>(*this).OnError(LogError(LOG_ENTRY_NOT_FOUND, this->_path.Path));
+        } else {
+            const_cast<TransformProxyEntry&>(*this).OnError(
+                LogError(LOG_ENTRY_NOT_FOUND, this->_path.Path));
             return {};
         }
     }
 }
 
 void TransformProxyEntry::SetOverride(bool flag) {
-    if (_override == flag)
-        return;
+    if (_override == flag) return;
 
     _override = flag;
     OnPropertyChanged(shared_from_this(), "Override");
 }
 
 void TransformProxyEntry::SetPosition(vsg::dvec3 value) {
-    if (_position == value)
-        return;
+    if (_position == value) return;
 
     _position = value;
     OnPropertyChanged(shared_from_this(), "Position");
 }
 
-void TransformProxyEntry::SetScale(vsg::dvec3 value) { 
-    if (_scale == value)
-        return;
+void TransformProxyEntry::SetScale(vsg::dvec3 value) {
+    if (_scale == value) return;
 
-    _scale = value; 
+    _scale = value;
     OnPropertyChanged(shared_from_this(), "Scale");
 }
 
-void TransformProxyEntry::SetOrientation(vsg::dquat value) { 
-    if (_orientation == value)
-        return;
+void TransformProxyEntry::SetOrientation(vsg::dquat value) {
+    if (_orientation == value) return;
 
-    _orientation = value; 
+    _orientation = value;
     OnPropertyChanged(shared_from_this(), "Orientation");
 }
 
@@ -146,7 +139,8 @@ void TransformProxyEntry::Serialize(EntryProperties& properties) const {
     properties["Path"] = _path.Path;
 }
 
-void TransformProxyEntry::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+void TransformProxyEntry::DeserializeInternal(
+    EntryPath path, const EntryProperties& properties) {
     TransformEntry::DeserializeInternal(path, properties);
 
     _override = ::Deserialize(properties, "Override", false);
@@ -156,8 +150,7 @@ void TransformProxyEntry::DeserializeInternal(EntryPath path, const EntryPropert
     _path.Path = ::Deserialize(properties, "Path", std::string{});
 }
 
-void TransformProxyEntry::CloneFrom(std::shared_ptr<Entry> entry)
-{
+void TransformProxyEntry::CloneFrom(std::shared_ptr<Entry> entry) {
     TransformEntry::CloneFrom(entry);
     assert(std::dynamic_pointer_cast<TransformProxyEntry>(entry));
 
@@ -202,7 +195,7 @@ void TransformEntryView::SetScale(vsg::dvec3 value) {
     _sync->Execute([&]() { return _model->SetScale(value); });
 }
 
-vsg::dvec3 TransformEntryView::GetScale() const { 
+vsg::dvec3 TransformEntryView::GetScale() const {
     return _sync->Execute([&]() { return _model->GetScale(); });
 }
 
@@ -210,19 +203,20 @@ void TransformEntryView::SetOrientation(vsg::dquat value) {
     _sync->Execute([&]() { return _model->SetOrientation(value); });
 }
 
-vsg::dquat TransformEntryView::GetOrientation() const { 
+vsg::dquat TransformEntryView::GetOrientation() const {
     return _sync->Execute([&]() { return _model->GetOrientation(); });
 }
 
-void TransformEntryView::Serialize(EntryProperties& properties) const {
+void TransformEntryView::Serialize(EntryProperties&) const {
     throw std::runtime_error("TransformEntryView is not serializable.");
 }
 
-void TransformEntryView::DeserializeInternal(EntryPath path, const EntryProperties& properties) {
+void TransformEntryView::DeserializeInternal(EntryPath,
+                                             const EntryProperties&) {
     throw std::runtime_error("TransformEntryView is not deserializable.");
 }
 
-bool TransformEntryView::IsMutable() const { 
+bool TransformEntryView::IsMutable() const {
     return _sync->Execute([&]() { return _model->IsMutable(); });
 }
 

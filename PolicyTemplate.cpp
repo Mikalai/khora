@@ -1,27 +1,22 @@
-#pragma once
-
-#include <cassert>
-#include <Resources.h>
 #include <Locale/Translate.h>
-#include <array>
 #include <Log/Log.h>
+#include <PlayerLogic.h>
+#include <PoliciesManipulator.h>
+#include <PolicyTemplate.h>
+#include <Resources.h>
 #include <UI/UI.h>
 #include <WorldLogic.h>
-#include <PoliciesManipulator.h>
-#include <PlayerLogic.h>
-#include <PolicyTemplate.h>
 
-PolicyTemplate::PolicyTemplate(PoliciesType policy, PolicyEffect& effect, PolicyType type)
-	: policy{ policy }
-	, effect{ &effect }
-	, type{ type }
-{
-	assert(policy == effect.GetType());
+#include <array>
+#include <cassert>
+
+PolicyTemplate::PolicyTemplate(PoliciesType policy, PolicyEffect& effect,
+                               PolicyType type)
+    : policy{policy}, effect{&effect}, type{type} {
+    assert(policy == effect.GetType());
 }
 
-const PolicyEffect& PolicyTemplate::GetEffect() const {
-	return *effect;
-}
+const PolicyEffect& PolicyTemplate::GetEffect() const { return *effect; }
 
 PoliciesType PolicyTemplate::GetType() const { return policy; }
 
@@ -521,150 +516,281 @@ std::tuple<PolicyEffect, PolicyType> g_policyEffects[As<int>(PoliciesType::polic
 };
 
 PolicyTemplate g_policyTemplates[As<int>(PoliciesType::policies_count)] = {
-    { PoliciesType::policy_front_old_guard, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_old_guard)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_old_guard)]) },
-    { PoliciesType::policy_front_archives, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_archives)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_archives)]) },
-    { PoliciesType::policy_front_asket, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_asket)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_asket)]) },
-    { PoliciesType::policy_front_bank, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_bank)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_bank)]) },
-    { PoliciesType::policy_front_central_government, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_central_government)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_central_government)]) },
-    { PoliciesType::policy_front_coloss, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_coloss)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_coloss)]) },
-    { PoliciesType::policy_front_contribution, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_contribution)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_contribution)]) },
-    { PoliciesType::policy_front_corinthian_order, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_corinthian_order)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_corinthian_order)]) },
-    { PoliciesType::policy_front_diolk, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_diolk)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_diolk)]) },
-    { PoliciesType::policy_front_diversification, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_diversification)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_diversification)]) },
-    { PoliciesType::policy_front_evpalin_tunnel, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_evpalin_tunnel)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_evpalin_tunnel)]) },
-    { PoliciesType::policy_front_gold_reserve, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_gold_reserve)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_gold_reserve)]) },
-    { PoliciesType::policy_front_gradualism, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_gradualism)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_gradualism)]) },
-    { PoliciesType::policy_front_greek_fire, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_greek_fire)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_greek_fire)]) },
-    { PoliciesType::policy_front_helepolis, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_helepolis)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_helepolis)]) },
-    { PoliciesType::policy_front_high_tax, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_high_tax)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_high_tax)]) },
-    { PoliciesType::policy_front_hire_mercenay, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_hire_mercenay)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_hire_mercenay)]) },
-    { PoliciesType::policy_front_lighthouse, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_lighthouse)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_lighthouse)]) },
-    { PoliciesType::policy_front_lyceum_foundation, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_lyceum_foundation)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_lyceum_foundation)]) },
-    { PoliciesType::policy_front_mint, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_mint)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_mint)]) },
-    { PoliciesType::policy_front_oracle, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_oracle)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_oracle)]) },
-    { PoliciesType::policy_front_ostracism, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_ostracism)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_ostracism)]) },
-    { PoliciesType::policy_front_painter_standing, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_painter_standing)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_painter_standing)]) },
-    { PoliciesType::policy_front_peripter, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_peripter)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_peripter)]) },
-    { PoliciesType::policy_front_persia, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_persia)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_persia)]) },
-    { PoliciesType::policy_front_power, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_power)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_power)]) },
-    { PoliciesType::policy_front_proscenium, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_proscenium)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_proscenium)]) },
-    { PoliciesType::policy_front_public_market, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_public_market)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_public_market)]) },
-    { PoliciesType::policy_front_rare_collection, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_rare_collection)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_rare_collection)]) },
-    { PoliciesType::policy_front_reform, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_reform)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_reform)]) },
-    { PoliciesType::policy_front_rivalvary, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_rivalvary)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_rivalvary)]) },
-    { PoliciesType::policy_front_science_respect, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_science_respect)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_science_respect)]) },
-    { PoliciesType::policy_front_silver_mine, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_silver_mine)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_silver_mine)]) },
-    { PoliciesType::policy_front_soviet, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_soviet)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_soviet)]) },
-    { PoliciesType::policy_front_stadium, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_stadium)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_stadium)]) },
-    { PoliciesType::policy_front_statue_hall, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_statue_hall)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_statue_hall)]) },
-    { PoliciesType::policy_front_stone_mine, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_stone_mine)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_stone_mine)]) },
-    { PoliciesType::policy_front_supplies_from_overseas, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_supplies_from_overseas)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_supplies_from_overseas)]) },
-    { PoliciesType::policy_front_western_gifts, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_western_gifts)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_western_gifts)]) },
-    { PoliciesType::policy_front_amnesty_for_socrat, std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_amnesty_for_socrat)]), std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_amnesty_for_socrat)]) }
-};
+    {PoliciesType::policy_front_old_guard,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_old_guard)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_old_guard)])},
+    {PoliciesType::policy_front_archives,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_archives)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_archives)])},
+    {PoliciesType::policy_front_asket,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_asket)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_asket)])},
+    {PoliciesType::policy_front_bank,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_bank)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_bank)])},
+    {PoliciesType::policy_front_central_government,
+     std::get<0>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_central_government)]),
+     std::get<1>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_central_government)])},
+    {PoliciesType::policy_front_coloss,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_coloss)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_coloss)])},
+    {PoliciesType::policy_front_contribution,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_contribution)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_contribution)])},
+    {PoliciesType::policy_front_corinthian_order,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_corinthian_order)]),
+     std::get<1>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_corinthian_order)])},
+    {PoliciesType::policy_front_diolk,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_diolk)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_diolk)])},
+    {PoliciesType::policy_front_diversification,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_diversification)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_diversification)])},
+    {PoliciesType::policy_front_evpalin_tunnel,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_evpalin_tunnel)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_evpalin_tunnel)])},
+    {PoliciesType::policy_front_gold_reserve,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_gold_reserve)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_gold_reserve)])},
+    {PoliciesType::policy_front_gradualism,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_gradualism)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_gradualism)])},
+    {PoliciesType::policy_front_greek_fire,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_greek_fire)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_greek_fire)])},
+    {PoliciesType::policy_front_helepolis,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_helepolis)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_helepolis)])},
+    {PoliciesType::policy_front_high_tax,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_high_tax)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_high_tax)])},
+    {PoliciesType::policy_front_hire_mercenay,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_hire_mercenay)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_hire_mercenay)])},
+    {PoliciesType::policy_front_lighthouse,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_lighthouse)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_lighthouse)])},
+    {PoliciesType::policy_front_lyceum_foundation,
+     std::get<0>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_lyceum_foundation)]),
+     std::get<1>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_lyceum_foundation)])},
+    {PoliciesType::policy_front_mint,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_mint)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_mint)])},
+    {PoliciesType::policy_front_oracle,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_oracle)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_oracle)])},
+    {PoliciesType::policy_front_ostracism,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_ostracism)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_ostracism)])},
+    {PoliciesType::policy_front_painter_standing,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_painter_standing)]),
+     std::get<1>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_painter_standing)])},
+    {PoliciesType::policy_front_peripter,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_peripter)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_peripter)])},
+    {PoliciesType::policy_front_persia,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_persia)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_persia)])},
+    {PoliciesType::policy_front_power,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_power)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_power)])},
+    {PoliciesType::policy_front_proscenium,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_proscenium)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_proscenium)])},
+    {PoliciesType::policy_front_public_market,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_public_market)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_public_market)])},
+    {PoliciesType::policy_front_rare_collection,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_rare_collection)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_rare_collection)])},
+    {PoliciesType::policy_front_reform,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_reform)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_reform)])},
+    {PoliciesType::policy_front_rivalvary,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_rivalvary)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_rivalvary)])},
+    {PoliciesType::policy_front_science_respect,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_science_respect)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_science_respect)])},
+    {PoliciesType::policy_front_silver_mine,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_silver_mine)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_silver_mine)])},
+    {PoliciesType::policy_front_soviet,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_soviet)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_soviet)])},
+    {PoliciesType::policy_front_stadium,
+     std::get<0>(g_policyEffects[As<int>(PoliciesType::policy_front_stadium)]),
+     std::get<1>(g_policyEffects[As<int>(PoliciesType::policy_front_stadium)])},
+    {PoliciesType::policy_front_statue_hall,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_statue_hall)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_statue_hall)])},
+    {PoliciesType::policy_front_stone_mine,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_stone_mine)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_stone_mine)])},
+    {PoliciesType::policy_front_supplies_from_overseas,
+     std::get<0>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_supplies_from_overseas)]),
+     std::get<1>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_supplies_from_overseas)])},
+    {PoliciesType::policy_front_western_gifts,
+     std::get<0>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_western_gifts)]),
+     std::get<1>(
+         g_policyEffects[As<int>(PoliciesType::policy_front_western_gifts)])},
+    {PoliciesType::policy_front_amnesty_for_socrat,
+     std::get<0>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_amnesty_for_socrat)]),
+     std::get<1>(g_policyEffects[As<int>(
+         PoliciesType::policy_front_amnesty_for_socrat)])}};
 
-std::string g_policyNames[]{
-	"policy_front_old_guard",
-	"policy_front_archives",
-	"policy_front_asket",
-	"policy_front_bank",
-	"policy_front_central_government",
-	"policy_front_coloss",
-	"policy_front_contribution",
-	"policy_front_corinthian_order",
-	"policy_front_diolk",
-	"policy_front_diversification",
-	"policy_front_evpalin_tunnel",
-	"policy_front_gold_reserve",
-	"policy_front_gradualism",
-	"policy_front_greek_fire",
-	"policy_front_helepolis",
-	"policy_front_high_tax",
-	"policy_front_hire_mercenay",
-	"policy_front_lighthouse",
-	"policy_front_lyceum_foundation",
-	"policy_front_mint",
-	"policy_front_oracle",
-	"policy_front_ostracism",
-	"policy_front_painter_standing",
-	"policy_front_peripter",
-	"policy_front_persia",
-	"policy_front_power",
-	"policy_front_proscenium",
-	"policy_front_public_market",
-	"policy_front_rare_collection",
-	"policy_front_reform",
-	"policy_front_rivalvary",
-	"policy_front_science_respect",
-	"policy_front_silver_mine",
-	"policy_front_soviet",
-	"policy_front_stadium",
-	"policy_front_statue_hall",
-	"policy_front_stone_mine",
-	"policy_front_supplies_from_overseas",
-	"policy_front_western_gifts",
-	"policy_front_amnesty_for_socrat"
-};
+std::string g_policyNames[]{"policy_front_old_guard",
+                            "policy_front_archives",
+                            "policy_front_asket",
+                            "policy_front_bank",
+                            "policy_front_central_government",
+                            "policy_front_coloss",
+                            "policy_front_contribution",
+                            "policy_front_corinthian_order",
+                            "policy_front_diolk",
+                            "policy_front_diversification",
+                            "policy_front_evpalin_tunnel",
+                            "policy_front_gold_reserve",
+                            "policy_front_gradualism",
+                            "policy_front_greek_fire",
+                            "policy_front_helepolis",
+                            "policy_front_high_tax",
+                            "policy_front_hire_mercenay",
+                            "policy_front_lighthouse",
+                            "policy_front_lyceum_foundation",
+                            "policy_front_mint",
+                            "policy_front_oracle",
+                            "policy_front_ostracism",
+                            "policy_front_painter_standing",
+                            "policy_front_peripter",
+                            "policy_front_persia",
+                            "policy_front_power",
+                            "policy_front_proscenium",
+                            "policy_front_public_market",
+                            "policy_front_rare_collection",
+                            "policy_front_reform",
+                            "policy_front_rivalvary",
+                            "policy_front_science_respect",
+                            "policy_front_silver_mine",
+                            "policy_front_soviet",
+                            "policy_front_stadium",
+                            "policy_front_statue_hall",
+                            "policy_front_stone_mine",
+                            "policy_front_supplies_from_overseas",
+                            "policy_front_western_gifts",
+                            "policy_front_amnesty_for_socrat"};
 
-std::string g_policyDescriptions[]{
-	"policy_front_old_guard",
-	"policy_front_archives",
-	"policy_front_asket",
-	"policy_front_bank",
-	"policy_front_central_government",
-	"policy_front_coloss",
-	"policy_front_contribution",
-	"policy_front_corinthian_order",
-	"policy_front_diolk",
-	"policy_front_diversification",
-	"policy_front_evpalin_tunnel",
-	"policy_front_gold_reserve",
-	"policy_front_gradualism",
-	"policy_front_greek_fire",
-	"policy_front_helepolis",
-	"policy_front_high_tax",
-	"policy_front_hire_mercenay",
-	"policy_front_lighthouse",
-	"policy_front_lyceum_foundation",
-	"policy_front_mint",
-	"policy_front_oracle",
-	"policy_front_ostracism",
-	"policy_front_painter_standing",
-	"policy_front_peripter",
-	"policy_front_persia",
-	"policy_front_power",
-	"policy_front_proscenium",
-	"policy_front_public_market",
-	"policy_front_rare_collection",
-	"policy_front_reform",
-	"policy_front_rivalvary",
-	"policy_front_science_respect",
-	"policy_front_silver_mine",
-	"policy_front_soviet",
-	"policy_front_stadium",
-	"policy_front_statue_hall",
-	"policy_front_stone_mine",
-	"policy_front_supplies_from_overseas",
-	"policy_front_western_gifts",
-	"policy_front_amnesty_for_socrat"
-};
+std::string g_policyDescriptions[]{"policy_front_old_guard",
+                                   "policy_front_archives",
+                                   "policy_front_asket",
+                                   "policy_front_bank",
+                                   "policy_front_central_government",
+                                   "policy_front_coloss",
+                                   "policy_front_contribution",
+                                   "policy_front_corinthian_order",
+                                   "policy_front_diolk",
+                                   "policy_front_diversification",
+                                   "policy_front_evpalin_tunnel",
+                                   "policy_front_gold_reserve",
+                                   "policy_front_gradualism",
+                                   "policy_front_greek_fire",
+                                   "policy_front_helepolis",
+                                   "policy_front_high_tax",
+                                   "policy_front_hire_mercenay",
+                                   "policy_front_lighthouse",
+                                   "policy_front_lyceum_foundation",
+                                   "policy_front_mint",
+                                   "policy_front_oracle",
+                                   "policy_front_ostracism",
+                                   "policy_front_painter_standing",
+                                   "policy_front_peripter",
+                                   "policy_front_persia",
+                                   "policy_front_power",
+                                   "policy_front_proscenium",
+                                   "policy_front_public_market",
+                                   "policy_front_rare_collection",
+                                   "policy_front_reform",
+                                   "policy_front_rivalvary",
+                                   "policy_front_science_respect",
+                                   "policy_front_silver_mine",
+                                   "policy_front_soviet",
+                                   "policy_front_stadium",
+                                   "policy_front_statue_hall",
+                                   "policy_front_stone_mine",
+                                   "policy_front_supplies_from_overseas",
+                                   "policy_front_western_gifts",
+                                   "policy_front_amnesty_for_socrat"};
 
-PolicyEffect g_nullEffect{ PoliciesType::policy_unknown, 0, 0, 0, 0, [](PlayerLogic&) {} };
-PolicyTemplate g_unknown{ PoliciesType::policy_unknown, g_nullEffect, PolicyType::Single };
+PolicyEffect g_nullEffect{PoliciesType::policy_unknown, 0, 0, 0, 0,
+                          [](PlayerLogic&) {}};
+PolicyTemplate g_unknown{PoliciesType::policy_unknown, g_nullEffect,
+                         PolicyType::Single};
 
 const PolicyTemplate& GetPolicyTemplate(PoliciesType policy) {
-    if (policy == PoliciesType::policy_unknown)
-		return g_unknown;
+    if (policy == PoliciesType::policy_unknown) return g_unknown;
 
-	auto& tmp = g_policyTemplates[(int)policy];
-	assert(tmp.GetType() == policy);
-	return tmp;
+    auto& tmp = g_policyTemplates[(int)policy];
+    assert(tmp.GetType() == policy);
+    return tmp;
 }
 
 const std::string& PolicyTemplate::GetName() const {
-	return tr(g_policyNames[(int)GetType()]);
+    return tr(g_policyNames[(int)GetType()]);
 }
 
 const std::string& PolicyTemplate::GetDescription() const {
-	return tr(g_policyDescriptions[(int)GetType()]);
+    return tr(g_policyDescriptions[(int)GetType()]);
 }

@@ -68,6 +68,7 @@ class DataModel
     std::shared_ptr<Entry> _activeEntry;
     std::shared_ptr<ConfigEntry> GetConfig();
     std::unordered_map<std::string, FontInfo> _fontsCache;
+    boost::asio::io_context& _ctx;
     std::shared_ptr<ISystemFonts> _fonts;
     SubscriptionPtr _fontsSubscription;
 
@@ -97,7 +98,6 @@ class DataModel
     std::unordered_map<std::string, PackageInfo> _packagePreviewRoots;
 
     std::shared_ptr<DirectoryEntry> _dir = std::make_shared<GroupEntry>();
-    boost::asio::io_context& _ctx;
 
     void Execute(const ResetModelCommand& cmd) override;
     void OnPropertyChanged(std::shared_ptr<Entry> sender,

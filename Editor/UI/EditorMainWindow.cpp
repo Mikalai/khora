@@ -47,8 +47,8 @@ class MyTreeDropTarget : public wxTextDropTarget {
           _targetTreeCtrl(targetTreeCtrl) {}
 
    private:
-    wxString _rootName;
     IDataModelEditor* _dataModel;
+    wxString _rootName;
     wxTreeCtrl* _targetTreeCtrl;
 
     // Inherited via wxTextDropTarget
@@ -57,11 +57,12 @@ class MyTreeDropTarget : public wxTextDropTarget {
         if (targetItem.IsOk()) {
             auto parentPath = GetPath(_rootName, _targetTreeCtrl, targetItem);
             _dataModel->Execute(IDataModelEditor::CopyNodeCommand{
-                .SourcePath = text.ToStdString(), .TargetPath = parentPath});
+                .SourcePath = {text.ToStdString()},
+                .TargetPath = {parentPath}});
         } else {
             _dataModel->Execute(IDataModelEditor::CopyNodeCommand{
-                .SourcePath = text.ToStdString(),
-                .TargetPath = _rootName.ToStdString()});
+                .SourcePath = {text.ToStdString()},
+                .TargetPath = {_rootName.ToStdString()}});
         }
         return true;
     }
@@ -152,7 +153,6 @@ void EditorMainWindow::Init(int argc, char** argv) {
         vsg_scene->accept(computeBounds);
         vsg::dvec3 centre =
             (computeBounds.bounds.min + computeBounds.bounds.max) * 0.5;
-        double nearFarRatio = 0.001;
         _lookAt = vsg::LookAt::create(centre + vsg::dvec3(0.0, 0.0, 3.5),
                                       centre, vsg::dvec3(0.0, 1.0, 0.0));
         auto perspective = vsg::Perspective::create(
@@ -225,7 +225,7 @@ void EditorMainWindow::importFontMenuOnMenuSelection(wxCommandEvent&) {}
 
 void EditorMainWindow::fontSearchOnSearchButton(wxCommandEvent&) {}
 
-void EditorMainWindow::fontSearchOnText(wxCommandEvent& event) {
+void EditorMainWindow::fontSearchOnText(wxCommandEvent&) {
     _fontFilter = fontSearch->GetValue().ToStdString();
     UpdateFonts();
 }
@@ -234,7 +234,8 @@ void EditorMainWindow::fontsListOnListItemSelected(wxListEvent& event) {
     if (auto selection = event.GetIndex(); selection >= 0) {
         _systemFonts->Execute(ISystemFonts::CompileFont{
             .DisplayName =
-                fontsList->GetItemText(event.GetIndex()).ToStdString()});
+                fontsList->GetItemText(event.GetIndex()).ToStdString(),
+            .State = {}});
     }
 }
 
@@ -274,7 +275,7 @@ void EditorMainWindow::Execute(const RefreshComplete& cmd) {
     });
 }
 
-void EditorMainWindow::dataPanelsOnNotebookPageChanged(wxNotebookEvent& event) {
+void EditorMainWindow::dataPanelsOnNotebookPageChanged(wxNotebookEvent&) {
     if (_systemFonts) {
         _systemFonts->Execute(ISystemFonts::Refresh{.Force = false});
     }
@@ -292,7 +293,7 @@ void EditorMainWindow::dataPanelsOnNotebookPageChanged(wxNotebookEvent& event) {
     // });
 }
 
-void EditorMainWindow::OnImport(wxCommandEvent& event) {
+void EditorMainWindow::OnImport(wxCommandEvent&) {
     wxFileDialog fd{this,
                     "Import packages",
                     wxEmptyString,
@@ -471,7 +472,7 @@ void EditorMainWindow::Execute(const SuggestedChildrenNotification& cmd) {
 
                 menu.Bind(
                     wxEVT_COMMAND_MENU_SELECTED,
-                    [cmd, e, this](wxCommandEvent& evt) {
+                    [cmd, e, this](wxCommandEvent&) {
                         _dataModel->Execute(IDataModelEditor::CreateNodeCommand{
                             .Path = cmd.Path.Append(e.Name), .Type = e.Type});
                     },
@@ -485,7 +486,7 @@ void EditorMainWindow::Execute(const SuggestedChildrenNotification& cmd) {
 
                 menu.Bind(
                     wxEVT_COMMAND_MENU_SELECTED,
-                    [cmd, this](wxCommandEvent& evt) {
+                    [cmd, this](wxCommandEvent&) {
                         auto s = finalScene->GetSelection();
                         if (!s.IsOk()) return;
                         _copyNode = GetPath(ROOT_SCENE, finalScene, s);
@@ -498,7 +499,7 @@ void EditorMainWindow::Execute(const SuggestedChildrenNotification& cmd) {
 
                 menu.Bind(
                     wxEVT_COMMAND_MENU_SELECTED,
-                    [cmd, this](wxCommandEvent& evt) {
+                    [cmd, this](wxCommandEvent&) {
                         auto s = finalScene->GetSelection();
                         if (!s.IsOk()) return;
                         auto target = GetPath(ROOT_SCENE, finalScene, s);
@@ -740,10 +741,10 @@ void EditorMainWindow::finalSceneOnTreeEndDrag(wxTreeEvent& event) {
     auto newPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
     if (wxGetKeyState(WXK_CONTROL)) {
         _dataModel->Execute(IDataModelEditor::CopyEntryCommand{
-            .SourcePath = _oldPath, .TargetPath = newPath.Path});
+            .SourcePath = {_oldPath}, .TargetPath = {newPath.Path}});
     } else {
         _dataModel->Execute(IDataModelEditor::MoveEntryCommand{
-            .SourcePath = _oldPath, .TargetPath = newPath.Path});
+            .SourcePath = {_oldPath}, .TargetPath = {newPath.Path}});
     }
     // _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root =
     // EntryPath{ ROOT_SCENE } });
@@ -765,7 +766,7 @@ void EditorMainWindow::finalSceneOnTreeItemRightClick(wxTreeEvent& event) {
     event.Skip();
 }
 
-void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent& event) {
+void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent&) {
     auto s = finalScene->GetSelection();
     if (!s.IsOk()) return;
 
@@ -789,7 +790,7 @@ void EditorMainWindow::addToSceneOnCombobox(wxCommandEvent& event) {
         .Path = path.Append(type), .Type = type});
 }
 
-void EditorMainWindow::navigateOnToolClicked(wxCommandEvent& event) {
+void EditorMainWindow::navigateOnToolClicked(wxCommandEvent&) {
     auto transform = _transformPanel->GetDataModel();
 
     if (!transform) return;
@@ -807,8 +808,7 @@ void EditorMainWindow::navigateOnToolClicked(wxCommandEvent& event) {
     _trackball->setViewpoint(_lookAt);
 }
 
-void EditorMainWindow::loadProjectMenuItemOnMenuSelection(
-    wxCommandEvent& event) {
+void EditorMainWindow::loadProjectMenuItemOnMenuSelection(wxCommandEvent&) {
     wxFileDialog fd{this,
                     "Load project",
                     wxEmptyString,
@@ -825,11 +825,11 @@ void EditorMainWindow::loadProjectMenuItemOnMenuSelection(
         IDataModelEditor::ImportFromFileCommand{.Path = _projectStorage});
 }
 
-void EditorMainWindow::resetMenuItemOnMenuSelection(wxCommandEvent& event) {
+void EditorMainWindow::resetMenuItemOnMenuSelection(wxCommandEvent&) {
     _dataModel->Execute(IDataModelEditor::ResetModelCommand{});
 }
 
-void EditorMainWindow::finalSceneOnTreeBeginLabelEdit(wxTreeEvent& event) {}
+void EditorMainWindow::finalSceneOnTreeBeginLabelEdit(wxTreeEvent&) {}
 
 void EditorMainWindow::finalSceneOnTreeEndLabelEdit(wxTreeEvent& event) {
     if (event.IsEditCancelled()) return;
@@ -855,8 +855,7 @@ void EditorMainWindow::finalSceneOnKeyDown(wxKeyEvent& event) {
     event.Skip();
 }
 
-void EditorMainWindow::saveProjectMenuItemOnMenuSelection(
-    wxCommandEvent& event) {
+void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent&) {
     if (_projectStorage.empty()) {
         wxFileDialog fd{this,
                         "Save project",
@@ -880,7 +879,7 @@ void EditorMainWindow::showTransformMenuOnMenuSelection(wxCommandEvent& event) {
         IDataModelEditor::CompileSceneCommand{.Root = {ROOT_SCENE}});
 }
 
-void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent& event) {
+void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent&) {
     wxFileDialog fd{this,
                     "Export Final Scene",
                     wxEmptyString,
@@ -895,7 +894,7 @@ void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent& event) {
     _dataModel->Execute(IDataModelEditor::ExportToFileCommand{.Path = path});
 }
 
-void EditorMainWindow::langAddOnButtonClick(wxCommandEvent& event) {
+void EditorMainWindow::langAddOnButtonClick(wxCommandEvent&) {
     TextEnterDialog dlg("Type Language Name", this);
     if (auto r = dlg.ShowModal(); r == wxID_CANCEL)
         return;
@@ -906,7 +905,7 @@ void EditorMainWindow::langAddOnButtonClick(wxCommandEvent& event) {
     }
 }
 
-void EditorMainWindow::langRemoveOnButtonClick(wxCommandEvent& event) {}
+void EditorMainWindow::langRemoveOnButtonClick(wxCommandEvent&) {}
 
 void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent& event) {
     wxMenu menu;
@@ -916,7 +915,7 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent& event) {
 
         menu.Bind(
             wxEVT_COMMAND_MENU_SELECTED,
-            [event, this](wxCommandEvent& evt) {
+            [event, this](wxCommandEvent&) {
                 _dataModel->Execute(IDataModelEditor::SetActiveLanguageRequest{
                     .Language = event.GetLabel().ToStdString()});
             },
@@ -928,7 +927,7 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent& event) {
 
         menu.Bind(
             wxEVT_COMMAND_MENU_SELECTED,
-            [event, this](wxCommandEvent& evt) {
+            [event, this](wxCommandEvent&) {
                 TextEnterDialog dlg("Type Language Name", this);
                 dlg.SetText(event.GetLabel().ToStdString());
 
@@ -949,7 +948,7 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent& event) {
 
         menu.Bind(
             wxEVT_COMMAND_MENU_SELECTED,
-            [event, this](wxCommandEvent& evt) {
+            [event, this](wxCommandEvent&) {
                 _dataModel->Execute(IDataModelEditor::RemoveLanguageCommand{
                     .Value = event.GetLabel().ToStdString()});
             },
