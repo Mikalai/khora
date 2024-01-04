@@ -5,6 +5,7 @@
 #include <boost/asio/io_context.hpp>
 #include <filesystem>
 
+#include "ISystemFonts.h"
 #include "LongOperationNotification.h"
 #include "Observer.h"
 

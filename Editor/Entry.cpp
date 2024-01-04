@@ -1,5 +1,6 @@
 #include "Entry.h"
 
+#include "Serializer.h"
 #include <magic_enum.hpp>
 
 Entry::Entry() {}
@@ -38,10 +39,13 @@ void Entry::RemoveObserver(std::shared_ptr<IEntryObserver> observer) {
 
 void Entry::Serialize(EntryProperties &properties) const {
   properties["Type"] = magic_enum::enum_name(GetType());
+  if (!_visibility)
+    properties["Visibility"] = _visibility;
 }
 
 void Entry::Deserialize(const EntryProperties &properties) {
   DeserializeInternal({}, properties);
+  _visibility = ::Deserialize(properties, "Visibility", true);
 }
 
 void Entry::DeserializeInternal(EntryPath, const EntryProperties &) {}
@@ -88,4 +92,11 @@ void Entry::CopyObserversTo(Entry &entry) {
 void Entry::CloneFrom(std::shared_ptr<Entry> entry) {
   _observers = entry->_observers;
   _parent = entry->_parent;
+}
+
+void Entry::SetVisibility(bool flag) {
+  if (_visibility == flag)
+    return;
+  _visibility = flag;
+  OnPropertyChanged(shared_from_this(), "Visibility");
 }

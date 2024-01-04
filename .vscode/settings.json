@@ -1,5 +1,4 @@
 {
-    "editor.formatOnSave": true,
     "files.associations": {
         "cctype": "cpp",
         "clocale": "cpp",
@@ -86,7 +85,9 @@
         "*.ipp": "cpp",
         "*.inc": "cpp",
         "coroutine": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "hash_set": "cpp",
+        "*.hpp11": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

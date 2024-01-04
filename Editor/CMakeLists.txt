@@ -61,7 +61,24 @@ set(EditorSources
     "Observer.h"
     "LongOperationNotification.h"
     "TextEntry.h"
-    "TextEntry.cpp")
+    "TextEntry.cpp"
+    "IReferenced.h"
+    "IEntry.h"
+    "IDirectoryEntry.h"
+    "IGeometryEntry.h"
+    "IAsyncQueue.h"
+    "IObserver.h"
+    "ISystemFonts.h"
+    "IGroupEntry.h"
+    "IConfigEntry.h"
+    "ITextEntry.h"
+    "ITransformEntry.h"
+    "ILocalizedEntry.h"
+    "IMaterialEntry.h"
+    "ISharedEntry.h"
+    "ISerializable.h"
+    "ISerializable.cpp"
+    "Factory.cpp")
 
 set(Boost_USE_STATIC_LIBS ON) 
 set(Boost_USE_MULTITHREADED ON)  
@@ -93,6 +110,9 @@ pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
     
 target_include_directories(Editor PUBLIC ${GTK3_INCLUDE_DIRS})
 target_link_libraries(Editor PRIVATE ${wxWidgets_LIBRARIES} vsg::vsg vsgXchange::vsgXchange ${Boost_LIBRARIES} KhoraLib)
+
+add_executable(GuidGen WIN32 "GuidGen.cpp")
+target_link_libraries(GuidGen PRIVATE ${Boost_LIBRARIES})
 
 add_custom_command(
     TARGET Editor POST_BUILD

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "GroupEntry.h"
+#include "ILocalizedEntry.h"
 
 class LocalizedEntry : public GroupEntry {
 public:

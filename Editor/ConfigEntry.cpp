@@ -6,6 +6,74 @@
 #include "Clone.h"
 #include "Serializer.h"
 
+namespace Vandrouka {
+
+class ConfigEntry final : public DirectoryEntryBase<ConfigEntry, IConfigEntry> {
+public:
+  EntryType GetType() const override { return EntryType::Config; }
+
+  bool GetShowTransform() const override { return _showTransform; }
+
+  void SetShowTransform(bool value) override {
+    if (_showTransform == value)
+      return;
+    _showTransform = value;
+    OnPropertyChanged("ShowTransform");
+  }
+
+  bool AddLanguage(const std::string &value) override {
+    auto it = std::find(_languages.begin(), _languages.end(), value);
+    if (it != _languages.end())
+      return false;
+
+    _languages.push_back(value);
+    OnPropertyChanged("Languages");
+    return true;
+  }
+
+  bool RemoveLanguage(const std::string &value) override {
+    auto it = std::find(_languages.begin(), _languages.end(), value);
+    if (it == _languages.end())
+      return false;
+
+    _languages.erase(it);
+    OnPropertyChanged("Languages");
+    return true;
+  }
+
+  std::vector<std::string> GetLanguages() const override { return _languages; }
+
+  std::string GetActiveLanguage() const override { return _activeLanguage; }
+
+  bool SetActiveLanguage(const std::string &value) override {
+    if (_activeLanguage == value) {
+      return false;
+    }
+
+    if (auto it = std::find(_languages.begin(), _languages.end(), value);
+        it == _languages.end()) {
+      OnError(new GenericError(LOG_LEVEL_ERROR, LOG_ENTRY_NOT_FOUND, value));
+      return false;
+    }
+
+    _activeLanguage = value;
+    OnPropertyChanged("ActiveLanguage");
+    return true;
+  }
+
+private:
+  bool _showTransform{true};
+  std::vector<std::string> _languages;
+  std::string _activeLanguage;
+};
+
+IReferenced *CreateConfigEntry() {
+  static_assert(std::is_base_of_v<IReferenced, ConfigEntry>);
+  return static_cast<IConfigEntry *>(new ConfigEntry());
+}
+
+} // namespace Vandrouka
+
 EntryType ConfigEntry::GetType() const { return EntryType::Config; }
 
 bool ConfigEntry::GetShowTransform() const { return _showTransform; }

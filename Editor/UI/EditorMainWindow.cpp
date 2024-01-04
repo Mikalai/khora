@@ -12,6 +12,11 @@
 #include "TextEnterDialog.h"
 #include "UICommon.h"
 
+class SceneTreeItemData : public wxTreeItemData {
+public:
+  SceneTreeItemData();
+};
+
 EntryPath GetPath(const wxString &rootName, wxTreeCtrl *tree, wxTreeItemId id) {
   std::stack<wxString> names;
 

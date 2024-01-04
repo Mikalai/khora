@@ -7,6 +7,237 @@
 #include "Errors.h"
 #include "Serializer.h"
 
+namespace Vandrouka {
+
+class TextEntry : public EntryBase<TextEntry, IEntry, ITextEntry, IObservable> {
+public:
+  bool QueryInterface(const InterfaceId &id, void **o) override {
+
+    if (id == GetIID<IEntry>::Id) {
+      *o = static_cast<IEntry *>(this);
+    } else if (id == GetIID<ITextEntry>::Id) {
+      *o = static_cast<ITextEntry *>(this);
+    } else if (id == GetIID<IObservable>::Id) {
+      *o = static_cast<IObservable *>(this);
+    } else if (id == GetIID<IReferenced>::Id) {
+      *o = static_cast<IReferenced *>(static_cast<IEntry *>(this));
+    } else {
+      *o = nullptr;
+    }
+
+    if (*o) {
+      this->AddRef();
+    }
+
+    return *o != nullptr;
+  }
+
+  EntryType GetType() const override { return EntryType::Text; }
+
+  void SetFont(const std::string &fontName) override {
+    if (_fontName == fontName)
+      return;
+
+    _fontName = fontName;
+    OnPropertyChanged("Font");
+  }
+
+  std::string GetFont() const override { return _fontName; }
+
+  void SetValue(const std::u8string &value) override {
+    if (_value == value)
+      return;
+
+    _value = value;
+    OnPropertyChanged("Value");
+  }
+  std::u8string GetValue() const override { return _value; }
+
+  double GetOffsetX() const override { return _offset[0]; }
+  double GetOffsetY() const override { return _offset[1]; }
+  double GetOffsetZ() const override { return _offset[2]; }
+
+  double GetHorizontalAxisX() const override { return _horAxis[0]; }
+  double GetHorizontalAxisY() const override { return _horAxis[1]; }
+  double GetHorizontalAxisZ() const override { return _horAxis[2]; }
+
+  double GetVerticalAxisX() const override { return _vertAxis[0]; }
+  double GetVerticalAxisY() const override { return _vertAxis[1]; }
+  double GetVerticalAxisZ() const override { return _vertAxis[2]; }
+
+  double GetColorR() const override { return _color[0]; }
+  double GetColorG() const override { return _color[1]; }
+  double GetColorB() const override { return _color[2]; }
+  double GetColorA() const override { return _color[3]; }
+
+  TextHorizontalAlignment GetHorizontalAlignment() const override {
+    return _horAlignment;
+  }
+
+  TextVerticalAlignment GetVerticalAlignment() const override {
+    return _vertAlignment;
+  }
+
+  double GetLineSpacing() const override { return _lineSpacing; }
+
+  void SetOffsetX(double value) override {
+    if (_offset[0] == value)
+      return;
+
+    _offset[0] = value;
+    OnPropertyChanged("Offset.X");
+  }
+
+  void SetOffsetY(double value) override {
+    if (_offset[1] == value)
+      return;
+
+    _offset[1] = value;
+    OnPropertyChanged("Offset.Y");
+  }
+
+  void SetOffsetZ(double value) {
+    if (_offset[2] == value)
+      return;
+
+    _offset[2] = value;
+    OnPropertyChanged("Offset.Z");
+  }
+
+  void SetHorizontalAxisX(double value) override {
+    if (_horAxis[0] == value)
+      return;
+
+    _horAxis[0] = value;
+    OnPropertyChanged("HorizontalAxis.X");
+  }
+
+  void SetHorizontalAxisY(double value) override {
+    if (_horAxis[1] == value)
+      return;
+
+    _horAxis[1] = value;
+    OnPropertyChanged("HorizontalAxis.Y");
+  }
+
+  void SetHorizontalAxisZ(double value) override {
+    if (_horAxis[2] == value)
+      return;
+
+    _horAxis[2] = value;
+    OnPropertyChanged("HorizontalAxis.Z");
+  }
+
+  void SetVerticalAxisX(double value) override {
+    if (_vertAxis[0] == value)
+      return;
+
+    _vertAxis[0] = value;
+    OnPropertyChanged("VerticalAxis.X");
+  }
+
+  void SetVerticalAxisY(double value) override {
+    if (_vertAxis[1] == value)
+      return;
+
+    _vertAxis[1] = value;
+    OnPropertyChanged("VerticalAxis.Y");
+  }
+
+  void SetVerticalAxisZ(double value) override {
+    if (_vertAxis[2] == value)
+      return;
+
+    _vertAxis[2] = value;
+    OnPropertyChanged("VerticalAxis.Z");
+  }
+
+  void SetColor(double r, double g, double b, double a) {
+    if (r == _color[0] && g == _color[1] && b == _color[2] && a == _color[3])
+      return;
+
+    _color[0] = r;
+    _color[1] = g;
+    _color[2] = b;
+    _color[3] = a;
+
+    OnPropertyChanged("Color");
+  }
+
+  void SetColorR(double value) override {
+    if (_color[0] == value)
+      return;
+
+    _color[0] = value;
+    OnPropertyChanged("Color.R");
+  }
+
+  void SetColorG(double value) override {
+    if (_color[1] == value)
+      return;
+
+    _color[1] = value;
+    OnPropertyChanged("Color.G");
+  }
+
+  void SetColorB(double value) override {
+    if (_color[2] == value)
+      return;
+
+    _color[2] = value;
+    OnPropertyChanged("Color.B");
+  }
+
+  void SetColorA(double value) override {
+    if (_color[3] == value)
+      return;
+
+    _color[3] = value;
+    OnPropertyChanged("Color.A");
+  }
+
+  void SetHorizontalAlignment(TextHorizontalAlignment value) override {
+    if (_horAlignment == value)
+      return;
+
+    _horAlignment = value;
+    OnPropertyChanged("HorizontalAlignment");
+  }
+
+  void SetVerticalAlignment(TextVerticalAlignment value) override {
+    if (_vertAlignment == value)
+      return;
+
+    _vertAlignment = value;
+    OnPropertyChanged("VerticalAlignment");
+  }
+
+  void SetLineSpacing(double value) {
+    if (_lineSpacing == value)
+      return;
+
+    _lineSpacing = value;
+    OnPropertyChanged("LineSpacing");
+  }
+
+private:
+  std::string _fontName;
+  std::u8string _value;
+
+  std::array<double, 3> _offset{{0, 0, 0}};
+  std::array<double, 3> _horAxis{{1, 0, 0}};
+  std::array<double, 3> _vertAxis{{0, 0, 1}};
+  std::array<double, 4> _color{{0, 0, 0, 1}};
+
+  TextHorizontalAlignment _horAlignment{TextHorizontalAlignment::Center};
+  TextVerticalAlignment _vertAlignment{TextVerticalAlignment::Center};
+
+  double _lineSpacing{1.0};
+};
+
+IReferenced *CreateTextEntry() { return (IEntry *)(new TextEntry()); }
+} // namespace Vandrouka
+
 TextEntry::TextEntry() {}
 
 TextEntry::TextEntry(const TextEntry &entry) : Entry{entry} {}

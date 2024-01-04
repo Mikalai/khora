@@ -109,8 +109,10 @@ void Application::OnIdle(wxIdleEvent &evt) {
   mainWindow->OnIdle();
 }
 
+static std::shared_ptr<boost::asio::io_context> g_io_context;
+
 std::unique_ptr<boost::asio::io_context::work> Application::InitThreadPool() {
-  _io_context = std::make_shared<boost::asio::io_context>();
+  g_io_context = _io_context = std::make_shared<boost::asio::io_context>();
   auto work = std::make_unique<boost::asio::io_context::work>(*_io_context);
 
   for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i) {
@@ -119,3 +121,5 @@ std::unique_ptr<boost::asio::io_context::work> Application::InitThreadPool() {
 
   return work;
 }
+
+std::shared_ptr<boost::asio::io_context> GetIoContext() { return g_io_context; }

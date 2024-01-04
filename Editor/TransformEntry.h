@@ -5,6 +5,7 @@
 #include <semaphore>
 
 #include "DirectoryEntry.h"
+#include "ITransformEntry.h"
 
 class AsyncQueue;
 

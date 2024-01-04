@@ -9,6 +9,7 @@
 #include <memory>
 #include <queue>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "DirectoryEntry.h"
@@ -30,6 +31,89 @@ const std::string PACKAGE_ENTRY_MATERIALS{"Materials"};
 class ISystemFonts;
 class CompilationState;
 class TextEntry;
+
+namespace Vandrouka {
+
+struct ImportFileCommand {
+  std::string FilePath;
+  vsg::ref_ptr<vsg::Options> Options;
+  std::filesystem::path ProjectPath;
+};
+
+struct CompileSceneCommand {
+  EntryPath Root;
+};
+
+struct CopyNodeCommand {
+  EntryPath SourcePath;
+  EntryPath TargetPath;
+};
+
+struct MoveEntryCommand {
+  EntryPath SourcePath;
+  EntryPath TargetPath;
+};
+
+struct CopyEntryCommand {
+  EntryPath SourcePath;
+  EntryPath TargetPath;
+};
+
+struct RemoveEntryCommand {
+  EntryPath Path;
+};
+
+struct RenameEntryCommand {
+  EntryPath OldPath;
+  EntryPath NewPath;
+};
+
+struct SaveToFileCommand {
+  std::filesystem::path Path;
+};
+
+struct ImportFromFileCommand {
+  std::filesystem::path Path;
+};
+
+struct ResetModelCommand {};
+
+struct SelectEntryCommand {
+  EntryPath Path;
+};
+
+struct CreateNodeCommand {
+  EntryPath Path;
+  std::string Type;
+};
+
+struct ExportToFileCommand {
+  std::string Path;
+};
+
+struct AddLanguageCommand {
+  std::string Value;
+};
+
+struct RemoveLanguageCommand {
+  std::string Value;
+};
+
+struct RenameLanguageCommand {
+  std::string OldValue;
+  std::string NewValue;
+};
+
+struct RequestSuggestedChildrenCommand {
+  EntryPath Path;
+  std::string Context;
+};
+
+struct SetActiveLanguageRequest {
+  std::string Language;
+};
+
+} // namespace Vandrouka
 
 class DataModel
     : public Observable<DataModel, IDataModelObserver, IDataModelEditor>,
@@ -73,7 +157,9 @@ private:
 
   void CompileFonts(std::shared_ptr<CompilationState> state,
                     std::shared_ptr<Entry> entry);
-  vsg::ref_ptr<vsg::Node> Compile(std::shared_ptr<CompilationState> state,
+
+  vsg::ref_ptr<vsg::Node> Compile(EntryPath path,
+                                  std::shared_ptr<CompilationState> state,
                                   std::shared_ptr<Entry> entry);
 
   struct TextConfig {

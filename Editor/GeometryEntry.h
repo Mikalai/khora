@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Entry.h"
+#include "IReferenced.h"
 #include <vsg/all.h>
 
 class DirectoryEntry;

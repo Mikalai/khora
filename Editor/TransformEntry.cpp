@@ -4,8 +4,126 @@
 
 #include "AsyncQueue.h"
 #include "Clone.h"
+#include "DirectoryEntry.h"
 #include "Errors.h"
 #include "Serializer.h"
+
+namespace Vandrouka {
+
+class TransformProxyEntry final
+    : public DirectoryEntryBase<TransformProxyEntry, ITransformEntry> {
+public:
+  EntryType GetType() const override { return EntryType::Transform; }
+
+  vsg::dmat4 GetWorldMatrix() override {
+    std::vector<vsg::ref_ptr<vsg::MatrixTransform>> path;
+    path.push_back(GetTransform());
+    auto parent = GetParent().Cast<IDirectoryEntry>();
+
+    while (parent) {
+      if (auto tr = parent.Cast<ITransformEntry>(); tr) {
+        path.push_back(tr->GetTransform());
+      }
+      parent = parent->GetParent().Cast<IDirectoryEntry>();
+    }
+
+    vsg::dmat4 r;
+
+    for (auto it = path.rbegin(); it != path.rend(); ++it) {
+      r = r * (*it)->matrix;
+    }
+
+    return r;
+  }
+
+  vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const override {
+    auto root = GetRoot().Cast<IDirectoryEntry>();
+    if (!root) {
+      OnError(new GenericError(LOG_LEVEL_ERROR, LOG_ENTRY_NOT_FOUND,
+                               this->_path.Path));
+      return {};
+    }
+
+    if (_override || !_path.IsValid()) {
+      vsg::ref_ptr<vsg::MatrixTransform> transform =
+          vsg::MatrixTransform::create();
+      transform->matrix = vsg::translate(_position) *
+                          vsg::rotate(_orientation) * vsg::scale(_scale);
+      return transform;
+    } else {
+      if (auto entry = root->FindEntry(_path); entry) {
+        if (auto transform = entry.Cast<ITransformEntry>(); transform) {
+          return transform->GetTransform();
+        } else {
+          OnError(new GenericError(LOG_LEVEL_ERROR, LOG_TYPE_MISMATCH,
+                                   this->_path.Path));
+          return {};
+        }
+      } else {
+        OnError(new GenericError(LOG_LEVEL_ERROR, LOG_ENTRY_NOT_FOUND,
+                                 this->_path.Path));
+        return {};
+      }
+    }
+  }
+
+  void SetOverride(bool flag) {
+    if (_override == flag)
+      return;
+
+    _override = flag;
+    OnPropertyChanged("Override");
+  }
+
+  bool GetOverride() const override { return _override; }
+
+  void SetPosition(vsg::dvec3 value) {
+    if (_position == value)
+      return;
+
+    _position = value;
+    OnPropertyChanged("Position");
+  }
+
+  vsg::dvec3 GetPosition() const override { return _position; }
+
+  void SetScale(vsg::dvec3 value) {
+    if (_scale == value)
+      return;
+
+    _scale = value;
+    OnPropertyChanged("Scale");
+  }
+
+  vsg::dvec3 GetScale() const override { return _scale; }
+
+  void SetOrientation(vsg::dquat value) {
+    if (_orientation == value)
+      return;
+
+    _orientation = value;
+    OnPropertyChanged("Orientation");
+  }
+
+  vsg::dquat GetOrientation() const override { return _orientation; }
+
+  bool IsMutable() const override { return true; }
+
+private:
+  bool _override{false};
+  vsg::dvec3 _position;
+  vsg::dquat _orientation;
+  vsg::dvec3 _scale{1, 1, 1};
+  EntryPath _path;
+};
+
+IReferenced *CreateTransformProxyEntry() {
+  static_assert(std::is_base_of_v<IReferenced, TransformProxyEntry>);
+  static_assert(std::is_base_of_v<ITransformEntry, TransformProxyEntry>);
+  return static_cast<ITransformEntry *>(new TransformProxyEntry());
+}
+
+} // namespace Vandrouka
 
 TransformEntry::TransformEntry() {}
 

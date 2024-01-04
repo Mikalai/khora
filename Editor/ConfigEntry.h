@@ -5,6 +5,7 @@
 #include <semaphore>
 
 #include "DirectoryEntry.h"
+#include "IConfigEntry.h"
 
 class AsyncQueue;
 
