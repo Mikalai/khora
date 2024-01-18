@@ -1,6 +1,8 @@
 #pragma once
-#include "IReferenced.h"
+#include "Referenced.h"
+#include <cassert>
 #include <string>
+#include "Result.h"
 
 const int EDITOR_NO_ERROR = 0;
 const int EDITOR_ERROR_FILE_NOT_FOUND = 1;
@@ -16,6 +18,8 @@ const int LOG_IO_ERROR = 10;
 const int LOG_VSGXCHANGE_NOT_FOUND = 11;
 const int LOG_FILE_LOAD_FAILED = 12;
 const int LOG_OPERATION_NOT_SUPPORTED = 13;
+const int LOG_NOT_IMPLEMENTED = 14;
+const int LOG_INDEX_OUT_OF_RANGE = 15;
 
 const int LOG_LEVEL_WARNING = 3;
 const int LOG_LEVEL_ERROR = 4;
@@ -41,43 +45,14 @@ inline auto LogError(auto... args) {
 const std::string ErrorToString(const LogNotification &error);
 
 namespace Vandrouka {
-class IError : public IReferenced {
-public:
-  virtual std::int32_t GetSeverity() = 0;
-  virtual std::string ToString() const = 0;
-};
-
-template <> struct GetIID<IError> {
-  static constexpr InterfaceId Id = {{0x1d, 0x2c, 0x8c, 0x73, 0x70, 0xb0, 0x49,
-                                      0x96, 0x8a, 0xaf, 0x7f, 0xb1, 0x6a, 0xf1,
-                                      0x72, 0x7d}};
-};
-
-template <typename Derived, typename Interface>
-class ErrorBase : public ReferenceCountedBase<Derived, Interface> {
-public:
-  bool QueryInterface(const InterfaceId &id, void **o) override {
-    if (id == GetIID<Interface>::Id) {
-      *o = static_cast<Interface *>(this);
-    } else if (id == GetIID<IError>::Id) {
-      *o = static_cast<IError *>(this);
-    } else if (id == GetIID<IReferenced>::Id) {
-      *o = static_cast<IReferenced *>(this);
-    } else {
-      *o = nullptr;
-    }
-
-    if (*o) {
-      this->AddRef();
-    }
-
-    return *o != nullptr;
-  }
-};
 
 template <typename... Args>
-class GenericError : public ErrorBase<GenericError<Args...>, IError> {
+class GenericError
+    : public ReferenceCountedBase<GenericError<Args...>, IError> {
 public:
+  using Interfaces =
+      QueryInterfaces<GenericError<Args...>, IError, IReferenced>;
+
   GenericError(int severity, int code, Args... args)
       : _severity{severity}, _code{code}, _args{std::forward<Args>(args)...} {}
 
@@ -114,6 +89,12 @@ public:
     case LOG_OPERATION_NOT_SUPPORTED:
       return "Operation is not supported. " +
              std::get<std::string>(this->_args);
+    case LOG_NOT_IMPLEMENTED:
+      return "Operation is not implemented. " +
+             std::get<std::string>(this->_args);
+    case LOG_INDEX_OUT_OF_RANGE:
+      return "Operation is out of range. " +
+             std::get<std::string>(this->_args);
     default:
       return "Unknown error.";
     }
@@ -124,4 +105,31 @@ private:
   int _code{0};
   std::tuple<Args...> _args;
 };
+
+template <ReferenceCounted T>
+inline void Map(Ref<T> o, std::function<void(Ref<T>)> onValid,
+                std::function<void(Ref<IError>)> onInvalid) {
+  if (o) {
+    onValid(o);
+  } else {
+    onInvalid(new GenericError(LOG_LEVEL_ERROR, LOG_NOT_IMPLEMENTED,
+                               std::string("")));
+  }
+}
+
+template <ReferenceCounted T, ReferenceCounted U>
+inline std::pair<Ref<T>, Ref<IError>> Cast(Ref<U> o) {
+  if (auto v = o.Cast<T>(); v) {
+    return {v, {}};
+  } else {
+    return {{},
+            new GenericError(LOG_LEVEL_ERROR, LOG_NOT_IMPLEMENTED,
+                             std::string(""))};
+  }
+}
+
+inline Ref<IError> NotFoundError(const std::string &value) {
+  return new GenericError{LOG_LEVEL_ERROR, LOG_ENTRY_NOT_FOUND, value};
+}
+
 } // namespace Vandrouka

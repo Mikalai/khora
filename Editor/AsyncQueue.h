@@ -10,6 +10,24 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "IAsyncQueue.h"
+#include "Referenced.h"
+
+namespace Vandrouka {
+
+class CallbackTask : public ReferenceCountedBase<CallbackTask, IAsyncTask> {
+public:
+  CallbackTask(std::function<void()> callback) : _callback{callback} {}
+
+  virtual ~CallbackTask() {}
+
+  void Execute() override { this->_callback(); }
+
+private:
+  std::function<void()> _callback;
+};
+
+}
 
 class CustomState : public std::enable_shared_from_this<CustomState> {
 public:

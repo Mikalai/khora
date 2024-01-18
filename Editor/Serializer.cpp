@@ -98,6 +98,15 @@ std::u8string Deserialize(const nlohmann::json &o, std::string_view property,
     return def;
 }
 
+std::wstring Deserialize(const nlohmann::json &o, std::string_view property,
+                          std::wstring def) {
+  if (auto it = o.find(property); it != o.end()) {
+    auto value = it->get<std::string>();
+    return std::filesystem::path(value).wstring();
+  } else
+    return def;
+}
+
 vsg::dquat Deserialize(const nlohmann::json &o, std::string_view property,
                        vsg::dquat def) {
   vsg::dquat r;

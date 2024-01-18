@@ -31,20 +31,32 @@ template <> struct GetCID<SystemFonts> {
                                   0x73, 0xf8}};
 };
 
+class IRefreshFontsMessage : public IMessage {
+public:
+  virtual bool GetForce() const = 0;
+};
+
+template <> struct GetIID<IRefreshFontsMessage> {
+  static constexpr InterfaceId Id = {{0xb1, 0x9b, 0x2a, 0xb3, 0x65, 0xff, 0x4a,
+                                      0x6a, 0x8d, 0x3, 0xf0, 0x9a, 0xa5, 0x94,
+                                      0x79, 0x4a}};
+};
+
+class ICompileFontMessage : public IMessage {
+public:
+  virtual const std::string& GetDisplayName() const = 0;  
+  virtual Ref<IReferenced> GetState() const = 0;
+};
+template <> struct GetIID<ICompileFontMessage> {
+  static constexpr InterfaceId Id = {{0x26, 0x4c, 0x4b, 0xb7, 0x6c, 0x29, 0x49,
+                                      0x4b, 0xa5, 0x9f, 0xd9, 0x30, 0x8e, 0x8f,
+                                      0x1a, 0x1f}};
+};
+
 class ISystemFonts : public IReferenced {
 public:
-  struct Refresh {
-    bool Force{false};
-  };
 
-  virtual void Execute(const Refresh &cmd) = 0;
-
-  struct CompileFont {
-    std::string DisplayName;
-    Ref<IReferenced> State;
-  };
-
-  virtual void Execute(const CompileFont &cmd) = 0;
+  virtual void Execute(Ref<IMessage> cmd) = 0;
 };
 
 template <> struct GetIID<ISystemFonts> {

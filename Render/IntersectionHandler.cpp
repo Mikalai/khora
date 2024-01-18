@@ -32,9 +32,9 @@ void IntersectionHandler::apply(vsg::KeyPressEvent& keyPress) {
             if (!lastIntersection) return;
 
             geom.position = vsg::vec3(lastIntersection->worldIntersection);
-            geom.dx.set(scale, 0.0f, 0.0f);
-            geom.dy.set(0.0f, scale, 0.0f);
-            geom.dz.set(0.0f, 0.0f, scale);
+            geom.dx.set((float)scale, 0.0f, 0.0f);
+            geom.dy.set(0.0f, (float)scale, 0.0f);
+            geom.dz.set(0.0f, 0.0f, (float)scale);
 
             if (keyPress.keyBase == 'b') {
                 scenegraph->addChild(builder->createBox(geom, state));

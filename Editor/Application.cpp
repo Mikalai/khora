@@ -3,9 +3,11 @@
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
+#include "Result.h"
 
 #include "UI/EditorMainWindow.h"
 #include "UI/UICommon.h"
+#include "ISystemFonts.h"
 
 #ifdef __linux__
 #include <pwd.h>
@@ -73,14 +75,27 @@ protected:
   //   }
 };
 
+void CheckResult() {
+  Vandrouka::Result<void> v{};
+  assert(v == true);
+  assert(!v == false);
+}
+
+void RunTests() { CheckResult(); }
+
 bool Application::OnInit() {
   _work = InitThreadPool();
   wxInitAllImageHandlers();
   wxArtProvider::Push(new MyProvider);
 
-  _fonts = ISystemFonts::Create(_io_context);
-  _dataModel = DataModel::Create(_fonts, _io_context);
-  mainWindow = new EditorMainWindow(_dataModel.get(), _fonts.get(), nullptr);
+  RunTests();
+
+  _fonts = Vandrouka::Create<Vandrouka::SystemFonts, Vandrouka::ISystemFonts>();
+  _dataModel = Vandrouka::Create<Vandrouka::DataModel, Vandrouka::IDataModel>();
+  assert(_dataModel.Cast<Vandrouka::IReferenced>());
+  _dataModel->AddDependency(_fonts);
+
+  mainWindow = new Vandrouka::EditorMainWindow(_dataModel, _fonts, nullptr);
   mainWindow->Init(argc, argv);
   mainWindow->Show(true);
 
@@ -91,8 +106,8 @@ bool Application::OnInit() {
 
 int Application::OnExit() {
   _work.reset();
-  _dataModel->GetSyncContext()->Complete();
-  _fonts->GetSyncContext()->Complete();
+  /*_dataModel->GetSyncContext()->Complete();
+  _fonts->GetSyncContext()->Complete();*/
   return 0;
 }
 
@@ -120,6 +135,19 @@ std::unique_ptr<boost::asio::io_context::work> Application::InitThreadPool() {
   }
 
   return work;
+}
+
+class wxAggregatedProcessor : public Vandrouka::AggregatedProcessor {
+
+protected:
+  void ExecuteAsync(std::function<void()> cb) override {
+    wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([cb]() { cb(); });
+  }
+};
+
+Vandrouka::Ref<Vandrouka::IAggregatedProcessor>
+Application::CreateWxProcessor() {
+  return new wxAggregatedProcessor{};
 }
 
 std::shared_ptr<boost::asio::io_context> GetIoContext() { return g_io_context; }

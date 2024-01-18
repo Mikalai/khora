@@ -1,25 +1,29 @@
 #pragma once
 
+#include <cassert>
 #include <atomic>
 #include <boost/uuid/uuid.hpp>
+#include <concepts>
 #include <cstdint>
 #include <functional>
+#include <type_traits>
 
 namespace Vandrouka {
 
 using ClassId = boost::uuids::uuid;
 using InterfaceId = boost::uuids::uuid;
+class IError;
 
 class IReferenced {
 public:
   virtual void AddRef() = 0;
   virtual void Release() = 0;
-  virtual bool QueryInterface(const InterfaceId &id, void **o) = 0;
+  virtual bool QueryInterface(const InterfaceId &id, void **o) = 0;  
 };
 
 template <typename T>
 concept ReferenceCounted = requires(T a) {
-  { std::is_base_of_v<IReferenced, T> };
+  { std::derived_from<T, IReferenced> };
 };
 
 template <ReferenceCounted T> struct GetIID;
@@ -35,6 +39,28 @@ public:
     }
   }
 
+  ~Ref() {
+    if (this->_o) {
+      this->_o->Release();
+      this->_o = nullptr;
+    }
+  }
+
+  template <typename U> Ref(U *o) {
+    if (!o) {
+      this->_o = nullptr;
+      return;
+    }
+
+    o->AddRef();
+
+    if (!o->QueryInterface(GetIID<T>::Id, (void **)&this->_o)) {
+      this->_o = nullptr;
+    }
+
+    o->Release();
+  }
+
   Ref(const Ref<T> &o) : _o{o._o} {
     if (this->_o) {
       this->_o->AddRef();
@@ -42,7 +68,7 @@ public:
   }
 
   template <ReferenceCounted U> Ref(const Ref<U> &o) {
-    auto v = o.template Cast<U>();
+    auto v = o.template Cast<T>();
     this->_o = v.Release();
   }
 
@@ -126,9 +152,15 @@ public:
     return *this;
   }
 
-  T *operator->() { return this->_o; }
+  T *operator->() {
+    assert(this->_o);
+    return this->_o;
+  }
 
-  const T *operator->() const { return this->_o; }
+  const T *operator->() const {
+    assert(this->_o);
+    return this->_o;
+  }
 
   operator bool() const { return this->_o != nullptr; }
 
@@ -140,6 +172,13 @@ public:
     auto r = this->_o;
     this->_o = nullptr;
     return r;
+  }
+
+  void Reset() {
+    if (this->_o) {
+      this->_o->Release();
+      this->_o = nullptr;
+    }
   }
 
   template <ReferenceCounted U> Ref<U> Cast() const {
@@ -186,83 +225,6 @@ template <ReferenceCounted C, ReferenceCounted T> Ref<T> Create() {
   }
   return {};
 }
-
-namespace Private {
-template <typename Derived, typename MainInterface,
-          ReferenceCounted... Interfaces>
-struct QueryInterfacesStruct;
-
-template <typename Derived, typename MainInterface, ReferenceCounted Interface,
-          ReferenceCounted... Other>
-struct QueryInterfacesStruct<Derived, MainInterface, Interface, Other...>
-    : public QueryInterfacesStruct<Derived, MainInterface, Other...> {
-
-  using Base = QueryInterfacesStruct<Derived, MainInterface, Other...>;
-
-  static bool Query(Derived *derived, const InterfaceId &id, void **o) {
-
-    if (Base::Query(derived, id, o)) {
-      return true;
-    }
-
-    if (id == GetIID<Interface>::Id) {
-      *o = static_cast<Interface *>(derived);
-    } else {
-      *o = nullptr;
-    }
-
-    if (*o) {
-      static_cast<MainInterface *>(derived)->AddRef();
-    }
-
-    return *o != nullptr;
-  }
-};
-
-template <typename Derived, typename MainInterface>
-struct QueryInterfacesStruct<Derived, MainInterface> {
-
-  static bool Query(Derived *derived, const InterfaceId &iid, void **o) {
-    if (iid == GetIID<IReferenced>::Id) {
-      *o = static_cast<IReferenced *>(static_cast<MainInterface *>(derived));
-    } else {
-      *o = nullptr;
-    }
-
-    if (*o) {
-      static_cast<MainInterface *>(derived)->AddRef();
-    }
-
-    return *o != nullptr;
-  }
-};
-} // namespace Private
-
-template <ReferenceCounted Derived, ReferenceCounted... Interfaces>
-class ReferenceCountedBase : public Interfaces... {
-
-public:
-  virtual ~ReferenceCountedBase() {}
-
-  void AddRef() override { this->_refCount++; }
-
-  void Release() override {
-    if (--this->_refCount == 0) {
-      delete (Derived *)this;
-    }
-  }
-
-  bool QueryInterface(const InterfaceId &id, void **o) override {
-    return Private::QueryInterfacesStruct<
-        Derived, std::tuple_element_t<0, std::tuple<Interfaces...>>,
-        Interfaces...>::Query((Derived *)this, id, o);
-  }
-
-  Ref<Derived> Self() { return Ref<Derived>{(Derived *)this}; }
-
-private:
-  std::atomic<std::uint64_t> _refCount{0};
-};
 
 template <class T> T *get_pointer(Ref<T> const &p) { return p.Get(); }
 

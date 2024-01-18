@@ -7,26 +7,10 @@
 
 namespace Vandrouka {
 
-class IEntryAddedMessage : public IMessage {
+class DirectoryChanges {
 public:
-  virtual EntryPath GetPath() const = 0;
-  virtual EntryRef GetEntry() const = 0;
-};
-template <> struct GetIID<IEntryAddedMessage> {
-  static constexpr InterfaceId Id = {{0x25, 0x2b, 0x63, 0x19, 0x65, 0x64, 0x43,
-                                      0xe8, 0xa7, 0xff, 0xf, 0x2d, 0x51, 0x83,
-                                      0x7a, 0xba}};
-};
-
-class IEntryRemovedMessage : public IMessage {
-public:
-  virtual EntryPath GetPath() const = 0;
-  virtual EntryRef GetEntry() const = 0;
-};
-template <> struct GetIID<IEntryRemovedMessage> {
-  static constexpr InterfaceId Id = {{0x31, 0x4b, 0xcf, 0x5e, 0, 0x9f, 0x40,
-                                      0xfd, 0x82, 0x6, 0xc2, 0xad, 0x32, 0x5c,
-                                      0x1d, 0x6a}};
+  std::vector<Ref<IEntryAddedMessage>> Added;
+  std::vector<Ref<IEntryRemovedMessage>> Removed;
 };
 
 class IDirectoryEntry : public IEntry {
@@ -39,10 +23,8 @@ public:
                                const EntryPath &parent = {}) = 0;
   virtual bool IsEmpty() const = 0;
   virtual bool CanAdd(EntryRef ref) = 0;
-  virtual bool Add(const EntryPath &path, EntryRef entry,
-                   const EntryPath &parent = {}) = 0;
-  virtual EntryRef Remove(const EntryPath &path,
-                          const EntryPath &parent = {}) = 0;
+  virtual Result<DirectoryChanges> Add(const EntryPath &path, EntryRef entry) = 0;
+  virtual Result<DirectoryChanges> Remove(const EntryPath &path) = 0;
   virtual EntryRef FindEntry(const EntryPath &path) const = 0;
 };
 

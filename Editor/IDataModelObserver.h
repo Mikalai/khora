@@ -14,7 +14,7 @@ namespace Vandrouka {
 
 class ICompileMessage : public IMessage {
 public:
-  virtual vsg::ref_ptr<vsg::Node> GetObject() = 0;
+  virtual vsg::ref_ptr<vsg::Node> GetResultObject() = 0;
   virtual Ref<IAsyncTask> GetCompletion() = 0;
   // std::function<void(vsg::ref_ptr<vsg::Node>, vsg::CompileResult &)>
   //     OnComplete;
@@ -25,28 +25,28 @@ template <> struct GetIID<ICompileMessage> {
                                       0x7e, 0x94}};
 };
 
-class IItemAddedMessage : public IMessage {
-public:
-  virtual EntryPath GetPath() const = 0;
-  virtual EntryType GetType() const = 0;
-  virtual bool GetVisibility() const = 0;
-};
-template <> struct GetIID<IItemAddedMessage> {
-  static constexpr InterfaceId Id = {{0x11, 0xfc, 0x50, 0xb8, 0xd1, 0xac, 0x45,
-                                      0xa8, 0xaf, 0x65, 0x51, 0x22, 0x27, 0xe,
-                                      0xa6, 0xf6}};
-};
-
-class IItemRemovedMessage : public IMessage {
-public:
-  virtual EntryPath GetPath() const = 0;
-  virtual EntryType GetType() const = 0;
-};
-template <> struct GetIID<IItemRemovedMessage> {
-  static constexpr InterfaceId Id = {{0x14, 0x5e, 0x3, 0x2b, 0x1b, 0xe5, 0x44,
-                                      0xa7, 0x9c, 0x84, 0x1e, 0x35, 0x86, 0,
-                                      0xc9, 0x4a}};
-};
+//class IItemAddedMessage : public IMessage {
+//public:
+//  virtual EntryPath GetPath() const = 0;
+//  virtual EntryType GetType() const = 0;
+//};
+//
+//template <> struct GetIID<IItemAddedMessage> {
+//  static constexpr InterfaceId Id = {{0x11, 0xfc, 0x50, 0xb8, 0xd1, 0xac, 0x45,
+//                                      0xa8, 0xaf, 0x65, 0x51, 0x22, 0x27, 0xe,
+//                                      0xa6, 0xf6}};
+//};
+//
+//class IItemRemovedMessage : public IMessage {
+//public:
+//  virtual EntryPath GetPath() const = 0;
+//  virtual EntryType GetType() const = 0;
+//};
+//template <> struct GetIID<IItemRemovedMessage> {
+//  static constexpr InterfaceId Id = {{0x14, 0x5e, 0x3, 0x2b, 0x1b, 0xe5, 0x44,
+//                                      0xa7, 0x9c, 0x84, 0x1e, 0x35, 0x86, 0,
+//                                      0xc9, 0x4a}};
+//};
 
 class ISceneCompeledMessage : public IMessage {
 public:
@@ -58,7 +58,11 @@ template <> struct GetIID<ISceneCompeledMessage> {
                                       0xeb, 0xd9}};
 };
 
-class IModelResetMessage : public IMessage {};
+class IModelResetMessage : public IMessage {
+public:
+    virtual Ref<IEntry> GetRoot() const = 0;
+};
+
 template <> struct GetIID<IModelResetMessage> {
   static constexpr InterfaceId Id = {{0x93, 0xaf, 0x47, 0xb9, 0xf2, 0x54, 0x44,
                                       0xcc, 0x85, 0x3b, 0xd1, 0x2f, 0x25, 0x3d,
@@ -77,8 +81,9 @@ template <> struct GetIID<IEntrySelectedMessage> {
 };
 
 class IEntryPropertyChangedMessage : public IMessage {
-  EntryRef ChangedEntry;
-  std::string_view Property;
+public:
+  virtual EntryRef GetChangedEntry() = 0;
+  virtual std::string_view GetProperty() = 0;
 };
 template <> struct GetIID<IEntryPropertyChangedMessage> {
   static constexpr InterfaceId Id = {{0xd0, 0xd, 0x7a, 0x58, 0x8d, 0xb8, 0x4a,
@@ -153,8 +158,8 @@ template <> struct GetIID<IBulkOperationEndedMessage> {
 
 class IActiveLanguageChangedMessage : public IMessage {
 public:
-  virtual const std::string &GetOldLanguage() const;
-  virtual const std::string &GetNewLanguage() const;
+  virtual const std::string &GetOldLanguage() const = 0;
+  virtual const std::string &GetNewLanguage() const = 0;
 };
 template <> struct GetIID<IActiveLanguageChangedMessage> {
   static constexpr InterfaceId Id = {{0xd0, 0x77, 0x6e, 0x7e, 0x3c, 0x1d, 0x4d,

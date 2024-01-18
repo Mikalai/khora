@@ -1,6 +1,7 @@
 #pragma once
 
-#include "IReferenced.h"
+#include "Result.h"
+#include <string>
 
 namespace Vandrouka {
 
@@ -9,10 +10,10 @@ enum class TextVerticalAlignment { Bottom, Center, Top };
 
 class ITextEntry : public IReferenced {
 public:
-  virtual void SetFont(const std::string &fontName) = 0;
+  virtual Result<bool> SetFont(const std::string &fontName) = 0;
   virtual std::string GetFont() const = 0;
 
-  virtual void SetValue(const std::u8string &value) = 0;
+  virtual Result<bool> SetValue(const std::u8string &value) = 0;
   virtual std::u8string GetValue() const = 0;
 
   virtual double GetOffsetX() const = 0;
@@ -36,27 +37,28 @@ public:
   virtual TextVerticalAlignment GetVerticalAlignment() const = 0;
   virtual double GetLineSpacing() const = 0;
 
-  virtual void SetOffsetX(double value) = 0;
-  virtual void SetOffsetY(double value) = 0;
-  virtual void SetOffsetZ(double value) = 0;
+  virtual Result<bool> SetOffsetX(double value) = 0;
+  virtual Result<bool> SetOffsetY(double value) = 0;
+  virtual Result<bool> SetOffsetZ(double value) = 0;
 
-  virtual void SetHorizontalAxisX(double value) = 0;
-  virtual void SetHorizontalAxisY(double value) = 0;
-  virtual void SetHorizontalAxisZ(double value) = 0;
+  virtual Result<bool> SetHorizontalAxisX(double value) = 0;
+  virtual Result<bool> SetHorizontalAxisY(double value) = 0;
+  virtual Result<bool> SetHorizontalAxisZ(double value) = 0;
 
-  virtual void SetVerticalAxisX(double value) = 0;
-  virtual void SetVerticalAxisY(double value) = 0;
-  virtual void SetVerticalAxisZ(double value) = 0;
+  virtual Result<bool> SetVerticalAxisX(double value) = 0;
+  virtual Result<bool> SetVerticalAxisY(double value) = 0;
+  virtual Result<bool> SetVerticalAxisZ(double value) = 0;
 
-  virtual void SetColor(double r, double g, double b, double a) = 0;
-  virtual void SetColorR(double value) = 0;
-  virtual void SetColorG(double value) = 0;
-  virtual void SetColorB(double value) = 0;
-  virtual void SetColorA(double value) = 0;
+  virtual Result<bool> SetColor(double r, double g, double b, double a) = 0;
+  virtual Result<bool> SetColorR(double value) = 0;
+  virtual Result<bool> SetColorG(double value) = 0;
+  virtual Result<bool> SetColorB(double value) = 0;
+  virtual Result<bool> SetColorA(double value) = 0;
 
-  virtual void SetHorizontalAlignment(TextHorizontalAlignment value) = 0;
-  virtual void SetVerticalAlignment(TextVerticalAlignment value) = 0;
-  virtual void SetLineSpacing(double value) = 0;
+  virtual Result<bool>
+  SetHorizontalAlignment(TextHorizontalAlignment value) = 0;
+  virtual Result<bool> SetVerticalAlignment(TextVerticalAlignment value) = 0;
+  virtual Result<bool> SetLineSpacing(double value) = 0;
 };
 
 template <> struct GetIID<ITextEntry> {

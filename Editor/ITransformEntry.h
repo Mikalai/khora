@@ -1,13 +1,13 @@
 #pragma once
 
-#include "IReferenced.h"
+#include "Result.h"
 #include <vsg/all.h>
 
 namespace Vandrouka {
 
 class ITransformEntry : public IReferenced {
 public:
-  virtual vsg::ref_ptr<vsg::MatrixTransform> GetTransform() const = 0;
+  virtual Result<vsg::ref_ptr<vsg::MatrixTransform>> GetTransform() const = 0;
   virtual void SetOverride(bool) = 0;
   virtual bool GetOverride() const = 0;
   virtual void SetPosition(vsg::dvec3) = 0;
@@ -28,9 +28,16 @@ template <> struct GetIID<ITransformEntry> {
 
 class TransformProxyEntry;
 template <> struct GetCID<TransformProxyEntry> {
-  static constexpr InterfaceId Id = {{0xb7, 0xff, 0x62, 0x8b, 0xa1, 0xa4, 0x4e,
+  static constexpr ClassId Id = {{0xb7, 0xff, 0x62, 0x8b, 0xa1, 0xa4, 0x4e,
                                       0xf4, 0x9f, 0x1a, 0xa7, 0xb, 0xa9, 0x6a,
                                       0x25, 0x81}};
+};
+
+class TransformPackageEntry;
+template <> struct GetCID<TransformPackageEntry> {
+  static constexpr ClassId Id = {{0x11, 0x1c, 0xf7, 0x2a, 0x69, 0x3e, 0x49,
+                                      0x37, 0xa1, 0x3f, 0x4c, 0xcb, 0x5d, 0x9a,
+                                      0x97, 0x32}};
 };
 
 } // namespace Vandrouka

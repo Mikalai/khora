@@ -14,6 +14,8 @@ using SubscriptionPtr = std::shared_ptr<Subscription>;
 
 namespace Vandrouka {
 
+class ICompilationState;
+
 class IImportFileMessage : public IMessage {
 public:
   virtual const std::string &GetFilePath() const = 0;
@@ -26,9 +28,19 @@ template <> struct GetIID<IImportFileMessage> {
                                       0xaa, 0x48}};
 };
 
+class IFontsCompilationJobsCompleteMessage : public IMessage {
+public:
+  virtual Ref<ICompilationState> GetState() const = 0;
+};
+template <> struct GetIID<IFontsCompilationJobsCompleteMessage> {
+  static constexpr InterfaceId Id = {{0x5d, 0x64, 0xfa, 0x92, 0xf3, 0xc9, 0x40,
+                                      0x58, 0x97, 0x71, 0x6c, 0x54, 0x27, 0x64,
+                                      0xcc, 0x4a}};
+};
+
 class ICompileSceneMessage : public IMessage {
 public:
-  virtual EntryPath GetRoot() = 0;
+  virtual EntryPath GetRoot() const = 0;
 };
 template <> struct GetIID<ICompileSceneMessage> {
   static constexpr InterfaceId Id = {{0x5d, 0xc8, 0x79, 0x70, 0, 0xd0, 0x41,
@@ -201,129 +213,130 @@ template <> struct GetIID<ISetActiveLanguageMessage> {
                                       0x62, 0xb2}};
 };
 
-} // namespace Vandrouka
-
-class IDataModelEditor {
-public:
-  virtual ~IDataModelEditor();
-
-  struct ImportFileCommand {
-    std::string FilePath;
-    vsg::ref_ptr<vsg::Options> Options;
-    std::filesystem::path ProjectPath;
-  };
-
-  virtual void Execute(const ImportFileCommand &cmd) = 0;
-
-  struct CompileSceneCommand {
-    EntryPath Root;
-  };
-
-  virtual void Execute(const CompileSceneCommand &cmd) = 0;
-
-  struct CopyNodeCommand {
-    EntryPath SourcePath;
-    EntryPath TargetPath;
-  };
-
-  virtual void Execute(const CopyNodeCommand &cmd) = 0;
-
-  struct MoveEntryCommand {
-    EntryPath SourcePath;
-    EntryPath TargetPath;
-  };
-
-  virtual void Execute(const MoveEntryCommand &cmd) = 0;
-
-  struct CopyEntryCommand {
-    EntryPath SourcePath;
-    EntryPath TargetPath;
-  };
-
-  virtual void Execute(const CopyEntryCommand &cmd) = 0;
-
-  struct RemoveEntryCommand {
-    EntryPath Path;
-  };
-
-  virtual void Execute(const RemoveEntryCommand &cmd) = 0;
-
-  struct RenameEntryCommand {
-    EntryPath OldPath;
-    EntryPath NewPath;
-  };
-
-  virtual void Execute(const RenameEntryCommand &cmd) = 0;
-
-  struct SaveToFileCommand {
-    std::filesystem::path Path;
-  };
-
-  virtual void Execute(const SaveToFileCommand &cmd) = 0;
-
-  struct ImportFromFileCommand {
-    std::filesystem::path Path;
-  };
-
-  virtual void Execute(const ImportFromFileCommand &cmd) = 0;
-
-  struct ResetModelCommand {};
-
-  virtual void Execute(const ResetModelCommand &cmd) = 0;
-
-  [[nodiscard]] virtual SubscriptionPtr
-  Subscribe(std::shared_ptr<IDataModelObserver> observer) = 0;
-
-  struct SelectEntryCommand {
-    EntryPath Path;
-  };
-
-  virtual void Execute(const SelectEntryCommand &cmd) = 0;
-
-  virtual std::shared_ptr<AsyncQueue> GetSyncContext() = 0;
-
-  struct CreateNodeCommand {
-    EntryPath Path;
-    std::string Type;
-  };
-
-  virtual void Execute(const CreateNodeCommand &cmd) = 0;
-
-  struct ExportToFileCommand {
-    std::string Path;
-  };
-
-  virtual void Execute(const ExportToFileCommand &cmd) = 0;
-
-  struct AddLanguageCommand {
-    std::string Value;
-  };
-
-  virtual void Execute(const AddLanguageCommand &cmd) = 0;
-
-  struct RemoveLanguageCommand {
-    std::string Value;
-  };
-
-  virtual void Execute(const RemoveLanguageCommand &cmd) = 0;
-
-  struct RenameLanguageCommand {
-    std::string OldValue;
-    std::string NewValue;
-  };
-
-  virtual void Execute(const RenameLanguageCommand &cmd) = 0;
-
-  struct RequestSuggestedChildrenCommand {
-    EntryPath Path;
-    std::string Context;
-  };
-
-  virtual void Execute(const RequestSuggestedChildrenCommand &cmd) = 0;
-
-  struct SetActiveLanguageRequest {
-    std::string Language;
-  };
-
-  virtual void Execute(const SetActiveLanguageRequest &cmd) = 0;
-};
+} 
+// namespace Vandrouka
+//
+//class IDataModelEditor {
+//public:
+//  virtual ~IDataModelEditor();
+//
+//  struct ImportFileCommand {
+//    std::string FilePath;
+//    vsg::ref_ptr<vsg::Options> Options;
+//    std::filesystem::path ProjectPath;
+//  };
+//
+//  virtual void Execute(const ImportFileCommand &cmd) = 0;
+//
+//  struct CompileSceneCommand {
+//    EntryPath Root;
+//  };
+//
+//  virtual void Execute(const CompileSceneCommand &cmd) = 0;
+//
+//  struct CopyNodeCommand {
+//    EntryPath SourcePath;
+//    EntryPath TargetPath;
+//  };
+//
+//  virtual void Execute(const CopyNodeCommand &cmd) = 0;
+//
+//  struct MoveEntryCommand {
+//    EntryPath SourcePath;
+//    EntryPath TargetPath;
+//  };
+//
+//  virtual void Execute(const MoveEntryCommand &cmd) = 0;
+//
+//  struct CopyEntryCommand {
+//    EntryPath SourcePath;
+//    EntryPath TargetPath;
+//  };
+//
+//  virtual void Execute(const CopyEntryCommand &cmd) = 0;
+//
+//  struct RemoveEntryCommand {
+//    EntryPath Path;
+//  };
+//
+//  virtual void Execute(const RemoveEntryCommand &cmd) = 0;
+//
+//  struct RenameEntryCommand {
+//    EntryPath OldPath;
+//    EntryPath NewPath;
+//  };
+//
+//  virtual void Execute(const RenameEntryCommand &cmd) = 0;
+//
+//  struct SaveToFileCommand {
+//    std::filesystem::path Path;
+//  };
+//
+//  virtual void Execute(const SaveToFileCommand &cmd) = 0;
+//
+//  struct ImportFromFileCommand {
+//    std::filesystem::path Path;
+//  };
+//
+//  virtual void Execute(const ImportFromFileCommand &cmd) = 0;
+//
+//  struct ResetModelCommand {};
+//
+//  virtual void Execute(const ResetModelCommand &cmd) = 0;
+//
+//  [[nodiscard]] virtual SubscriptionPtr
+//  Subscribe(std::shared_ptr<IDataModelObserver> observer) = 0;
+//
+//  struct SelectEntryCommand {
+//    EntryPath Path;
+//  };
+//
+//  virtual void Execute(const SelectEntryCommand &cmd) = 0;
+//
+//  virtual std::shared_ptr<AsyncQueue> GetSyncContext() = 0;
+//
+//  struct CreateNodeCommand {
+//    EntryPath Path;
+//    std::string Type;
+//  };
+//
+//  virtual void Execute(const CreateNodeCommand &cmd) = 0;
+//
+//  struct ExportToFileCommand {
+//    std::string Path;
+//  };
+//
+//  virtual void Execute(const ExportToFileCommand &cmd) = 0;
+//
+//  struct AddLanguageCommand {
+//    std::string Value;
+//  };
+//
+//  virtual void Execute(const AddLanguageCommand &cmd) = 0;
+//
+//  struct RemoveLanguageCommand {
+//    std::string Value;
+//  };
+//
+//  virtual void Execute(const RemoveLanguageCommand &cmd) = 0;
+//
+//  struct RenameLanguageCommand {
+//    std::string OldValue;
+//    std::string NewValue;
+//  };
+//
+//  virtual void Execute(const RenameLanguageCommand &cmd) = 0;
+//
+//  struct RequestSuggestedChildrenCommand {
+//    EntryPath Path;
+//    std::string Context;
+//  };
+//
+//  virtual void Execute(const RequestSuggestedChildrenCommand &cmd) = 0;
+//
+//  struct SetActiveLanguageRequest {
+//    std::string Language;
+//  };
+//
+//  virtual void Execute(const SetActiveLanguageRequest &cmd) = 0;
+//};

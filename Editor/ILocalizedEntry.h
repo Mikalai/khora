@@ -6,8 +6,7 @@
 namespace Vandrouka {
 
 class ILocalizedEntry : public IReferenced {
-public:
-  virtual vsg::ref_ptr<vsg::Group> GetGroup() = 0;
+public:  
 };
 
 template <> struct GetIID<ILocalizedEntry> {

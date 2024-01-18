@@ -17,6 +17,8 @@ vsg::dquat Deserialize(const nlohmann::json &o, std::string_view property,
                        vsg::dquat def);
 std::u8string Deserialize(const nlohmann::json &o, std::string_view property,
                           std::u8string def);
+std::wstring Deserialize(const nlohmann::json &o, std::string_view property,
+                         std::wstring def);
 std::array<double, 3> DeserializeVector(const nlohmann::json &o,
                                         std::string_view property,
                                         std::array<double, 3> def);

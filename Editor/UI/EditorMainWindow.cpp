@@ -8,14 +8,31 @@
 
 #include "../Application.h"
 #include "../ConfigEntry.h"
+#include "../DataModel/IDataModelState.h"
+#include "../Messages/AddLanguageMessage.h"
+#include "../Messages/CompileFontMessage.h"
+#include "../Messages/CompileSceneMessage.h"
+#include "../Messages/CopyEntryMessage.h"
+#include "../Messages/CopyNodeMessage.h"
+#include "../Messages/CreateNodeMessage.h"
+#include "../Messages/ExportToFileMessage.h"
+#include "../Messages/ImportFileMessage.h"
+#include "../Messages/MoveEntryMessage.h"
+#include "../Messages/RefreshFontsMessage.h"
+#include "../Messages/RemoveEntryMessage.h"
+#include "../Messages/RemoveLanguageMessage.h"
+#include "../Messages/RenameEntryMessage.h"
+#include "../Messages/RequestSuggestedChildrenMessage.h"
+#include "../Messages/ResetModelMessage.h"
+#include "../Messages/SaveToFileMessage.h"
+#include "../Messages/SelectEntryMessage.h"
+#include "../Messages/SetActiveLanguageMessage.h"
 #include "../TransformEntry.h"
+#include "Processors.h"
 #include "TextEnterDialog.h"
 #include "UICommon.h"
 
-class SceneTreeItemData : public wxTreeItemData {
-public:
-  SceneTreeItemData();
-};
+namespace Vandrouka {
 
 EntryPath GetPath(const wxString &rootName, wxTreeCtrl *tree, wxTreeItemId id) {
   std::stack<wxString> names;
@@ -44,15 +61,49 @@ EntryPath GetPath(const wxString &rootName, wxTreeCtrl *tree, wxTreeItemId id) {
   return {path.ToStdString()};
 }
 
+void EditorMainWindow::Reset(Vandrouka::Ref<IEntry> root) {
+  // _subscriptions[""] =
+  // root.Cast<IObservable>()->Subscribe(static_cast<IObserver*>(this));
+
+  reseting = true;
+  assetsTree->UnselectAll();
+  finalScene->UnselectAll();
+  packageToId.clear();
+
+  for (auto child : _root->children) {
+    _cleanup.emplace_back(60, child);
+  }
+
+  _root->children.clear();
+  assetsTree->DeleteAllItems();
+  finalScene->DeleteAllItems();
+  assetsTree->AddRoot("");
+  finalScene->AddRoot("");
+  reseting = false;
+}
+
+void EditorMainWindow::SelectEntry(Vandrouka::Ref<IEntry> entry) {
+  _transformPanel->SetDataModel(entry);
+  _textPanel->SetDataModel(entry);
+  propertiesSizer->Layout();
+  _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
+}
+
+class SceneTreeItemData : public wxTreeItemData {
+public:
+  SceneTreeItemData();
+};
+
 class MyTreeDropTarget : public wxTextDropTarget {
 public:
-  MyTreeDropTarget(const wxString &rootName, IDataModelEditor *dataModel,
+  MyTreeDropTarget(const wxString &rootName,
+                   Vandrouka::Ref<IDataModel> dataModel,
                    wxTreeCtrl *targetTreeCtrl)
       : _dataModel{dataModel}, _rootName{rootName},
         _targetTreeCtrl(targetTreeCtrl) {}
 
 private:
-  IDataModelEditor *_dataModel;
+  Vandrouka::Ref<IDataModel> _dataModel;
   wxString _rootName;
   wxTreeCtrl *_targetTreeCtrl;
 
@@ -61,25 +112,112 @@ private:
     wxTreeItemId targetItem = _targetTreeCtrl->HitTest(wxPoint(x, y));
     if (targetItem.IsOk()) {
       auto parentPath = GetPath(_rootName, _targetTreeCtrl, targetItem);
-      _dataModel->Execute(IDataModelEditor::CopyNodeCommand{
-          .SourcePath = {text.ToStdString()}, .TargetPath = {parentPath}});
+      _dataModel->Execute(
+          new CopyNodeMessage{{text.ToStdString()}, {parentPath}});
     } else {
-      _dataModel->Execute(IDataModelEditor::CopyNodeCommand{
-          .SourcePath = {text.ToStdString()},
-          .TargetPath = {_rootName.ToStdString()}});
+      _dataModel->Execute(
+          new CopyNodeMessage{{text.ToStdString()}, {_rootName.ToStdString()}});
     }
     return true;
   }
 };
 
-void EditorMainWindow::Init(int argc, char **argv) {
-  _dataObserverAdapter = std::make_shared<DataModelObserverAdapter>(*this);
-  _dataModelSubscription = _dataModel->Subscribe(_dataObserverAdapter);
-  _systemFontsObserverAdapter =
-      std::make_shared<SystemFontsObserverAdapter>(*this);
-  _systemFontsSubscription =
-      _systemFonts->Subscribe(_systemFontsObserverAdapter);
+void EditorMainWindow::AddLanguage(std::string value) {
+  wxListItem item;
+  // item.SetColumn(0);
+  // item.SetImage(_imagePlusImage);
+  item.SetId(languageListBox->GetItemCount());
+  item.SetText(value);
+  languageListBox->InsertItem(item);
+}
 
+void EditorMainWindow::SetLanguageActive(std::string oldValue,
+                                         std::string newValue) {
+  auto id = languageListBox->FindItem(-1, newValue);
+
+  if (id >= 0) {
+    wxListItem item;
+    item.SetId(id);
+    if (languageListBox->GetItem(item)) {
+      item.SetImage(_imagePlusImage);
+      languageListBox->SetItem(item);
+    }
+  }
+
+  id = languageListBox->FindItem(-1, oldValue);
+  if (id >= 0) {
+    wxListItem item;
+    item.SetId(id);
+    if (languageListBox->GetItem(item)) {
+      item.SetImage(-1);
+      languageListBox->SetItem(item);
+    }
+  }
+};
+
+void EditorMainWindow::RemoveLanguage(std::string value) {
+  if (auto index = languageListBox->FindItem(-1, value); index < 0)
+    return;
+  else {
+    languageListBox->DeleteItem(index);
+  }
+}
+
+void EditorMainWindow::SaveCurrentSelectionPath() {
+  auto s = finalScene->GetSelection();
+  if (!s.IsOk())
+    return;
+  _copyNode = GetPath(ROOT_SCENE, finalScene, s);
+}
+
+void EditorMainWindow::PasteEntryCopy() {
+  auto s = finalScene->GetSelection();
+  if (!s.IsOk())
+    return;
+  auto target = GetPath(ROOT_SCENE, finalScene, s);
+  if (target.IsValid()) {
+    _dataModel->Execute(new CopyEntryMessage{_copyNode, target});
+  }
+}
+
+EditorMainWindow::EditorMainWindow(Vandrouka::Ref<IDataModel> dataModel,
+                                   Vandrouka::Ref<ISystemFonts> systemFonts,
+                                   wxWindow *parent)
+    : EditorMainWindowBase(parent, -1, "Editor"), _dataModel{dataModel},
+      _systemFonts{systemFonts} {
+
+  _observerWrapper = new ObserverWrapper{this};
+  _processor = Application::CreateWxProcessor();
+  _stateWrapper = new EditorMainWindowStateWrapper{this};
+  _sinkWrapper = new MessageSinkWrapper{this};
+
+  _systemFontsSubscription =
+      this->_systemFonts.Cast<IObservable>()->Subscribe(_observerWrapper);
+  _dataModelSubscription =
+      this->_dataModel.Cast<IObservable>()->Subscribe(_observerWrapper);
+
+  _processor->AddProcessor(new FontCompiledMessageProcessor());
+  _processor->AddProcessor(new FontsRefreshCompletedMessageProcessor());
+  _processor->AddProcessor(new CompileMessageProcessor());
+  _processor->AddProcessor(new SceneCompeledMessageProcessor());
+  _processor->AddProcessor(new ModelResetMessageProcessor());
+  _processor->AddProcessor(new EntrySelectedMessageProcessor());
+  _processor->AddProcessor(new EntryPropertyChangedMessageProcessor());
+  _processor->AddProcessor(new ConfigChangedMessageProcessor());
+  _processor->AddProcessor(new LanguageAddedMessageProcessor());
+  _processor->AddProcessor(new ActiveLanguageChangedMessageProcessor());
+  _processor->AddProcessor(new LanguageRemovedMessageProcessor());
+  _processor->AddProcessor(new SuggestedChildrenMessageProcessor());
+  _processor->AddProcessor(new BulkOperationStartedMessageProcessor());
+  _processor->AddProcessor(new BulkOperationEndedMessageProcessor());
+  _processor->AddProcessor(new EntryRemovedMessageProcessor());
+  _processor->AddProcessor(new EntryAddedMessageProcessor());
+  _processor->AddProcessor(new LongOperationEndedMessageProcessor());
+  _processor->AddProcessor(new LongOperationStartedMessageProcessor());
+  _processor->SetUnhandledProcessor(new UnhandledMessageProcessor());
+}
+
+void EditorMainWindow::Init(int argc, char **argv) {
   Maximize(true);
   wxSize size{16, 16};
   this->dataPanels->SetSelection(0);
@@ -87,6 +225,7 @@ void EditorMainWindow::Init(int argc, char **argv) {
   this->languageListBox->AppendColumn("Languages", wxLIST_FORMAT_LEFT, 200);
 
   this->fontsList->AppendColumn("Font File", wxLIST_FORMAT_LEFT, 200);
+  this->logsList->AppendColumn("Message", wxLIST_FORMAT_LEFT, 200);
 
   _imageList = new wxImageList(size.GetWidth(), size.GetHeight(), true);
   _imageErrorIcon =
@@ -218,11 +357,6 @@ void EditorMainWindow::Init(int argc, char **argv) {
   this->finalScene->AddRoot("SCENE");
 }
 
-EditorMainWindow::EditorMainWindow(IDataModelEditor *dataModel,
-                                   ISystemFonts *systemFonts, wxWindow *parent)
-    : EditorMainWindowBase(parent, -1, "Editor"), _dataModel{dataModel},
-      _systemFonts{systemFonts} {}
-
 void EditorMainWindow::Paint() { viewerWindow->PaintNow(); }
 
 void EditorMainWindow::importFontMenuOnMenuSelection(wxCommandEvent &) {}
@@ -236,22 +370,9 @@ void EditorMainWindow::fontSearchOnText(wxCommandEvent &) {
 
 void EditorMainWindow::fontsListOnListItemSelected(wxListEvent &event) {
   if (auto selection = event.GetIndex(); selection >= 0) {
-    _systemFonts->Execute(ISystemFonts::CompileFont{
-        .DisplayName = fontsList->GetItemText(event.GetIndex()).ToStdString(),
-        .State = {}});
+    _systemFonts->Execute(new CompileFontMessage{
+        fontsList->GetItemText(event.GetIndex()).ToStdString(), {}});
   }
-}
-
-void EditorMainWindow::Execute(const FontCompiled &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _root->children.clear();
-
-    if (cmd.Root) {
-      _root->addChild(cmd.Root);
-    }
-
-    viewerWindow->viewer->compileManager->compile(_root);
-  });
 }
 
 void EditorMainWindow::UpdateFonts() {
@@ -271,29 +392,10 @@ void EditorMainWindow::UpdateFonts() {
   _textPanel->SetFonts(_fontsCache);
 }
 
-void EditorMainWindow::Execute(const RefreshComplete &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _fontsCache = cmd.Fonts;
-    UpdateFonts();
-  });
-}
-
 void EditorMainWindow::dataPanelsOnNotebookPageChanged(wxNotebookEvent &) {
   if (_systemFonts) {
-    _systemFonts->Execute(ISystemFonts::Refresh{.Force = false});
+    _systemFonts->Execute(new RefreshFontsMessage{false});
   }
-
-  // static_cast<Application*>(wxApp::GetInstance())->GetFonts()->Refresh(false,
-  // [&](auto fonts) {
-  //     auto allFonts = fonts->GetAllFonts();
-  //     wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this,
-  //     allFonts]() {
-  //         this->fontsList->Clear();
-  //         for (auto font : allFonts) {
-  //             this->fontsList->AppendString(font.filename().string());
-  //         }
-  //     });
-  // });
 }
 
 void EditorMainWindow::OnImport(wxCommandEvent &) {
@@ -311,239 +413,44 @@ void EditorMainWindow::OnImport(wxCommandEvent &) {
   fd.GetPaths(files);
 
   for (auto file : files) {
-    _dataModel->Execute(IDataModelEditor::ImportFileCommand{
-        .FilePath = file.ToStdString(),
-        .Options = _options,
-        .ProjectPath = this->_projectStorage.parent_path()});
+    _dataModel->Execute(new ImportFileMessage{
+        file.ToStdString(), _options, this->_projectStorage.parent_path()});
   }
 }
 
-void EditorMainWindow::Execute(const CompileCommand &cmd) {
+void EditorMainWindow::OnError(Vandrouka::Ref<IError> cmd) {
   wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    auto result = viewerWindow->viewer->compileManager->compile(cmd.Object);
-    cmd.OnComplete(cmd.Object, result);
-  });
-}
-
-void EditorMainWindow::Execute(const SceneCompeledNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _root->children.clear();
-    if (cmd.Root) {
-      _root->addChild(cmd.Root);
+    if (logsList->GetItemCount() < 1000) {
+      wxListItem item;
+      item.SetColumn(0);
+      item.SetText(cmd->ToString());
+      item.SetId(logsList->GetItemCount());
+      logsList->InsertItem(item);
     }
 
-    viewerWindow->viewer->compileManager->compile(_root);
-  });
-}
-
-void EditorMainWindow::Execute(const ModelResetNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    reseting = true;
-    assetsTree->UnselectAll();
-    finalScene->UnselectAll();
-    packageToId.clear();
-
-    for (auto child : _root->children) {
-      _cleanup.emplace_back(60, child);
-    }
-
-    _root->children.clear();
-    assetsTree->DeleteAllItems();
-    finalScene->DeleteAllItems();
-    assetsTree->AddRoot("");
-    finalScene->AddRoot("");
-    reseting = false;
-  });
-}
-
-void EditorMainWindow::Execute(const LogNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
     if (_bulkOperation == 0) {
-      wxMessageBox(ErrorToString(cmd), "Error", wxICON_ERROR);
+      // wxMessageBox(cmd->ToString(), "Error", wxICON_ERROR);
     } else {
-      _bulkErrors.push_back(ErrorToString(cmd));
+      _bulkErrors.push_back(cmd->ToString());
     }
   });
 }
 
-void EditorMainWindow::Execute(const EntrySelectedNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _transformPanel->SetDataModel(cmd.SelectedEntry);
-    _textPanel->SetDataModel(cmd.SelectedEntry);
-    propertiesSizer->Layout();
-    _dataModel->Execute(
-        IDataModelEditor::CompileSceneCommand{.Root = {ROOT_SCENE}});
-  });
+void EditorMainWindow::AddRef() {}
+
+void EditorMainWindow::Release() {}
+
+bool EditorMainWindow::QueryInterface(const InterfaceId &id, void **o) {
+  if (o)
+    *o = nullptr;
+  return false;
 }
 
-static const std::unordered_set<std::string_view> PropertiesToRecompile{
-    "Orientation",
-    "Position",
-    "Override",
-    "Scale",
-    "Font",
-    "Value",
-    "Color",
-    "Color.R",
-    "Color.G",
-    "Color.B",
-    "Color.A",
-    "Offset",
-    "Offset.X",
-    "Offset.Y",
-    "Offset.Z",
-    "VerticalAxis",
-    "VerticalAxis.X",
-    "VerticalAxis.Y",
-    "VerticalAxis.Z",
-    "HorizontalAxis",
-    "HorizontalAxis.X",
-    "HorizontalAxis.Y",
-    "HorizontalAxis.Z",
-    "HorizontalAlignment",
-    "VerticalAlignment",
-    "LineSpacing",
-    "ActiveLanguage"};
-
-void EditorMainWindow::Execute(const EntryPropertyChangedNotification &cmd) {
-  if (!cmd.ChangedEntry)
-    return;
-
-  if (PropertiesToRecompile.contains(cmd.Property)) {
-    _dataModel->Execute(
-        IDataModelEditor::CompileSceneCommand{.Root = {ROOT_SCENE}});
-  }
+void EditorMainWindow::OnNext(Vandrouka::Ref<IMessage> msg) {
+  _processor->Process(_stateWrapper, msg, _sinkWrapper);
 }
 
-void EditorMainWindow::Execute(const ConfigNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _config = cmd.Config;
-    UpdateConfig();
-  });
-}
-
-void EditorMainWindow::Execute(const LanguageAddedNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    wxListItem item;
-    // item.SetColumn(0);
-    // item.SetImage(_imagePlusImage);
-    item.SetId(languageListBox->GetItemCount());
-    item.SetText(cmd.Value);
-    languageListBox->InsertItem(item);
-  });
-}
-
-void EditorMainWindow::Execute(const ActiveLanguageChanged &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    auto id = languageListBox->FindItem(-1, cmd.NewLanguage);
-
-    if (id >= 0) {
-      wxListItem item;
-      item.SetId(id);
-      if (languageListBox->GetItem(item)) {
-        item.SetImage(_imagePlusImage);
-        languageListBox->SetItem(item);
-      }
-    }
-
-    id = languageListBox->FindItem(-1, cmd.OldLanguage);
-    if (id >= 0) {
-      wxListItem item;
-      item.SetId(id);
-      if (languageListBox->GetItem(item)) {
-        item.SetImage(-1);
-        languageListBox->SetItem(item);
-      }
-    }
-  });
-}
-
-void EditorMainWindow::Execute(const LanguageRemoveNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    if (auto index = languageListBox->FindItem(-1, cmd.Value); index < 0)
-      return;
-    else {
-      languageListBox->DeleteItem(index);
-    }
-  });
-}
-
-void EditorMainWindow::Execute(const SuggestedChildrenNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    if (cmd.Context == "popup") {
-      wxMenu menu;
-      for (auto e : cmd.Suggestions) {
-        auto item = menu.Append(wxID_ANY, e.Name);
-
-        menu.Bind(
-            wxEVT_COMMAND_MENU_SELECTED,
-            [cmd, e, this](wxCommandEvent &) {
-              _dataModel->Execute(IDataModelEditor::CreateNodeCommand{
-                  .Path = cmd.Path.Append(e.Name), .Type = e.Type});
-            },
-            item->GetId());
-      }
-
-      {
-        menu.AppendSeparator();
-
-        auto item = menu.Append(wxID_ANY, "Copy");
-
-        menu.Bind(
-            wxEVT_COMMAND_MENU_SELECTED,
-            [cmd, this](wxCommandEvent &) {
-              auto s = finalScene->GetSelection();
-              if (!s.IsOk())
-                return;
-              _copyNode = GetPath(ROOT_SCENE, finalScene, s);
-            },
-            item->GetId());
-      }
-
-      if (_copyNode.IsValid()) {
-        auto item = menu.Append(wxID_ANY, "Paste");
-
-        menu.Bind(
-            wxEVT_COMMAND_MENU_SELECTED,
-            [cmd, this](wxCommandEvent &) {
-              auto s = finalScene->GetSelection();
-              if (!s.IsOk())
-                return;
-              auto target = GetPath(ROOT_SCENE, finalScene, s);
-              if (target.IsValid()) {
-                _dataModel->Execute(IDataModelEditor::CopyEntryCommand{
-                    .SourcePath = _copyNode, .TargetPath = target});
-              }
-            },
-            item->GetId());
-      }
-
-      PopupMenu(&menu);
-    }
-  });
-}
-
-void EditorMainWindow::Execute(const BulkOperationStartedNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter(
-      [this, cmd]() { _bulkOperation++; });
-}
-
-void EditorMainWindow::Execute(const BulkOperationEndedNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _bulkOperation--;
-    assert(_bulkOperation >= 0);
-    if (_bulkOperation == 0) {
-      if (!_bulkErrors.empty()) {
-        std::string bigMessage;
-        for (auto &e : _bulkErrors) {
-          bigMessage.append(e);
-          bigMessage.append("\n\r");
-        }
-        wxMessageBox(bigMessage, "Error", wxICON_ERROR);
-      }
-    }
-  });
-}
+void EditorMainWindow::OnComplete() {}
 
 int EditorMainWindow::GetEntryTypeImage(EntryType type) {
   switch (type) {
@@ -586,118 +493,120 @@ void EditorMainWindow::UpdateConfig() {
   }
 }
 
-void EditorMainWindow::Execute(const ItemAddedNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    wxTreeCtrl *tree = nullptr;
-    if (cmd.Path.GetName() == ROOT_PACKAGES) {
-      tree = assetsTree;
-    } else if (cmd.Path.GetName() == ROOT_SCENE) {
-      tree = finalScene;
-    }
-
-    if (!tree)
-      return;
-
-    auto cur = cmd.Path.GetNext();
-
-    if (!cur.IsValid())
-      return;
-
-    wxTreeItemId parent = tree->GetRootItem();
-
-    while (cur.GetNext().IsValid()) {
-      wxTreeItemIdValue cookie;
-      auto child = tree->GetFirstChild(parent, cookie);
-
-      while (true) {
-        if (!child.IsOk()) {
-          parent = tree->AppendItem(parent, cur.GetName(),
-                                    GetEntryTypeImage(cmd.Type));
-          cur = cur.GetNext();
-          break;
-        }
-
-        auto text = tree->GetItemText(child);
-        if (text == cur.GetName()) {
-          parent = child;
-          cur = cur.GetNext();
-          break;
-        }
-
-        child = tree->GetNextChild(parent, cookie);
-      }
-    }
-
-    if (!parent.IsOk())
-      return;
-
-    auto itemId =
-        tree->AppendItem(parent, cur.GetName(), GetEntryTypeImage(cmd.Type));
-
-    if (tree == finalScene) {
-      tree->SelectItem(itemId, true);
-      _dataModel->Execute(
-          IDataModelEditor::CompileSceneCommand{.Root = {.Path = ROOT_SCENE}});
-    }
-  });
+void EditorMainWindow::SubmitMessage(Vandrouka::Ref<IMessage> msg) {
+  assert(false && "Should not be here");
 }
 
-void EditorMainWindow::Execute(const ItemRemovedNotification &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    wxTreeCtrl *tree = nullptr;
-    if (cmd.Path.GetName() == ROOT_PACKAGES) {
-      tree = assetsTree;
-    } else if (cmd.Path.GetName() == ROOT_SCENE) {
-      tree = finalScene;
-    }
+void EditorMainWindow::SubmitError(Vandrouka::Ref<IError> msg) { OnError(msg); }
 
-    if (!tree)
-      return;
+void EditorMainWindow::AddEntry(EntryPath path, EntryType type) {
+  wxTreeCtrl *tree = nullptr;
+  if (path.GetName() == ROOT_PACKAGES) {
+    tree = assetsTree;
+  } else if (path.GetName() == ROOT_SCENE) {
+    tree = finalScene;
+  }
 
-    auto cur = cmd.Path.GetNext();
-    wxTreeItemId parent = tree->GetRootItem();
+  if (!tree)
+    return;
 
-    while (cur.GetNext().IsValid()) {
-      wxTreeItemIdValue cookie;
-      auto child = tree->GetFirstChild(parent, cookie);
+  auto cur = path.GetNext();
 
-      while (true) {
-        if (!child.IsOk()) {
-          return;
-        }
+  if (!cur.IsValid())
+    return;
 
-        auto text = tree->GetItemText(child);
-        if (text == cur.GetName()) {
-          parent = child;
-          cur = cur.GetNext();
-          break;
-        }
+  wxTreeItemId parent = tree->GetRootItem();
 
-        child = tree->GetNextChild(parent, cookie);
-      }
-    }
-
-    auto name = cur.GetName();
-
+  while (cur.GetNext().IsValid()) {
     wxTreeItemIdValue cookie;
     auto child = tree->GetFirstChild(parent, cookie);
 
     while (true) {
-      if (!child.IsOk())
-        return;
+      if (!child.IsOk()) {
+        parent =
+            tree->AppendItem(parent, cur.GetName(), GetEntryTypeImage(type));
+        cur = cur.GetNext();
+        break;
+      }
 
       auto text = tree->GetItemText(child);
       if (text == cur.GetName()) {
-        tree->Delete(child);
-        return;
+        parent = child;
+        cur = cur.GetNext();
+        break;
       }
 
       child = tree->GetNextChild(parent, cookie);
     }
+  }
 
-    _dataModel->Execute(
-        IDataModelEditor::CompileSceneCommand{.Root = {.Path = ROOT_SCENE}});
-  });
+  if (!parent.IsOk())
+    return;
+
+  auto itemId =
+      tree->AppendItem(parent, cur.GetName(), GetEntryTypeImage(type));
+
+  if (tree == finalScene) {
+    if (_longOperations.empty()) {
+      tree->SelectItem(itemId, true);
+      _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
+    }
+  }
+}
+
+void EditorMainWindow::RemoveEntry(EntryPath path) {
+  wxTreeCtrl *tree = nullptr;
+  if (path.GetName() == ROOT_PACKAGES) {
+    tree = assetsTree;
+  } else if (path.GetName() == ROOT_SCENE) {
+    tree = finalScene;
+  }
+
+  if (!tree)
+    return;
+
+  auto cur = path.GetNext();
+  wxTreeItemId parent = tree->GetRootItem();
+
+  while (cur.GetNext().IsValid()) {
+    wxTreeItemIdValue cookie;
+    auto child = tree->GetFirstChild(parent, cookie);
+
+    while (true) {
+      if (!child.IsOk()) {
+        return;
+      }
+
+      auto text = tree->GetItemText(child);
+      if (text == cur.GetName()) {
+        parent = child;
+        cur = cur.GetNext();
+        break;
+      }
+
+      child = tree->GetNextChild(parent, cookie);
+    }
+  }
+
+  auto name = cur.GetName();
+
+  wxTreeItemIdValue cookie;
+  auto child = tree->GetFirstChild(parent, cookie);
+
+  while (true) {
+    if (!child.IsOk())
+      return;
+
+    auto text = tree->GetItemText(child);
+    if (text == cur.GetName()) {
+      tree->Delete(child);
+      return;
+    }
+
+    child = tree->GetNextChild(parent, cookie);
+  }
+
+  _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
 }
 
 void EditorMainWindow::assetsTreeOnTreeSelChanged(wxTreeEvent &event) {
@@ -708,8 +617,8 @@ void EditorMainWindow::assetsTreeOnTreeSelChanged(wxTreeEvent &event) {
     return;
   else {
     if (assetsTree->GetItemParent(item) == assetsTree->GetRootItem()) {
-      _dataModel->Execute(IDataModelEditor::CompileSceneCommand{
-          .Root = GetPath(ROOT_PACKAGES, assetsTree, item)});
+      _dataModel->Execute(
+          new CompileSceneMessage{GetPath(ROOT_PACKAGES, assetsTree, item)});
     }
   }
 }
@@ -722,12 +631,12 @@ void EditorMainWindow::finalSceneOnTreeSelChanged(wxTreeEvent &event) {
     return;
   else {
     if (finalScene->GetItemParent(item) == finalScene->GetRootItem()) {
-      _dataModel->Execute(IDataModelEditor::CompileSceneCommand{
-          .Root = GetPath(ROOT_SCENE, finalScene, item)});
+      _dataModel->Execute(
+          new CompileSceneMessage{GetPath(ROOT_SCENE, finalScene, item)});
     }
 
-    _dataModel->Execute(IDataModelEditor::SelectEntryCommand{
-        .Path = GetPath(ROOT_SCENE, finalScene, item)});
+    _dataModel->Execute(
+        new SelectEntryMessage{GetPath(ROOT_SCENE, finalScene, item)});
   }
 }
 
@@ -752,11 +661,9 @@ void EditorMainWindow::finalSceneOnTreeEndDrag(wxTreeEvent &event) {
   // auto oldPath = GetPath(ROOT_SCENE, finalScene, event.GetOldItem());
   auto newPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
   if (wxGetKeyState(WXK_CONTROL)) {
-    _dataModel->Execute(IDataModelEditor::CopyEntryCommand{
-        .SourcePath = {_oldPath}, .TargetPath = {newPath.Path}});
+    _dataModel->Execute(new CopyEntryMessage{{_oldPath}, {newPath.Path}});
   } else {
-    _dataModel->Execute(IDataModelEditor::MoveEntryCommand{
-        .SourcePath = {_oldPath}, .TargetPath = {newPath.Path}});
+    _dataModel->Execute(new MoveEntryMessage{{_oldPath}, {newPath.Path}});
   }
   // _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root =
   // EntryPath{ ROOT_SCENE } });
@@ -772,8 +679,7 @@ void EditorMainWindow::finalSceneOnTreeItemRightClick(wxTreeEvent &event) {
 
   auto path = GetPath(ROOT_SCENE, finalScene, item);
 
-  _dataModel->Execute(IDataModelEditor::RequestSuggestedChildrenCommand{
-      .Path = path, .Context = "popup"});
+  _dataModel->Execute(new RequestSuggestedChildrenMessage{path, "popup"});
 
   event.Skip();
 }
@@ -785,9 +691,8 @@ void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent &) {
 
   auto path = GetPath(ROOT_SCENE, finalScene, s);
 
-  _dataModel->Execute(IDataModelEditor::RemoveEntryCommand{.Path = path});
-  _dataModel->Execute(
-      IDataModelEditor::CompileSceneCommand{.Root = EntryPath{ROOT_SCENE}});
+  _dataModel->Execute(new RemoveEntryMessage{path});
+  _dataModel->Execute(new CompileSceneMessage{EntryPath{ROOT_SCENE}});
 }
 
 void EditorMainWindow::addToSceneOnCombobox(wxCommandEvent &event) {
@@ -799,8 +704,7 @@ void EditorMainWindow::addToSceneOnCombobox(wxCommandEvent &event) {
   }
 
   auto type = event.GetString().ToStdString();
-  _dataModel->Execute(IDataModelEditor::CreateNodeCommand{
-      .Path = path.Append(type), .Type = type});
+  _dataModel->Execute(new CreateNodeMessage{path.Append(type), type});
 }
 
 void EditorMainWindow::navigateOnToolClicked(wxCommandEvent &) {
@@ -834,13 +738,12 @@ void EditorMainWindow::loadProjectMenuItemOnMenuSelection(wxCommandEvent &) {
 
   _projectStorage = fd.GetPath().ToStdString();
 
-  _dataModel->Execute(IDataModelEditor::ResetModelCommand{});
-  _dataModel->Execute(
-      IDataModelEditor::ImportFromFileCommand{.Path = _projectStorage});
+  _dataModel->Execute(new ResetModelMessage{});
+  _dataModel->Execute(new ImportFromFileMessage{_projectStorage});
 }
 
 void EditorMainWindow::resetMenuItemOnMenuSelection(wxCommandEvent &) {
-  _dataModel->Execute(IDataModelEditor::ResetModelCommand{});
+  _dataModel->Execute(new ResetModelMessage{});
 }
 
 void EditorMainWindow::finalSceneOnTreeBeginLabelEdit(wxTreeEvent &) {}
@@ -854,8 +757,7 @@ void EditorMainWindow::finalSceneOnTreeEndLabelEdit(wxTreeEvent &event) {
   auto oldPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
   auto newPath = oldPath.GetParent().Append(newName.ToStdString());
 
-  _dataModel->Execute(IDataModelEditor::RenameEntryCommand{.OldPath = oldPath,
-                                                           .NewPath = newPath});
+  _dataModel->Execute(new RenameEntryMessage{oldPath, newPath});
 
   event.Veto();
 }
@@ -885,14 +787,12 @@ void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent &) {
     _projectStorage = fd.GetPath().ToStdString();
   }
 
-  _dataModel->Execute(
-      IDataModelEditor::SaveToFileCommand{.Path = _projectStorage});
+  _dataModel->Execute(new SaveToFileMessage{_projectStorage});
 }
 
 void EditorMainWindow::showTransformMenuOnMenuSelection(wxCommandEvent &event) {
   _config->SetShowTransform(event.IsChecked());
-  _dataModel->Execute(
-      IDataModelEditor::CompileSceneCommand{.Root = {ROOT_SCENE}});
+  _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
 }
 
 void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent &) {
@@ -908,7 +808,7 @@ void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent &) {
 
   auto path = fd.GetPath().ToStdString();
 
-  _dataModel->Execute(IDataModelEditor::ExportToFileCommand{.Path = path});
+  _dataModel->Execute(new ExportToFileMessage{path});
 }
 
 void EditorMainWindow::langAddOnButtonClick(wxCommandEvent &) {
@@ -917,8 +817,7 @@ void EditorMainWindow::langAddOnButtonClick(wxCommandEvent &) {
     return;
   else if (r == wxID_OK) {
     auto value = dlg.GetText();
-    _dataModel->Execute(
-        IDataModelEditor::AddLanguageCommand{.Value = value.ToStdString()});
+    _dataModel->Execute(new AddLanguageMessage{value.ToStdString()});
   }
 }
 
@@ -933,8 +832,8 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
     menu.Bind(
         wxEVT_COMMAND_MENU_SELECTED,
         [event, this](wxCommandEvent &) {
-          _dataModel->Execute(IDataModelEditor::SetActiveLanguageRequest{
-              .Language = event.GetLabel().ToStdString()});
+          _dataModel->Execute(
+              new SetActiveLanguageMessage{event.GetLabel().ToStdString()});
         },
         item->GetId());
   }
@@ -952,9 +851,8 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
             return;
           else if (r == wxID_OK) {
             auto value = dlg.GetText();
-            _dataModel->Execute(IDataModelEditor::RenameLanguageCommand{
-                .OldValue = event.GetLabel().ToStdString(),
-                .NewValue = value.ToStdString()});
+            _dataModel->Execute(new RenameLanguageMessage{
+                event.GetLabel().ToStdString(), value.ToStdString()});
           }
         },
         item->GetId());
@@ -966,8 +864,8 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
     menu.Bind(
         wxEVT_COMMAND_MENU_SELECTED,
         [event, this](wxCommandEvent &) {
-          _dataModel->Execute(IDataModelEditor::RemoveLanguageCommand{
-              .Value = event.GetLabel().ToStdString()});
+          _dataModel->Execute(
+              new RemoveLanguageMessage{event.GetLabel().ToStdString()});
         },
         item->GetId());
   }
@@ -975,36 +873,32 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
   PopupMenu(&menu);
 }
 
-void EditorMainWindow::Execute(const LongOperationStarted &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _longOperations.insert(cmd.Operation);
-    if (_longOperations.size() == 1) {
-      showLongTasksBtn->SetLabel(cmd.Operation.Name);
-      busyIcon->Show(true);
-      showLongTasksBtn->Show(true);
-      bottomBarLongTasksSizer->Layout();
-      bottomBarSizer->Layout();
-      Layout();
-    }
-  });
-}
-
-void EditorMainWindow::Execute(const LongOperationEnded &cmd) {
-  wxTheApp->GetTopWindow()->GetEventHandler()->CallAfter([this, cmd]() {
-    _longOperations.erase(cmd.Operation);
-    if (_longOperations.empty()) {
-      showLongTasksBtn->SetLabel("");
-      showLongTasksBtn->Show(false);
-      busyIcon->Show(false);
-    } else {
-      auto op = *_longOperations.begin();
-      showLongTasksBtn->SetLabel(op.Name);
-    }
-
+void EditorMainWindow::BeginOperation(const LongOperation &op) {
+  _longOperations.insert(op);
+  if (_longOperations.size() == 1) {
+    showLongTasksBtn->SetLabel(op.Name);
+    busyIcon->Show(true);
+    showLongTasksBtn->Show(true);
     bottomBarLongTasksSizer->Layout();
     bottomBarSizer->Layout();
     Layout();
-  });
+  }
+}
+
+void EditorMainWindow::EndOperation(const LongOperation &op) {
+  _longOperations.erase(op);
+  if (_longOperations.empty()) {
+    showLongTasksBtn->SetLabel("");
+    showLongTasksBtn->Show(false);
+    busyIcon->Show(false);
+  } else {
+    auto op = *_longOperations.begin();
+    showLongTasksBtn->SetLabel(op.Name);
+  }
+
+  bottomBarLongTasksSizer->Layout();
+  bottomBarSizer->Layout();
+  Layout();
 }
 
 void EditorMainWindow::OnIdle() {
@@ -1012,3 +906,5 @@ void EditorMainWindow::OnIdle() {
     busyIcon->SetValue((busyIcon->GetValue() + 1) % busyIcon->GetRange());
   }
 }
+
+} // namespace Vandrouka

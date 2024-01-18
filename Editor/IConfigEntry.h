@@ -1,22 +1,18 @@
 #pragma once
 
-#include <vsg/all.h>
-
-#include <semaphore>
-
-#include "IReferenced.h"
+#include "Result.h"
 
 namespace Vandrouka {
 
 class IConfigEntry : public IReferenced {
 public:
   virtual bool GetShowTransform() const = 0;
-  virtual void SetShowTransform(bool value) = 0;
-  virtual bool AddLanguage(const std::string &value) = 0;
-  virtual bool RemoveLanguage(const std::string &value) = 0;
+  virtual Result<bool> SetShowTransform(bool value) = 0;
+  virtual Result<bool> AddLanguage(const std::string &value) = 0;
+  virtual Result<bool> RemoveLanguage(const std::string &value) = 0;
   virtual std::vector<std::string> GetLanguages() const = 0;
   virtual std::string GetActiveLanguage() const = 0;
-  virtual bool SetActiveLanguage(const std::string &value) = 0;
+  virtual Result<bool> SetActiveLanguage(const std::string &value) = 0;
 };
 
 template <> struct GetIID<IConfigEntry> {

@@ -1,11 +1,14 @@
 #include "AsyncQueue.h"
 #include "IAsyncQueue.h"
 #include "IoContext.h"
+#include <concepts>
 
 namespace Vandrouka {
 
 class LockTask : public ReferenceCountedBase<LockTask, IAsyncTask> {
 public:
+  using Interfaces = QueryInterfaces<LockTask, IAsyncTask, IReferenced>;
+
   LockTask(std::binary_semaphore &s, Ref<IAsyncTask> task)
       : _s{s}, _task{task} {}
 
@@ -37,8 +40,10 @@ private:
   Ref<IAsyncTask> _task;
 };
 
-class AsyncQueue : public ReferenceCountedBase<AsyncQueue, IAsyncQueue> {
+class AsyncQueue final : public ReferenceCountedBase<AsyncQueue, IAsyncQueue> {
 public:
+  using Interfaces = QueryInterfaces<AsyncQueue, IAsyncQueue, IReferenced>;
+
   AsyncQueue(std::shared_ptr<boost::asio::io_context> ctx)
       : _ctx{ctx}, _timer{*ctx} {
     Start();
@@ -46,7 +51,7 @@ public:
 
   virtual ~AsyncQueue() {}
 
-  bool QueryInterface(const InterfaceId &id, void **o) override {
+  /*bool QueryInterface(const InterfaceId &id, void **o) override {
     if (id == GetIID<IAsyncQueue>::Id) {
       *o = static_cast<IAsyncQueue *>(this);
     } else if (id == GetIID<IReferenced>::Id) {
@@ -60,7 +65,7 @@ public:
     }
 
     return *o != nullptr;
-  }
+  }*/
 
   void Start() {
     _timer.expires_from_now(boost::posix_time::seconds(60));
@@ -114,6 +119,8 @@ public:
 
   void Execute(Ref<IAsyncTask> task) override {
     std::binary_semaphore s{0};
+    static_assert(std::is_convertible_v<LockTask *, IAsyncTask *>,
+                  "LockTask is not derived from IAsyncTask");
 
     Ref<IAsyncTask> wrappedTask{new LockTask(s, task)};
 
@@ -133,7 +140,11 @@ private:
   std::thread::id _currentThread;
 };
 
-IReferenced *CreateAsyncQueue() { return new AsyncQueue(GetIoContext()); }
+IReferenced *CreateAsyncQueue() {
+  // static_assert(std::derived_from<::Vandrouka::AsyncQueue, IReferenced>,
+  // "AsyncQueue is not IReferenced");
+  return (IAsyncQueue *)(new AsyncQueue(GetIoContext()));
+}
 
 } // namespace Vandrouka
 

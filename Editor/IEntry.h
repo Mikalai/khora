@@ -26,7 +26,7 @@ class IEntry : public IReferenced {
 public:
   virtual EntryType GetType() const = 0;
   virtual EntryRef GetParent() const = 0;
-  virtual void SetParent(EntryRef parent) = 0;
+  virtual void SetParent(IEntry* parent) = 0;
   virtual EntryRef GetRoot() const = 0;
 };
 

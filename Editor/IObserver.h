@@ -1,17 +1,72 @@
 #pragma once
 
+#include <boost/uuid/uuid_hash.hpp>
+#include <span>
 #include "Errors.h"
 #include "IReferenced.h"
 
 namespace Vandrouka {
 
+using MessageId = boost::uuids::uuid;
+
 class IMessage : public IReferenced {
 public:
+  virtual const MessageId& GetTypeID() const = 0;
 };
+
+template <typename T>
+concept MessageType = requires(T a) {
+  { std::derived_from<T, IMessage> };
+};
+
 template <> struct GetIID<IMessage> {
   static constexpr InterfaceId Id = {{0xad, 0x15, 0xcd, 0x2b, 0xe4, 0x2b, 0x43,
                                       0xef, 0x8f, 0x74, 0x5d, 0x2f, 0x9a, 0xb1,
                                       0xce, 0x5}};
+};
+
+
+class IMessageOutput : public IReferenced {
+public:
+  virtual void SubmitMessage(Ref<IMessage> msg) = 0;
+  virtual void SubmitError(Ref<IError> msg) = 0;
+
+  void SubmitAllMessages(auto container) {
+    for (auto it = std::begin(container); it != std::end(container); ++it) {
+      SubmitMessage(*it);
+    }
+  }
+};
+
+template <> struct GetIID<IMessageOutput> {
+  static constexpr InterfaceId Id = {{0x63, 0x3e, 0x6c, 0x85, 0xe1, 0xda, 0x41,
+                                      0x74, 0x93, 0xcf, 0x4c, 0x14, 0xf7, 0x21,
+                                      0xb2, 0x3}};
+};
+
+class IMessageProcessor : public IReferenced {
+public:
+  virtual std::span<MessageId> GetMessageIds() = 0;
+  virtual void Process(Ref<IReferenced> state, Ref<IMessage> msg,
+                       Ref<IMessageOutput> sink) = 0;
+};
+
+template <> struct GetIID<IMessageProcessor> {
+  static constexpr InterfaceId Id = {{0x3b, 0xc2, 0x63, 0xc5, 0x16, 0x64, 0x42,
+                                      0x9, 0x9c, 0x28, 0x1b, 0xe2, 0x38, 0x84,
+                                      0xbe, 0x4f}};
+};
+
+class IAggregatedProcessor : public IMessageProcessor {
+public:
+  virtual void AddProcessor(Ref<IMessageProcessor> processor) = 0;
+  virtual void SetUnhandledProcessor(Ref<IMessageProcessor> processor) = 0;
+};
+
+template <> struct GetIID<IAggregatedProcessor> {
+  static constexpr InterfaceId Id = {{0x3e, 0x14, 0x3, 0xdb, 0x8e, 0xbc, 0x44,
+                                      0x61, 0x9f, 0x6, 0x7e, 0x91, 0xc4, 0x88,
+                                      0x3, 0xd1}};
 };
 
 class ISubscribedMessage : public IMessage {

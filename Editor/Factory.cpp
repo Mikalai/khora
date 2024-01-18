@@ -6,6 +6,10 @@
 #include "ISystemFonts.h"
 #include "ITextEntry.h"
 #include "ITransformEntry.h"
+#include "ISerializable.h"
+#include "IDataModel.h"
+#include "IGeometryEntry.h"
+#include "IMaterialEntry.h"
 
 namespace Vandrouka {
 
@@ -16,8 +20,16 @@ IReferenced *CreateTextEntry();
 IReferenced *CreateTransformProxyEntry();
 IReferenced *CreateLocalizedEntry();
 IReferenced *CreateConfigEntry();
+IReferenced *CreateJsonPackage();
+IReferenced *CreateDataModel();
+IReferenced *CreateGeometryPackageEntry();
+IReferenced *CreateGeometryProxyEntry();
+IReferenced *CreateTransformPackageEntry();
+IReferenced *CreateTransformProxyEntry();
+IReferenced *CreateMaterialProxyEntry();
+IReferenced *CreateMaterialPackageEntry();
 
-bool Create(const ClassId &cid, const InterfaceId &iid, void **obj) {
+  bool Create(const ClassId &cid, const InterfaceId &iid, void **obj) {
 
   Ref<IReferenced> result;
 
@@ -35,6 +47,22 @@ bool Create(const ClassId &cid, const InterfaceId &iid, void **obj) {
     result = Ref<IReferenced>{CreateLocalizedEntry()};
   } else if (cid == GetCID<ConfigEntry>::Id) {
     result = Ref<IReferenced>{CreateConfigEntry()};
+  } else if (cid == GetCID<JsonPackage>::Id) {
+    result = Ref<IReferenced>{CreateJsonPackage()};
+  } else if (cid == GetCID<DataModel>::Id) {
+    result = Ref<IReferenced>{CreateDataModel()};
+  } else if (cid == GetCID<GeometryPackageEntry>::Id) {
+    result = Ref<IReferenced>{CreateGeometryPackageEntry()};
+  } else if (cid == GetCID<GeometryProxyEntry>::Id) {
+    result = Ref<IReferenced>{CreateGeometryProxyEntry()};
+  } else if (cid == GetCID<TransformPackageEntry>::Id) {
+    result = Ref<IReferenced>{CreateTransformPackageEntry()};
+  } else if (cid == GetCID<TransformProxyEntry>::Id) {
+    result = Ref<IReferenced>{CreateTransformProxyEntry()};
+  } else if (cid == GetCID<MaterialProxyEntry>::Id) {
+    result = Ref<IReferenced>{CreateMaterialProxyEntry()};
+  } else if (cid == GetCID<MaterialPackageEntry>::Id) {
+    result = Ref<IReferenced>{CreateMaterialPackageEntry()};
   } else {
     result = nullptr;
   }
