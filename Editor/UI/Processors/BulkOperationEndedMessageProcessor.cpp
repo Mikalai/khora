@@ -1,10 +1,12 @@
 #include "BulkOperationEndedMessageProcessor.h"
 #include "../EditorMainWindow.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
+
 void BulkOperationEndedMessageProcessor::ProcessMessage(
     Ref<IEditorMainWindowStateWrapper> state,
-    Ref<IBulkOperationEndedMessage> cmd, Ref<IMessageOutput> sink) {
+    Ref<State::Messages::IBulkOperationEndedMessage> cmd,
+    Ref<IMessageOutput> sink) {
 
   auto ops = state->GetState()->_bulkOperation--;
   assert(ops >= 0);
@@ -19,4 +21,5 @@ void BulkOperationEndedMessageProcessor::ProcessMessage(
     }
   }
 }
-} // namespace Vandrouka
+
+} // namespace Vandrouka::UI::Private

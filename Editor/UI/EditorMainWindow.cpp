@@ -6,35 +6,40 @@
 #include <boost/algorithm/string.hpp>
 #include <unordered_set>
 
+#include <Catalog/Interface/IConfigEntry.h>
+#include <Catalog/Interface/ITransformEntry.h>
+#include <Fonts/Module/Messages/CompileFontMessage.h>
+#include <Fonts/Module/Messages/RefreshFontsMessage.h>
+#include <Fundamental/Module/Observer.h>
+#include <State/Interface/IDataModelState.h>
+#include <State/Module/Messages/AddLanguageMessage.h>
+#include <State/Module/Messages/CompileSceneMessage.h>
+#include <State/Module/Messages/CopyEntryMessage.h>
+#include <State/Module/Messages/CopyNodeMessage.h>
+#include <State/Module/Messages/CreateNodeMessage.h>
+#include <State/Module/Messages/ExportToFileMessage.h>
+#include <State/Module/Messages/ImportFileMessage.h>
+#include <State/Module/Messages/RenameLanguageMessage.h>
+#include <State/Module/Messages/MoveEntryMessage.h>
+#include <State/Module/Messages/RemoveEntryMessage.h>
+#include <State/Module/Messages/ImportFromFileMessage.h>
+#include <State/Module/Messages/RemoveLanguageMessage.h>
+#include <State/Module/Messages/RenameEntryMessage.h>
+#include <State/Module/Messages/RequestSuggestedChildrenMessage.h>
+#include <State/Module/Messages/ResetModelMessage.h>
+#include <State/Module/Messages/SaveToFileMessage.h>
+#include <State/Module/Messages/SelectEntryMessage.h>
+#include <State/Module/Messages/SetActiveLanguageMessage.h>
+
 #include "../Application.h"
-#include "../ConfigEntry.h"
-#include "../DataModel/IDataModelState.h"
-#include "../Messages/AddLanguageMessage.h"
-#include "../Messages/CompileFontMessage.h"
-#include "../Messages/CompileSceneMessage.h"
-#include "../Messages/CopyEntryMessage.h"
-#include "../Messages/CopyNodeMessage.h"
-#include "../Messages/CreateNodeMessage.h"
-#include "../Messages/ExportToFileMessage.h"
-#include "../Messages/ImportFileMessage.h"
-#include "../Messages/MoveEntryMessage.h"
-#include "../Messages/RefreshFontsMessage.h"
-#include "../Messages/RemoveEntryMessage.h"
-#include "../Messages/RemoveLanguageMessage.h"
-#include "../Messages/RenameEntryMessage.h"
-#include "../Messages/RequestSuggestedChildrenMessage.h"
-#include "../Messages/ResetModelMessage.h"
-#include "../Messages/SaveToFileMessage.h"
-#include "../Messages/SelectEntryMessage.h"
-#include "../Messages/SetActiveLanguageMessage.h"
-#include "../TransformEntry.h"
 #include "Processors.h"
 #include "TextEnterDialog.h"
 #include "UICommon.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private {
 
-EntryPath GetPath(const wxString &rootName, wxTreeCtrl *tree, wxTreeItemId id) {
+Catalog::EntryPath GetPath(const wxString &rootName, wxTreeCtrl *tree,
+                           wxTreeItemId id) {
   std::stack<wxString> names;
 
   if (!id.IsOk())
@@ -61,7 +66,7 @@ EntryPath GetPath(const wxString &rootName, wxTreeCtrl *tree, wxTreeItemId id) {
   return {path.ToStdString()};
 }
 
-void EditorMainWindow::Reset(Vandrouka::Ref<IEntry> root) {
+void EditorMainWindow::Reset(Vandrouka::Ref<Catalog::IEntry> root) {
   // _subscriptions[""] =
   // root.Cast<IObservable>()->Subscribe(static_cast<IObserver*>(this));
 
@@ -82,11 +87,12 @@ void EditorMainWindow::Reset(Vandrouka::Ref<IEntry> root) {
   reseting = false;
 }
 
-void EditorMainWindow::SelectEntry(Vandrouka::Ref<IEntry> entry) {
+void EditorMainWindow::SelectEntry(Vandrouka::Ref<Catalog::IEntry> entry) {
   _transformPanel->SetDataModel(entry);
   _textPanel->SetDataModel(entry);
   propertiesSizer->Layout();
-  _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
+  _dataModel->Execute(
+      new State::Private::Messages::CompileSceneMessage{{State::ROOT_SCENE}});
 }
 
 class SceneTreeItemData : public wxTreeItemData {
@@ -97,13 +103,13 @@ public:
 class MyTreeDropTarget : public wxTextDropTarget {
 public:
   MyTreeDropTarget(const wxString &rootName,
-                   Vandrouka::Ref<IDataModel> dataModel,
+                   Vandrouka::Ref<State::IDataModel> dataModel,
                    wxTreeCtrl *targetTreeCtrl)
       : _dataModel{dataModel}, _rootName{rootName},
         _targetTreeCtrl(targetTreeCtrl) {}
 
 private:
-  Vandrouka::Ref<IDataModel> _dataModel;
+  Vandrouka::Ref<State::IDataModel> _dataModel;
   wxString _rootName;
   wxTreeCtrl *_targetTreeCtrl;
 
@@ -167,54 +173,63 @@ void EditorMainWindow::SaveCurrentSelectionPath() {
   auto s = finalScene->GetSelection();
   if (!s.IsOk())
     return;
-  _copyNode = GetPath(ROOT_SCENE, finalScene, s);
+  _copyNode = GetPath(State::ROOT_SCENE, finalScene, s);
 }
 
 void EditorMainWindow::PasteEntryCopy() {
   auto s = finalScene->GetSelection();
   if (!s.IsOk())
     return;
-  auto target = GetPath(ROOT_SCENE, finalScene, s);
+  auto target = GetPath(State::ROOT_SCENE, finalScene, s);
   if (target.IsValid()) {
-    _dataModel->Execute(new CopyEntryMessage{_copyNode, target});
+    _dataModel->Execute(
+        new State::Private::Messages::CopyEntryMessage{_copyNode, target});
   }
 }
 
-EditorMainWindow::EditorMainWindow(Vandrouka::Ref<IDataModel> dataModel,
-                                   Vandrouka::Ref<ISystemFonts> systemFonts,
-                                   wxWindow *parent)
+EditorMainWindow::EditorMainWindow(
+    Vandrouka::Ref<State::IDataModel> dataModel,
+    Vandrouka::Ref<Fonts::ISystemFonts> systemFonts, wxWindow *parent)
     : EditorMainWindowBase(parent, -1, "Editor"), _dataModel{dataModel},
       _systemFonts{systemFonts} {
 
-  _observerWrapper = new ObserverWrapper{this};
+  _observerWrapper = new Fundamental::Private::ObserverWrapper{this};
   _processor = Application::CreateWxProcessor();
   _stateWrapper = new EditorMainWindowStateWrapper{this};
-  _sinkWrapper = new MessageSinkWrapper{this};
+  _sinkWrapper = new Fundamental::Private::MessageSinkWrapper{this};
 
   _systemFontsSubscription =
       this->_systemFonts.Cast<IObservable>()->Subscribe(_observerWrapper);
   _dataModelSubscription =
       this->_dataModel.Cast<IObservable>()->Subscribe(_observerWrapper);
 
-  _processor->AddProcessor(new FontCompiledMessageProcessor());
-  _processor->AddProcessor(new FontsRefreshCompletedMessageProcessor());
-  _processor->AddProcessor(new CompileMessageProcessor());
-  _processor->AddProcessor(new SceneCompeledMessageProcessor());
-  _processor->AddProcessor(new ModelResetMessageProcessor());
-  _processor->AddProcessor(new EntrySelectedMessageProcessor());
-  _processor->AddProcessor(new EntryPropertyChangedMessageProcessor());
-  _processor->AddProcessor(new ConfigChangedMessageProcessor());
-  _processor->AddProcessor(new LanguageAddedMessageProcessor());
-  _processor->AddProcessor(new ActiveLanguageChangedMessageProcessor());
-  _processor->AddProcessor(new LanguageRemovedMessageProcessor());
-  _processor->AddProcessor(new SuggestedChildrenMessageProcessor());
-  _processor->AddProcessor(new BulkOperationStartedMessageProcessor());
-  _processor->AddProcessor(new BulkOperationEndedMessageProcessor());
-  _processor->AddProcessor(new EntryRemovedMessageProcessor());
-  _processor->AddProcessor(new EntryAddedMessageProcessor());
-  _processor->AddProcessor(new LongOperationEndedMessageProcessor());
-  _processor->AddProcessor(new LongOperationStartedMessageProcessor());
-  _processor->SetUnhandledProcessor(new UnhandledMessageProcessor());
+  _processor->AddProcessor(new Processors::FontCompiledMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::FontsRefreshCompletedMessageProcessor());
+  _processor->AddProcessor(new Processors::CompileMessageProcessor());
+  _processor->AddProcessor(new Processors::SceneCompeledMessageProcessor());
+  _processor->AddProcessor(new Processors::ModelResetMessageProcessor());
+  _processor->AddProcessor(new Processors::EntrySelectedMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::EntryPropertyChangedMessageProcessor());
+  _processor->AddProcessor(new Processors::ConfigChangedMessageProcessor());
+  _processor->AddProcessor(new Processors::LanguageAddedMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::ActiveLanguageChangedMessageProcessor());
+  _processor->AddProcessor(new Processors::LanguageRemovedMessageProcessor());
+  _processor->AddProcessor(new Processors::SuggestedChildrenMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::BulkOperationStartedMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::BulkOperationEndedMessageProcessor());
+  _processor->AddProcessor(new Processors::EntryRemovedMessageProcessor());
+  _processor->AddProcessor(new Processors::EntryAddedMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::LongOperationEndedMessageProcessor());
+  _processor->AddProcessor(
+      new Processors::LongOperationStartedMessageProcessor());
+  _processor->SetUnhandledProcessor(
+      new Processors::UnhandledMessageProcessor());
 }
 
 void EditorMainWindow::Init(int argc, char **argv) {
@@ -257,7 +272,7 @@ void EditorMainWindow::Init(int argc, char **argv) {
   propertiesSizer->Add(_textPanel.get(), 0, wxALL | wxEXPAND, 5);
 
   finalScene->SetDropTarget(
-      new MyTreeDropTarget(ROOT_SCENE, _dataModel, finalScene));
+      new MyTreeDropTarget(State::ROOT_SCENE, _dataModel, finalScene));
 
   assert(_dataModel);
 
@@ -370,7 +385,7 @@ void EditorMainWindow::fontSearchOnText(wxCommandEvent &) {
 
 void EditorMainWindow::fontsListOnListItemSelected(wxListEvent &event) {
   if (auto selection = event.GetIndex(); selection >= 0) {
-    _systemFonts->Execute(new CompileFontMessage{
+    _systemFonts->Execute(new Fonts::Private::Messages::CompileFontMessage{
         fontsList->GetItemText(event.GetIndex()).ToStdString(), {}});
   }
 }
@@ -394,7 +409,8 @@ void EditorMainWindow::UpdateFonts() {
 
 void EditorMainWindow::dataPanelsOnNotebookPageChanged(wxNotebookEvent &) {
   if (_systemFonts) {
-    _systemFonts->Execute(new RefreshFontsMessage{false});
+    _systemFonts->Execute(
+        new Fonts::Private::Messages::RefreshFontsMessage{false});
   }
 }
 
@@ -413,7 +429,7 @@ void EditorMainWindow::OnImport(wxCommandEvent &) {
   fd.GetPaths(files);
 
   for (auto file : files) {
-    _dataModel->Execute(new ImportFileMessage{
+    _dataModel->Execute(new State::Private::Messages::ImportFileMessage{
         file.ToStdString(), _options, this->_projectStorage.parent_path()});
   }
 }
@@ -452,23 +468,23 @@ void EditorMainWindow::OnNext(Vandrouka::Ref<IMessage> msg) {
 
 void EditorMainWindow::OnComplete() {}
 
-int EditorMainWindow::GetEntryTypeImage(EntryType type) {
+int EditorMainWindow::GetEntryTypeImage(Catalog::EntryType type) {
   switch (type) {
-  case EntryType::Directory:
+  case Catalog::EntryType::Directory:
     break;
-  case EntryType::Transform:
+  case Catalog::EntryType::Transform:
     return _imageTransformImage;
-  case EntryType::Material:
+  case Catalog::EntryType::Material:
     return _imageMaterialImage;
-  case EntryType::Geometry:
+  case Catalog::EntryType::Geometry:
     return _imageGeometryImage;
-  case EntryType::Group:
+  case Catalog::EntryType::Group:
     return _imageGroupImage;
-  case EntryType::Localized:
+  case Catalog::EntryType::Localized:
     return _imageLocalizedImage;
-  case EntryType::Config:
+  case Catalog::EntryType::Config:
     break;
-  case EntryType::Text:
+  case Catalog::EntryType::Text:
     return _imageTextImage;
   default:
     break;
@@ -499,11 +515,12 @@ void EditorMainWindow::SubmitMessage(Vandrouka::Ref<IMessage> msg) {
 
 void EditorMainWindow::SubmitError(Vandrouka::Ref<IError> msg) { OnError(msg); }
 
-void EditorMainWindow::AddEntry(EntryPath path, EntryType type) {
+void EditorMainWindow::AddEntry(Catalog::EntryPath path,
+                                Catalog::EntryType type) {
   wxTreeCtrl *tree = nullptr;
-  if (path.GetName() == ROOT_PACKAGES) {
+  if (path.GetName() == State::ROOT_PACKAGES) {
     tree = assetsTree;
-  } else if (path.GetName() == ROOT_SCENE) {
+  } else if (path.GetName() == State::ROOT_SCENE) {
     tree = finalScene;
   }
 
@@ -549,16 +566,16 @@ void EditorMainWindow::AddEntry(EntryPath path, EntryType type) {
   if (tree == finalScene) {
     if (_longOperations.empty()) {
       tree->SelectItem(itemId, true);
-      _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
+      _dataModel->Execute(new State::Private::Messages::CompileSceneMessage{{State::ROOT_SCENE}});
     }
   }
 }
 
-void EditorMainWindow::RemoveEntry(EntryPath path) {
+void EditorMainWindow::RemoveEntry(Catalog::EntryPath path) {
   wxTreeCtrl *tree = nullptr;
-  if (path.GetName() == ROOT_PACKAGES) {
+  if (path.GetName() == State::ROOT_PACKAGES) {
     tree = assetsTree;
-  } else if (path.GetName() == ROOT_SCENE) {
+  } else if (path.GetName() == State::ROOT_SCENE) {
     tree = finalScene;
   }
 
@@ -606,7 +623,7 @@ void EditorMainWindow::RemoveEntry(EntryPath path) {
     child = tree->GetNextChild(parent, cookie);
   }
 
-  _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
+  _dataModel->Execute(new State::Private::Messages::CompileSceneMessage{{State::ROOT_SCENE}});
 }
 
 void EditorMainWindow::assetsTreeOnTreeSelChanged(wxTreeEvent &event) {
@@ -617,8 +634,8 @@ void EditorMainWindow::assetsTreeOnTreeSelChanged(wxTreeEvent &event) {
     return;
   else {
     if (assetsTree->GetItemParent(item) == assetsTree->GetRootItem()) {
-      _dataModel->Execute(
-          new CompileSceneMessage{GetPath(ROOT_PACKAGES, assetsTree, item)});
+      _dataModel->Execute(new State::Private::Messages::CompileSceneMessage{
+          GetPath(State::ROOT_PACKAGES, assetsTree, item)});
     }
   }
 }
@@ -631,17 +648,17 @@ void EditorMainWindow::finalSceneOnTreeSelChanged(wxTreeEvent &event) {
     return;
   else {
     if (finalScene->GetItemParent(item) == finalScene->GetRootItem()) {
-      _dataModel->Execute(
-          new CompileSceneMessage{GetPath(ROOT_SCENE, finalScene, item)});
+      _dataModel->Execute(new State::Private::Messages::CompileSceneMessage{
+          GetPath(State::ROOT_SCENE, finalScene, item)});
     }
 
-    _dataModel->Execute(
-        new SelectEntryMessage{GetPath(ROOT_SCENE, finalScene, item)});
+    _dataModel->Execute(new State::Private::Messages::SelectEntryMessage{
+        GetPath(State::ROOT_SCENE, finalScene, item)});
   }
 }
 
 void EditorMainWindow::assetsTreeOnTreeBeginDrag(wxTreeEvent &event) {
-  auto text = GetPath(ROOT_PACKAGES, assetsTree, event.GetItem());
+  auto text = GetPath(State::ROOT_PACKAGES, assetsTree, event.GetItem());
 
   wxTextDataObject tdo(text.Path);
   wxDropSource tds(tdo, assetsTree);
@@ -653,17 +670,19 @@ void EditorMainWindow::assetsTreeOnTreeEndDrag(wxTreeEvent &event) {
 }
 
 void EditorMainWindow::finalSceneOnTreeBeginDrag(wxTreeEvent &event) {
-  _oldPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
+  _oldPath = GetPath(State::ROOT_SCENE, finalScene, event.GetItem());
   event.Allow();
 }
 
 void EditorMainWindow::finalSceneOnTreeEndDrag(wxTreeEvent &event) {
   // auto oldPath = GetPath(ROOT_SCENE, finalScene, event.GetOldItem());
-  auto newPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
+  auto newPath = GetPath(State::ROOT_SCENE, finalScene, event.GetItem());
   if (wxGetKeyState(WXK_CONTROL)) {
-    _dataModel->Execute(new CopyEntryMessage{{_oldPath}, {newPath.Path}});
+    _dataModel->Execute(
+        new State::Private::Messages::CopyEntryMessage{{_oldPath}, {newPath.Path}});
   } else {
-    _dataModel->Execute(new MoveEntryMessage{{_oldPath}, {newPath.Path}});
+    _dataModel->Execute(new State::Private::Messages::MoveEntryMessage{
+        {_oldPath}, {newPath.Path}});
   }
   // _dataModel->Execute(IDataModelEditor::CompileSceneCommand{ .Root =
   // EntryPath{ ROOT_SCENE } });
@@ -677,9 +696,11 @@ void EditorMainWindow::finalSceneOnTreeItemRightClick(wxTreeEvent &event) {
     }
   }
 
-  auto path = GetPath(ROOT_SCENE, finalScene, item);
+  auto path = GetPath(State::ROOT_SCENE, finalScene, item);
 
-  _dataModel->Execute(new RequestSuggestedChildrenMessage{path, "popup"});
+  _dataModel->Execute(
+      new State::Private::Messages::RequestSuggestedChildrenMessage{path,
+                                                                    "popup"});
 
   event.Skip();
 }
@@ -689,22 +710,24 @@ void EditorMainWindow::deleteFromSceneOnButtonClick(wxCommandEvent &) {
   if (!s.IsOk())
     return;
 
-  auto path = GetPath(ROOT_SCENE, finalScene, s);
+  auto path = GetPath(State::ROOT_SCENE, finalScene, s);
 
-  _dataModel->Execute(new RemoveEntryMessage{path});
-  _dataModel->Execute(new CompileSceneMessage{EntryPath{ROOT_SCENE}});
+  _dataModel->Execute(new State::Private::Messages::RemoveEntryMessage{path});
+  _dataModel->Execute(
+      new State::Private::Messages::CompileSceneMessage{{State::ROOT_SCENE}});
 }
 
 void EditorMainWindow::addToSceneOnCombobox(wxCommandEvent &event) {
-  EntryPath path{.Path = ROOT_SCENE};
+  Catalog::EntryPath path{.Path = State::ROOT_SCENE};
 
   auto s = finalScene->GetSelection();
   if (s.IsOk()) {
-    path = GetPath(ROOT_SCENE, finalScene, s);
+    path = GetPath(State::ROOT_SCENE, finalScene, s);
   }
 
   auto type = event.GetString().ToStdString();
-  _dataModel->Execute(new CreateNodeMessage{path.Append(type), type});
+  _dataModel->Execute(
+      new State::Private::Messages::CreateNodeMessage{path.Append(type), type});
 }
 
 void EditorMainWindow::navigateOnToolClicked(wxCommandEvent &) {
@@ -738,12 +761,13 @@ void EditorMainWindow::loadProjectMenuItemOnMenuSelection(wxCommandEvent &) {
 
   _projectStorage = fd.GetPath().ToStdString();
 
-  _dataModel->Execute(new ResetModelMessage{});
-  _dataModel->Execute(new ImportFromFileMessage{_projectStorage});
+  _dataModel->Execute(new State::Private::Messages::ResetModelMessage{});
+  _dataModel->Execute(
+      new State::Private::Messages::ImportFromFileMessage{_projectStorage});
 }
 
 void EditorMainWindow::resetMenuItemOnMenuSelection(wxCommandEvent &) {
-  _dataModel->Execute(new ResetModelMessage{});
+  _dataModel->Execute(new State::Private::Messages::ResetModelMessage{});
 }
 
 void EditorMainWindow::finalSceneOnTreeBeginLabelEdit(wxTreeEvent &) {}
@@ -754,10 +778,11 @@ void EditorMainWindow::finalSceneOnTreeEndLabelEdit(wxTreeEvent &event) {
 
   auto newName = event.GetLabel();
 
-  auto oldPath = GetPath(ROOT_SCENE, finalScene, event.GetItem());
+  auto oldPath = GetPath(State::ROOT_SCENE, finalScene, event.GetItem());
   auto newPath = oldPath.GetParent().Append(newName.ToStdString());
 
-  _dataModel->Execute(new RenameEntryMessage{oldPath, newPath});
+  _dataModel->Execute(
+      new State::Private::Messages::RenameEntryMessage{oldPath, newPath});
 
   event.Veto();
 }
@@ -787,12 +812,14 @@ void EditorMainWindow::saveProjectMenuItemOnMenuSelection(wxCommandEvent &) {
     _projectStorage = fd.GetPath().ToStdString();
   }
 
-  _dataModel->Execute(new SaveToFileMessage{_projectStorage});
+  _dataModel->Execute(
+      new State::Private::Messages::SaveToFileMessage{_projectStorage});
 }
 
 void EditorMainWindow::showTransformMenuOnMenuSelection(wxCommandEvent &event) {
   _config->SetShowTransform(event.IsChecked());
-  _dataModel->Execute(new CompileSceneMessage{{ROOT_SCENE}});
+  _dataModel->Execute(
+      new State::Private::Messages::CompileSceneMessage{{State::ROOT_SCENE}});
 }
 
 void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent &) {
@@ -808,7 +835,7 @@ void EditorMainWindow::exportMenuOnMenuSelection(wxCommandEvent &) {
 
   auto path = fd.GetPath().ToStdString();
 
-  _dataModel->Execute(new ExportToFileMessage{path});
+  _dataModel->Execute(new State::Private::Messages::ExportToFileMessage{path});
 }
 
 void EditorMainWindow::langAddOnButtonClick(wxCommandEvent &) {
@@ -833,7 +860,8 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
         wxEVT_COMMAND_MENU_SELECTED,
         [event, this](wxCommandEvent &) {
           _dataModel->Execute(
-              new SetActiveLanguageMessage{event.GetLabel().ToStdString()});
+              new State::Private::Messages::SetActiveLanguageMessage{
+                  event.GetLabel().ToStdString()});
         },
         item->GetId());
   }
@@ -851,7 +879,8 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
             return;
           else if (r == wxID_OK) {
             auto value = dlg.GetText();
-            _dataModel->Execute(new RenameLanguageMessage{
+            _dataModel->Execute(
+                new State::Private::Messages::RenameLanguageMessage{
                 event.GetLabel().ToStdString(), value.ToStdString()});
           }
         },
@@ -865,7 +894,7 @@ void EditorMainWindow::languageListBoxOnListBoxDClick(wxListEvent &event) {
         wxEVT_COMMAND_MENU_SELECTED,
         [event, this](wxCommandEvent &) {
           _dataModel->Execute(
-              new RemoveLanguageMessage{event.GetLabel().ToStdString()});
+              new State::Private::Messages::RemoveLanguageMessage{event.GetLabel().ToStdString()});
         },
         item->GetId());
   }
@@ -907,4 +936,4 @@ void EditorMainWindow::OnIdle() {
   }
 }
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

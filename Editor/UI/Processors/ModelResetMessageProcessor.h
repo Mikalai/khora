@@ -1,20 +1,20 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
+#include <Fundamental/Module/MessageProcessor.h>
+#include <State/Interface/Messages/IModelResetMessage.h>
 #include "../ViewerState.h"
 
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 class ModelResetMessageProcessor
-    : public MessageProcessorBase<ModelResetMessageProcessor,
+    : public Fundamental::Private::MessageProcessorBase<ModelResetMessageProcessor,
                                   IEditorMainWindowStateWrapper,
-                                  IModelResetMessage> {
+                                  State::Messages::IModelResetMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<IModelResetMessage> cmd, Ref<IMessageOutput> sink);
+                      Ref<State::Messages::IModelResetMessage> cmd,
+                      Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

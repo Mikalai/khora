@@ -1,16 +1,14 @@
 #include "TextPanel.h"
 #include "../Application.h"
-
 #include <magic_enum.hpp>
-
-#include "../TextEntry.h"
 #include "UICommon.h"
+#include <Fundamental/Module/Observer.h>
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private {
 
 TextPanel::TextPanel(wxWindow *parent) : TextPanelBase(parent) {
-  _observerWrapper = new ObserverWrapper{this};
-  _sinkWrapper = new MessageSinkWrapper{this};
+  _observerWrapper = new Fundamental::Private::ObserverWrapper{this};
+  _sinkWrapper = new Fundamental::Private::MessageSinkWrapper{this};
   _stateWrapper = new TextPanelStateWrapper{this};
   _processor = Application::CreateWxProcessor();
 }
@@ -125,18 +123,18 @@ void TextPanel::vertAxisZEditOnText(wxCommandEvent &) {
 void TextPanel::horAlignmentOnCombobox(wxCommandEvent &) {
   if (!_dataModel)
     return;
-  auto value = magic_enum::enum_cast<TextHorizontalAlignment>(
+  auto value = magic_enum::enum_cast<Catalog::TextHorizontalAlignment>(
                    horAlignment->GetValue().ToStdString())
-                   .value_or(TextHorizontalAlignment::Center);
+                   .value_or(Catalog::TextHorizontalAlignment::Center);
   _dataModel->SetHorizontalAlignment(value);
 }
 
 void TextPanel::vertAlignmentOnCombobox(wxCommandEvent &) {
   if (!_dataModel)
     return;
-  auto value = magic_enum::enum_cast<TextVerticalAlignment>(
+  auto value = magic_enum::enum_cast<Catalog::TextVerticalAlignment>(
                    vertAlignment->GetValue().ToStdString())
-                   .value_or(TextVerticalAlignment::Center);
+                   .value_or(Catalog::TextVerticalAlignment::Center);
   _dataModel->SetVerticalAlignment(value);
 }
 
@@ -149,10 +147,10 @@ void TextPanel::lineSpacingEditOnText(wxCommandEvent &) {
   }
 }
 
-void TextPanel::SetDataModel(Vandrouka::Ref<IEntry> entry) {
+void TextPanel::SetDataModel(Vandrouka::Ref<Catalog::IEntry> entry) {
   _dataModelSubscription.Reset();
 
-  _dataModel = entry.Cast<ITextEntry>();
+  _dataModel = entry.Cast<Catalog::ITextEntry>();
 
   if (auto o = _dataModel.Cast<IObservable>(); o) {
     _dataModelSubscription = o->Subscribe(_observerWrapper);
@@ -230,7 +228,7 @@ void TextPanel::SubmitMessage(Vandrouka::Ref<IMessage> msg) {}
 
 void TextPanel::SubmitError(Vandrouka::Ref<IError> msg) {}
 
-void TextPanel::SetFonts(std::vector<FontInfo> fonts) {
+void TextPanel::SetFonts(std::vector<Fonts::FontInfo> fonts) {
   fontCmb->Clear();
   for (auto &fnt : fonts) {
     fontCmb->Append(fnt.GetDisplayName());

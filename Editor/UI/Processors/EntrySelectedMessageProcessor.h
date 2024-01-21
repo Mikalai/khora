@@ -1,19 +1,19 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
 #include "../ViewerState.h"
+#include <Fundamental/Module/MessageProcessor.h>
+#include <State/Interface/Messages/IEntrySelectedMessage.h>
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 class EntrySelectedMessageProcessor
-    : public MessageProcessorBase<EntrySelectedMessageProcessor,
-                                  IEditorMainWindowStateWrapper,
-                                  IEntrySelectedMessage> {
+    : public Fundamental::Private::MessageProcessorBase<
+          EntrySelectedMessageProcessor, IEditorMainWindowStateWrapper,
+          State::Messages::IEntrySelectedMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<IEntrySelectedMessage> cmd, Ref<IMessageOutput> sink);
+                      Ref<State::Messages::IEntrySelectedMessage> cmd,
+                      Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

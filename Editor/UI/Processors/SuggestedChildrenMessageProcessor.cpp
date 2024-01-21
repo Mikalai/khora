@@ -1,11 +1,13 @@
 #include "SuggestedChildrenMessageProcessor.h"
 #include "../EditorMainWindow.h"
-#include "../../Messages/CreateNodeMessage.h"
+#include <State/Module/Messages/CreateNodeMessage.h>
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
+
 void SuggestedChildrenMessageProcessor::ProcessMessage(
     Ref<IEditorMainWindowStateWrapper> state,
-    Ref<ISuggestedChildrenMessage> cmd, Ref<IMessageOutput> sink) {
+    Ref<State::Messages::ISuggestedChildrenMessage> cmd,
+    Ref<IMessageOutput> sink) {
   if (cmd->GetContext() == "popup") {
     wxMenu menu;
     for (auto e : cmd->GetSuggestions()) {
@@ -15,7 +17,7 @@ void SuggestedChildrenMessageProcessor::ProcessMessage(
           wxEVT_COMMAND_MENU_SELECTED,
           [state, cmd, e, this](wxCommandEvent &) mutable {
             state->GetState()->_dataModel->Execute(
-                new CreateNodeMessage{cmd->GetPath().Append(e.Name), e.Type});
+                new State::Private::Messages::CreateNodeMessage{cmd->GetPath().Append(e.Name), e.Type});
           },
           item->GetId());
     }
@@ -47,4 +49,5 @@ void SuggestedChildrenMessageProcessor::ProcessMessage(
     state->GetState()->PopupMenu(&menu);
   }
 }
-} // namespace Vandrouka
+
+} // namespace Vandrouka::UI::Private

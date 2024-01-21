@@ -1,12 +1,13 @@
 #include "LongOperationEndedMessageProcessor.h"
 #include "../EditorMainWindow.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 void LongOperationEndedMessageProcessor::ProcessMessage(
     Ref<IEditorMainWindowStateWrapper> state,
-    Ref<ILongOperationEndedMessage> cmd, Ref<IMessageOutput> sink) {
+    Ref<Fundamental::Messages::ILongOperationEndedMessage> cmd,
+    Ref<IMessageOutput> sink) {
   state->GetState()->EndOperation(cmd->GetOperation());
 }
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

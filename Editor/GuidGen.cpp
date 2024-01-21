@@ -1,7 +1,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <iostream>
-#include "IReferenced.h"
+#include <Fundamental/Interface/IReferenced.h>
 
 int main(int argc, char** argv) {
     auto g = boost::uuids::random_generator()();

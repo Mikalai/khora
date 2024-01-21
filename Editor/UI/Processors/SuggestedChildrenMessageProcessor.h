@@ -1,21 +1,19 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
 #include "../ViewerState.h"
+#include <State/Interface/Messages/ISuggestedChildrenMessage.h>
+#include <Fundamental/Module/MessageProcessor.h>
 
-namespace Vandrouka {
-
+namespace Vandrouka::UI::Private::Processors {
 
 class SuggestedChildrenMessageProcessor
-    : public MessageProcessorBase<SuggestedChildrenMessageProcessor,
-                                  IEditorMainWindowStateWrapper,
-                                  ISuggestedChildrenMessage> {
+    : public Fundamental::Private::MessageProcessorBase<
+          SuggestedChildrenMessageProcessor, IEditorMainWindowStateWrapper,
+          State::Messages::ISuggestedChildrenMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<ISuggestedChildrenMessage> cmd,
+                      Ref<State::Messages::ISuggestedChildrenMessage> cmd,
                       Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

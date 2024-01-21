@@ -1,20 +1,19 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
+#include <Fundamental/Module/MessageProcessor.h>
+#include <State/Interface/Messages/ICompileMessage.h>
 #include "../ViewerState.h"
 
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 class CompileMessageProcessor
-    : public MessageProcessorBase<CompileMessageProcessor,
+    : public Fundamental::Private::MessageProcessorBase<CompileMessageProcessor,
                                   IEditorMainWindowStateWrapper,
-                                  ICompileMessage> {
+                                  State::Messages::ICompileMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<ICompileMessage> cmd, Ref<IMessageOutput> sink);
+                      Ref<State::Messages::ICompileMessage> cmd, Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

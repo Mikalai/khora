@@ -1,22 +1,19 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
+#include <Fundamental/Module/MessageProcessor.h>
+#include <State/Interface/Messages/IBulkOperationStartedMessage.h>
 #include "../ViewerState.h"
 
-
-namespace Vandrouka {
-
+namespace Vandrouka::UI::Private::Processors {
 
 class BulkOperationStartedMessageProcessor
-    : public MessageProcessorBase<BulkOperationStartedMessageProcessor,
+    : public Fundamental::Private::MessageProcessorBase<BulkOperationStartedMessageProcessor,
                                   IEditorMainWindowStateWrapper,
-                                  IBulkOperationStartedMessage> {
+                                  State::Messages::IBulkOperationStartedMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<IBulkOperationStartedMessage> cmd,
+                      Ref<State::Messages::IBulkOperationStartedMessage> cmd,
                       Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

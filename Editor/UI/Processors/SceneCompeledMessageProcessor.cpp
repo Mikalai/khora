@@ -1,10 +1,11 @@
 #include "SceneCompeledMessageProcessor.h"
 #include "../EditorMainWindow.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
+
 void SceneCompeledMessageProcessor::ProcessMessage(
-    Ref<IEditorMainWindowStateWrapper> state, Ref<ISceneCompeledMessage> cmd,
-    Ref<IMessageOutput> sink) {
+    Ref<IEditorMainWindowStateWrapper> state,
+    Ref<State::Messages::ISceneCompeledMessage> cmd, Ref<IMessageOutput> sink) {
   auto s = state->GetState();
   auto _root = s->_root;
   auto viewerWindow = s->viewerWindow;
@@ -21,4 +22,5 @@ void SceneCompeledMessageProcessor::ProcessMessage(
 
   viewerWindow->viewer->compileManager->compile(_root);
 }
-} // namespace Vandrouka
+
+} // namespace Vandrouka::UI::Private::Processors

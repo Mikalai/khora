@@ -1,14 +1,13 @@
 #include "ModelResetMessageProcessor.h"
 #include "../EditorMainWindow.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 void ModelResetMessageProcessor::ProcessMessage(
-    Ref<IEditorMainWindowStateWrapper> state, Ref<IModelResetMessage> cmd,
-    Ref<IMessageOutput> sink) {
+    Ref<IEditorMainWindowStateWrapper> state,
+    Ref<State::Messages::IModelResetMessage> cmd, Ref<IMessageOutput> sink) {
 
   state->GetState()->Reset(cmd->GetRoot());
-
 }
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

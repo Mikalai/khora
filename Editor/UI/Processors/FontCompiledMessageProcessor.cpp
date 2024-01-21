@@ -1,10 +1,11 @@
 #include "FontCompiledMessageProcessor.h"
 #include "../EditorMainWindow.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 void FontCompiledMessageProcessor::ProcessMessage(
-    Ref<IEditorMainWindowStateWrapper> state, Ref<IFontCompiledMessage> &cmd,
+    Ref<IEditorMainWindowStateWrapper> state,
+    Ref<Fonts::Messages::IFontCompiledMessage> &cmd,
     Ref<IMessageOutput> sink) {
 
   if (cmd->GetState())
@@ -26,4 +27,4 @@ void FontCompiledMessageProcessor::ProcessMessage(
   viewerWindow->viewer->compileManager->compile(_root);
 }
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

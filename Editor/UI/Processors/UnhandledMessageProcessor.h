@@ -1,14 +1,12 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
+#include <Fundamental/Module/MessageProcessor.h>
 #include "../ViewerState.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 class UnhandledMessageProcessor
-    : public MessageProcessorBase<UnhandledMessageProcessor,
+    : public Fundamental::Private::MessageProcessorBase<UnhandledMessageProcessor,
                                   IEditorMainWindowStateWrapper,
                                   IMessage> {
 public:
@@ -17,4 +15,4 @@ public:
                       Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

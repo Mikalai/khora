@@ -1,12 +1,13 @@
 #include "ConfigChangedMessageProcessor.h"
-#include "../../IConfigEntry.h"
+#include <Catalog/Interface/IConfigEntry.h>
 #include "../EditorMainWindow.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 void ConfigChangedMessageProcessor::ProcessMessage(
-    Ref<IEditorMainWindowStateWrapper> state, Ref<IConfigChangedMessage> cmd,
+    Ref<IEditorMainWindowStateWrapper> state,
+    Ref<State::Messages::IConfigChangedMessage> cmd,
     Ref<IMessageOutput> sink) {
   state->GetState()->_config = cmd->GetConfig();
   state->GetState()->UpdateConfig();
 }
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

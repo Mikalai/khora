@@ -3,11 +3,11 @@
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/dll.hpp>
-#include "Result.h"
+#include <Fundamental/Interface/Result.h>
 
 #include "UI/EditorMainWindow.h"
 #include "UI/UICommon.h"
-#include "ISystemFonts.h"
+#include <Fonts/Interface/ISystemFonts.h>
 
 #ifdef __linux__
 #include <pwd.h>
@@ -90,12 +90,12 @@ bool Application::OnInit() {
 
   RunTests();
 
-  _fonts = Vandrouka::Create<Vandrouka::SystemFonts, Vandrouka::ISystemFonts>();
-  _dataModel = Vandrouka::Create<Vandrouka::DataModel, Vandrouka::IDataModel>();
+  _fonts = Vandrouka::Create<Vandrouka::Instances::Fonts::SystemFonts, Vandrouka::Fonts::ISystemFonts>();
+  _dataModel = Vandrouka::Create<Vandrouka::Instances::State::DataModel, Vandrouka::State::IDataModel>();
   assert(_dataModel.Cast<Vandrouka::IReferenced>());
   _dataModel->AddDependency(_fonts);
 
-  mainWindow = new Vandrouka::EditorMainWindow(_dataModel, _fonts, nullptr);
+  mainWindow = new Vandrouka::UI::Private::EditorMainWindow(_dataModel, _fonts, nullptr);
   mainWindow->Init(argc, argv);
   mainWindow->Show(true);
 
@@ -137,7 +137,7 @@ std::unique_ptr<boost::asio::io_context::work> Application::InitThreadPool() {
   return work;
 }
 
-class wxAggregatedProcessor : public Vandrouka::AggregatedProcessor {
+class wxAggregatedProcessor : public Vandrouka::Fundamental::Private::AggregatedProcessor {
 
 protected:
   void ExecuteAsync(std::function<void()> cb) override {
@@ -145,7 +145,7 @@ protected:
   }
 };
 
-Vandrouka::Ref<Vandrouka::IAggregatedProcessor>
+Vandrouka::Ref<Vandrouka::Fundamental::IAggregatedProcessor>
 Application::CreateWxProcessor() {
   return new wxAggregatedProcessor{};
 }

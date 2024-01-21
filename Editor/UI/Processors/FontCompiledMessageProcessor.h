@@ -1,22 +1,23 @@
 #pragma once
 
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
-#include "../../MessageProcessor.h"
-#include "../../ISystemFonts.h"
+
+
+#include <Fundamental/Module/MessageProcessor.h>
+#include <Fonts/Interface.h>
 #include "../ViewerState.h"
 
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 
 class FontCompiledMessageProcessor
-    : public MessageProcessorBase<FontCompiledMessageProcessor,
+    : public Fundamental::Private::MessageProcessorBase<FontCompiledMessageProcessor,
                                   IEditorMainWindowStateWrapper,
-                                  IFontCompiledMessage> {
+                                  Fonts::Messages::IFontCompiledMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<IFontCompiledMessage> &cmd, Ref<IMessageOutput> sink);
+                      Ref<Fonts::Messages::IFontCompiledMessage> &cmd,
+                      Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private

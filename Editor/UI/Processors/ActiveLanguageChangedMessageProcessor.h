@@ -1,20 +1,20 @@
 #pragma once
 
-#include "../../MessageProcessor.h"
-#include "../../IDataModelEditor.h"
-#include "../../IDataModelObserver.h"
+#include <Fundamental/Module/MessageProcessor.h>
+#include <State/Interface/Messages/IActiveLanguageChangedMessage.h>
+
 #include "../ViewerState.h"
 
-namespace Vandrouka {
+namespace Vandrouka::UI::Private::Processors {
 
 class ActiveLanguageChangedMessageProcessor
-    : public MessageProcessorBase<ActiveLanguageChangedMessageProcessor,
+    : public Fundamental::Private::MessageProcessorBase<ActiveLanguageChangedMessageProcessor,
                                   IEditorMainWindowStateWrapper,
-                                  IActiveLanguageChangedMessage> {
+                                  State::Messages::IActiveLanguageChangedMessage> {
 public:
   void ProcessMessage(Ref<IEditorMainWindowStateWrapper> state,
-                      Ref<IActiveLanguageChangedMessage> cmd,
+                      Ref<State::Messages::IActiveLanguageChangedMessage> cmd,
                       Ref<IMessageOutput> sink);
 };
 
-} // namespace Vandrouka
+} // namespace Vandrouka::UI::Private
